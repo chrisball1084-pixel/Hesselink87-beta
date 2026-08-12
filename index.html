@@ -22,7 +22,7 @@
     --radius:20px; --radius-sm:13px; --shadow:0 20px 50px rgba(0,0,0,.32);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  button,.tab,.day-btn{touch-action:manipulation}
+  button,.tab,.day-btn{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   html,body{margin:0;padding:0}
   body{
     background:radial-gradient(circle at 85% -10%,rgba(19,200,239,.12),transparent 512px),
@@ -170,9 +170,12 @@
   .ex.awaiting-finish .ex-done-btn{border-color:var(--blue);color:var(--blue-bright);
     background:var(--blue-soft);box-shadow:0 0 0 1px rgba(19,200,239,.15)}
 
-  .set3-toggle{display:block;width:calc(100% - 24px);margin:6px 12px;padding:8px;
-    border-radius:9px;border:1px dashed var(--line);background:transparent;color:var(--muted);
-    font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;min-height:44px}
+  .set-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:7px 12px}
+  .set-control{min-height:44px;padding:8px;border-radius:10px;border:1px dashed var(--line);
+    background:transparent;color:var(--muted);font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+  .set-control.add{border-color:rgba(19,200,239,.42);color:var(--blue-bright)}
+  .set-control.remove{border-color:rgba(255,107,117,.35);color:var(--danger)}
+  .set-control[hidden]{display:none}
 
   .ex-done-btn{display:block;width:calc(100% - 24px);margin:8px 12px 4px;padding:12px;
     border-radius:11px;border:1px solid var(--good);background:rgba(40,199,111,.1);
@@ -568,7 +571,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 902;
+const APP_VERSION = 903;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -587,6 +590,7 @@ const TPL_KEY   = "hesselink_beta_templates_v2";
 const LOG_KEY   = "hesselink_beta_log_v2";
 const OLD_LOG   = "hesselink_beta_log_v1";
 const DRAFT_KEY = "hesselink_beta_draft_v1";
+const TIMER_KEY = "hesselink_beta_timer_v1";
 const KG_STEP   = 2.5;
 
 const EXERCISE_LIBRARY = [
@@ -725,9 +729,17 @@ function weekKey(iso){
   return d.toISOString().slice(0,10);
 }
 const num = v => { const x=parseFloat(String(v).replace(",", ".")); return isNaN(x)?0:x; };
-const exVolume = s => num(s.kg1)*num(s.wdh1) + num(s.kg2)*num(s.wdh2) + num(s.kg3)*num(s.wdh3);
+function workSetsOf(s){
+  if(Array.isArray(s&&s.workSets)) return s.workSets.map(x=>({kg:x&&x.kg||"",reps:x&&x.reps||""}));
+  const keys=Object.keys(s||{}).map(k=>(k.match(/^kg(\d+)$/)||[])[1]).filter(Boolean).map(Number)
+    .filter(n=>(s||{})[`kg${n}`]||(s||{})[`wdh${n}`]).sort((a,b)=>a-b);
+  const count=Math.max(2,num((s||{}).setCount),keys.length?Math.max(...keys):2);
+  return Array.from({length:count},(_,idx)=>({kg:(s||{})[`kg${idx+1}`]||"",reps:(s||{})[`wdh${idx+1}`]||""}));
+}
+const hasSetValues = s => !!(s&&(s.wkg||s.wwdh||workSetsOf(s).some(set=>set.kg||set.reps)));
+const exVolume = s => workSetsOf(s).reduce((sum,set)=>sum+num(set.kg)*num(set.reps),0);
 const sessionVolume = e => e.sets.reduce((x,s)=>x+exVolume(s),0);
-const maxKg = s => Math.max(num(s.kg1), num(s.kg2), num(s.kg3));
+const maxKg = s => Math.max(0,...workSetsOf(s).map(set=>num(set.kg)));
 
 /* oberes Ende des Zielbereichs, z. B. "8–12" -> 12 */
 function goalUpper(goal){
@@ -740,7 +752,8 @@ function goalUpper(goal){
 function hitTop(s, goal){
   const up = goalUpper(goal);
   if(!up) return false;
-  return num(s.wdh1)>=up && num(s.wdh2)>=up && num(s.wdh1)>0;
+  const sets=workSetsOf(s);
+  return sets.length>=2 && num(sets[0].reps)>=up && num(sets[1].reps)>=up && num(sets[0].reps)>0;
 }
 
 function lastEntryForDay(day, excludeId){
@@ -763,7 +776,7 @@ function saveDraftNow(){
     sets: templates[currentDay].map((ex,i)=>{
       const s = readSets(i);
       s.done = !!document.querySelector(`.ex[data-i="${i}"].done`);
-      s.has3 = !!document.querySelector(`.ex[data-i="${i}"] .set-row[data-s3]`);
+      s.setCount = s.workSets.length;
       s.touched = !!document.querySelector(`.ex[data-i="${i}"] input[type=number][data-touched="1"]`);
       return s;
     }),
@@ -825,12 +838,12 @@ async function selectLibraryExercise(id){
   const choice=EXERCISE_LIBRARY.find(x=>x.id===id);
   if(!choice || libraryTargetIdx===null || !templates[currentDay][libraryTargetIdx]) return;
   const drafts=loadDrafts(), dayDraft=drafts[currentDay], setDraft=dayDraft&&dayDraft.sets&&dayDraft.sets[libraryTargetIdx];
-  const hasValues=setDraft&&Object.entries(setDraft).some(([k,v])=>k!=="has3"&&k!=="touched"&&v);
+  const hasValues=hasSetValues(setDraft);
   if(hasValues){
     closeLibrary();
     const ok=await askConfirm("Übung trotz Eingaben austauschen?","Die bereits erfassten Werte dieser Übung im laufenden Beta-Training werden verworfen. Andere Übungen bleiben erhalten.","Austauschen");
     if(!ok){ openLibrary(libraryTargetIdx); return; }
-    dayDraft.sets[libraryTargetIdx]={wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:"",done:false,has3:false,touched:false};
+    dayDraft.sets[libraryTargetIdx]={wkg:"",wwdh:"",workSets:[{kg:"",reps:""},{kg:"",reps:""}],setCount:2,done:false,touched:false};
     saveJSON(DRAFT_KEY,drafts);
   }
   templates[currentDay][libraryTargetIdx]={id:choice.id,n:choice.n,goal:choice.goal};
@@ -852,10 +865,7 @@ function sourceName(ex){ return editing ? ex.name : ex.n; }
 const escAttr = v => String(v||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function previousText(s){
   if(!s) return "Noch keine Werte";
-  const parts = [];
-  if(s.kg1||s.wdh1) parts.push(`${s.kg1||"–"} kg × ${s.wdh1||"–"}`);
-  if(s.kg2||s.wdh2) parts.push(`${s.kg2||"–"} kg × ${s.wdh2||"–"}`);
-  if(s.kg3||s.wdh3) parts.push(`${s.kg3||"–"} kg × ${s.wdh3||"–"}`);
+  const parts = workSetsOf(s).filter(set=>set.kg||set.reps).map(set=>`${set.kg||"–"} kg × ${set.reps||"–"}`);
   return parts.join(" · ") || "Noch keine Werte";
 }
 function targetText(s, goal){
@@ -871,7 +881,7 @@ function renderTodayCard(){
   const weekCount = arr.filter(e=>weekKey(e.date)===weekKey(todayISO())).length;
   const last = lastEntryForDay(currentDay);
   const draft = loadDrafts()[currentDay];
-  const hasDraft = !!(draft && ((draft.sets||[]).some(s=>s && (s.done||s.wkg||s.wwdh||s.kg1||s.wdh1||s.kg2||s.wdh2||s.kg3||s.wdh3))
+  const hasDraft = !!(draft && ((draft.sets||[]).some(s=>s && (s.done||hasSetValues(s)))
     || draft.weight || draft.energy || draft.note));
   $("#today-title").textContent = PLANNAME();
   $("#today-week").textContent = `${weekCount} von 2 Einheiten`;
@@ -926,8 +936,11 @@ function renderExercises(){
           ${setRow(i,"warm","Warm-Up")}
           ${setRow(i,"1","Satz 1")}
           ${setRow(i,"2","Satz 2")}
-          <div class="s3-slot" data-slot="${i}"></div>
-          <button class="set3-toggle" data-i="${i}" type="button">+ Satz 3 (optional)</button>
+          <div class="extra-sets" data-slot="${i}"></div>
+          <div class="set-controls">
+            <button class="set-control add" data-add-set="${i}" type="button">+ Satz hinzufügen</button>
+            <button class="set-control remove" data-remove-set="${i}" type="button" hidden>− Letzten Satz entfernen</button>
+          </div>
           <button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abgeschlossen</button>
           <div class="pause-hint" data-hint="${i}">
             <span class="ph-txt">⏱ Pause läuft · 2:00</span>
@@ -944,23 +957,23 @@ function renderExercises(){
 
   /* Werte einsetzen: Entwurf > letzte Einheit */
   src.forEach((ex,i)=>{
-    let vals = null, done = false, has3 = false;
+    let vals = null, done = false, setCount = 2;
     if(editing){
       vals = ex;
-      has3 = !!(ex.kg3||ex.wdh3);
+      setCount = workSetsOf(ex).length;
     } else if(draft && draft.sets && draft.sets[i]){
-      vals = draft.sets[i]; done = !!vals.done; has3 = !!vals.has3 || !!(vals.kg3||vals.wdh3);
+      vals = draft.sets[i]; done = !!vals.done; setCount = Math.max(2,vals.setCount||workSetsOf(vals).length);
     } else if(prev){
       const nm = (sourceName(ex)||"").trim().toLowerCase();
       const p = prev.sets.find(s=>(s.name||"").trim().toLowerCase()===nm) || null;
-      has3 = !!(p && (p.kg3||p.wdh3));
+      setCount = p ? workSetsOf(p).length : 2;
     }
-    if(has3) showSet3(i);
+    ensureSetCount(i,setCount);
     if(vals){
       setVal(i,"wkg",vals.wkg);   setVal(i,"wwdh",vals.wwdh);
-      setVal(i,"kg1",vals.kg1);   setVal(i,"wdh1",vals.wdh1);
-      setVal(i,"kg2",vals.kg2);   setVal(i,"wdh2",vals.wdh2);
-      setVal(i,"kg3",vals.kg3);   setVal(i,"wdh3",vals.wdh3);
+      workSetsOf(vals).forEach((set,idx)=>{
+        setVal(i,`kg${idx+1}`,set.kg); setVal(i,`wdh${idx+1}`,set.reps);
+      });
       if(!editing && draft && (vals.touched || vals.touched===undefined)){
         document.querySelectorAll(`.ex[data-i="${i}"] input[type=number]`).forEach(inp=>{
           if(inp.value!=="") inp.dataset.touched="1";
@@ -1016,21 +1029,30 @@ function setRow(i,which,label,extraAttr){
     </div>`;
 }
 
-function showSet3(i){
-  const slot = document.querySelector(`.s3-slot[data-slot="${i}"]`);
-  const toggle = document.querySelector(`.set3-toggle[data-i="${i}"]`);
-  if(!slot || slot.children.length) return;
-  slot.insertAdjacentHTML("beforeend", setRow(i,"3","Satz 3",'data-s3="1"'));
-  if(toggle) toggle.style.display = "none";
+function setCountForExercise(i){
+  return document.querySelectorAll(`.set-row[data-row-ex="${i}"]:not(.warm)`).length;
+}
+function updateSetControls(i){
+  const remove=document.querySelector(`[data-remove-set="${i}"]`);
+  if(remove) remove.hidden=setCountForExercise(i)<=2;
+}
+function ensureSetCount(i,count){
+  const slot = document.querySelector(`.extra-sets[data-slot="${i}"]`);
+  if(!slot) return;
+  const target=Math.max(2,Number(count)||2);
+  for(let n=setCountForExercise(i)+1;n<=target;n++) slot.insertAdjacentHTML("beforeend",setRow(i,String(n),`Satz ${n}`,'data-optional-set="1"'));
   const ex = document.querySelector(`.ex[data-i="${i}"]`);
   if(ex) ex.classList.remove("awaiting-finish");
   setDoneLabel(i,!!(ex&&ex.classList.contains("done")));
   bindRowEvents(slot);
+  updateSetControls(i);
 }
 function bindRowEvents(scope){
   scope.querySelectorAll(".st-btn").forEach(b=>{
     if(b.dataset.rowBound) return;
     b.dataset.rowBound="1";
+    b.addEventListener("contextmenu",e=>e.preventDefault());
+    b.addEventListener("dragstart",e=>e.preventDefault());
     b.addEventListener("click",()=>{
       const inp = document.querySelector(`#ex-container input[type=number][data-ex="${b.dataset.ex}"][data-f="${b.dataset.f}"]`);
       if(!inp) return;
@@ -1127,8 +1149,29 @@ function bindExerciseEvents(){
       toast("Übung entfernt ✓");
     });
   });
-  document.querySelectorAll(".set3-toggle").forEach(b=>{
-    b.addEventListener("click",()=>{ showSet3(+b.dataset.i); setActiveExercise(+b.dataset.i,false); setActiveSet(+b.dataset.i,"3",true); saveDraftNow(); });
+  document.querySelectorAll("[data-add-set]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const i=+b.dataset.addSet, next=setCountForExercise(i)+1;
+      ensureSetCount(i,next); setActiveExercise(i,false); setActiveSet(i,String(next),true); saveDraftNow();
+      toast(`Satz ${next} hinzugefügt ✓`);
+    });
+  });
+  document.querySelectorAll("[data-remove-set]").forEach(b=>{
+    b.addEventListener("click",async()=>{
+      const i=+b.dataset.removeSet, count=setCountForExercise(i);
+      if(count<=2) return;
+      const row=document.querySelector(`.set-row[data-row-ex="${i}"][data-set="${count}"]`);
+      const hasValues=!!row&&[...row.querySelectorAll("input")].some(inp=>inp.value!=="");
+      if(hasValues){
+        const ok=await askConfirm(`Satz ${count} entfernen?`,`Die Eingaben aus Satz ${count} werden verworfen. Die übrigen Sätze bleiben erhalten.`,"Satz entfernen");
+        if(!ok) return;
+      }
+      if(row) row.remove();
+      const ex=document.querySelector(`.ex[data-i="${i}"]`); if(ex) ex.classList.remove("awaiting-finish");
+      updateSetControls(i); setDoneLabel(i,!!(ex&&ex.classList.contains("done")));
+      if(activeExIdx===i && String(activeSetKey)===String(count)) setActiveSet(i,String(count-1),false);
+      updateVolume(i); updateExerciseSummary(i); saveDraftNow(); toast(`Satz ${count} entfernt ✓`);
+    });
   });
   document.querySelectorAll("[data-swap]").forEach(b=>{
     b.addEventListener("click",()=>openLibrary(+b.dataset.swap));
@@ -1139,9 +1182,11 @@ function bindExerciseEvents(){
       const prev = lastEntryForDay(currentDay);
       const p = prev && prev.sets.find(s=>(s.name||"").trim().toLowerCase()===(sourceName(ex)||"").trim().toLowerCase());
       if(!p) return;
-      ["1","2","3"].forEach(k=>{
-        if(p[`kg${k}`]){
-          setVal(i,`kg${k}`,p[`kg${k}`]);
+      const previousSets=workSetsOf(p); ensureSetCount(i,previousSets.length);
+      previousSets.forEach((set,idx)=>{
+        const k=String(idx+1);
+        if(set.kg){
+          setVal(i,`kg${k}`,set.kg);
           const inp=document.querySelector(`input[data-ex="${i}"][data-f="kg${k}"]`); if(inp) inp.dataset.touched="1";
         }
       });
@@ -1156,7 +1201,12 @@ const PLANNAME = () => currentDay==="1" ? "Day 1" : "Day 2";
 
 function readSets(i){
   const g = f => (document.querySelector(`#ex-container input[data-ex="${i}"][data-f="${f}"]`)||{}).value||"";
-  return {wkg:g("wkg"),wwdh:g("wwdh"),kg1:g("kg1"),wdh1:g("wdh1"),kg2:g("kg2"),wdh2:g("wdh2"),kg3:g("kg3"),wdh3:g("wdh3")};
+  const workSets=[...document.querySelectorAll(`.set-row[data-row-ex="${i}"]:not(.warm)`)].map(row=>{
+    const key=row.dataset.set; return {kg:g(`kg${key}`),reps:g(`wdh${key}`)};
+  });
+  const result={wkg:g("wkg"),wwdh:g("wwdh"),workSets,setCount:workSets.length};
+  workSets.forEach((set,idx)=>{ result[`kg${idx+1}`]=set.kg; result[`wdh${idx+1}`]=set.reps; });
+  return result;
 }
 function updateVolume(i){
   const s = readSets(i);
@@ -1176,10 +1226,8 @@ function updateExerciseSummary(i){
 }
 function firstPendingSet(i){
   if(!setIsComplete(i,"warm")) return "warm";
-  if(!setIsComplete(i,"1")) return "1";
-  if(!setIsComplete(i,"2")) return "2";
-  if(document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`) && !setIsComplete(i,"3")) return "3";
-  return document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`) ? "3" : "2";
+  const keys=[...document.querySelectorAll(`.set-row[data-row-ex="${i}"]:not(.warm)`)].map(r=>r.dataset.set);
+  return keys.find(key=>!setIsComplete(i,key)) || keys[keys.length-1] || "2";
 }
 function setActiveExercise(i,scroll=true){
   if(planEditMode || editing) return;
@@ -1226,8 +1274,7 @@ function queueSetAdvance(i,key){
   },5000);
 }
 function advanceFromSet(i,key){
-  const keys = ["warm","1","2"];
-  if(document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`)) keys.push("3");
+  const keys = ["warm",...[...document.querySelectorAll(`.set-row[data-row-ex="${i}"]:not(.warm)`)].map(r=>r.dataset.set)];
   const pos = keys.indexOf(key);
   startPauseFor(i);
   if(pos>=0 && pos<keys.length-1){
@@ -1262,7 +1309,7 @@ function updateResumeBanner(){
   if(!d){ banner.classList.remove("show"); return; }
   const total = templates[currentDay].length;
   const done  = (d.sets||[]).filter(s=>s && s.done).length;
-  const hasAnyValue = (d.sets||[]).some(s=>s && (s.wkg||s.wwdh||s.kg1||s.wdh1||s.kg2||s.wdh2||s.kg3||s.wdh3))
+  const hasAnyValue = (d.sets||[]).some(s=>hasSetValues(s))
     || d.weight || d.energy || d.note;
   if(!hasAnyValue){ banner.classList.remove("show"); return; }
   $("#resume-sub").textContent = `${PLANNAME()} · ${done}/${total} Übungen abgeschlossen`;
@@ -1332,7 +1379,7 @@ function startEdit(id){
   const entry = loadLog().find(e=>e.id==id);
   if(!entry) return;
   editing = JSON.parse(JSON.stringify(entry));
-  editing.sets.forEach(s=>{ s.kg3=s.kg3||""; s.wdh3=s.wdh3||""; });
+  editing.sets.forEach(s=>{ s.workSets=workSetsOf(s); s.setCount=s.workSets.length; });
   currentDay = editing.day;
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
@@ -1538,6 +1585,7 @@ function tRender(){
 }
 function tStart(){
   tRemain = T_PRESETS[tIdx]; tEndAt = Date.now() + tRemain*1000; tState="running"; tRender();
+  saveJSON(TIMER_KEY,{endAt:tEndAt,tIdx,timerExIdx});
   clearInterval(tInterval);
   clearTimeout(tResetT);
   tInterval = setInterval(tTick,500);
@@ -1555,12 +1603,13 @@ function startPauseFor(i){
 }
 function tFinish(){
   if(tState==="finished") return;
+  localStorage.removeItem(TIMER_KEY);
   clearInterval(tInterval); tEndAt=0; tRemain=0; tState="finished"; tRender();
   beep(); if(navigator.vibrate) navigator.vibrate([200,100,200]);
   clearTimeout(tResetT);
   tResetT=setTimeout(()=>{ tState="idle"; timerExIdx=null; tRender(); }, 4000);
 }
-function tStop(){ clearInterval(tInterval); clearTimeout(tResetT); tEndAt=0; tState="idle"; timerExIdx=null; tRender(); }
+function tStop(){ clearInterval(tInterval); clearTimeout(tResetT); localStorage.removeItem(TIMER_KEY); tEndAt=0; tState="idle"; timerExIdx=null; tRender(); }
 tMain.addEventListener("click",()=>{
   if(tState==="idle"){ timerExIdx=null; tStart(); }
   else if(tState==="running"){ tIdx=(tIdx+1)%T_PRESETS.length; tStart(); }
@@ -1583,6 +1632,15 @@ function beep(){
       o.start(audioCtx.currentTime+t); o.stop(audioCtx.currentTime+t+0.3);
     });
   }catch(e){}
+}
+const savedTimer=loadJSON(TIMER_KEY,null);
+if(savedTimer&&num(savedTimer.endAt)>Date.now()){
+  tEndAt=num(savedTimer.endAt); tIdx=Math.max(0,Math.min(T_PRESETS.length-1,num(savedTimer.tIdx)));
+  timerExIdx=savedTimer.timerExIdx===null?null:String(savedTimer.timerExIdx);
+  tRemain=Math.ceil((tEndAt-Date.now())/1000); tState="running"; tInterval=setInterval(tTick,500);
+} else if(savedTimer){
+  localStorage.removeItem(TIMER_KEY); timerExIdx=savedTimer.timerExIdx===null?null:String(savedTimer.timerExIdx); tState="finished";
+  tResetT=setTimeout(()=>{ tState="idle"; timerExIdx=null; tRender(); },4000);
 }
 tRender();
 
@@ -1607,10 +1665,7 @@ function renderHistory(){
     const rows = e.sets.map(s=>{
       const vol = exVolume(s); sv += vol;
       const warm = (s.wkg||s.wwdh) ? `WU ${s.wkg||"–"}×${s.wwdh||"–"} · ` : "";
-      const parts = [];
-      if(s.kg1||s.wdh1) parts.push(`${s.kg1||"–"}×${s.wdh1||"–"}`);
-      if(s.kg2||s.wdh2) parts.push(`${s.kg2||"–"}×${s.wdh2||"–"}`);
-      if(s.kg3||s.wdh3) parts.push(`${s.kg3||"–"}×${s.wdh3||"–"}`);
+      const parts = workSetsOf(s).filter(set=>set.kg||set.reps).map(set=>`${set.kg||"–"}×${set.reps||"–"}`);
       const work = parts.join(" · ") || "–";
       const volTxt = vol>0 ? ` (${Math.round(vol)} kg)` : "";
       return `<div class="hist-ex"><span class="hx-name">${s.name}</span><span class="hx-val">${warm}${work}${volTxt}</span></div>`;
@@ -1738,6 +1793,7 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   const ok=await askConfirm("Beta-Daten zurücksetzen?","Trainingshistorie, Entwürfe und angepasste Pläne dieser Beta werden gelöscht und auf den Ausgangszustand gesetzt.","Beta zurücksetzen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
+  tStop();
   currentDay="1"; activeExIdx=0; activeSetKey="warm"; editing=null; planEditMode=false; clearFormMeta();
   document.querySelectorAll(".day-btn").forEach(x=>x.classList.toggle("active",x.dataset.day==="1"));
   $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
@@ -1756,15 +1812,19 @@ function download(filename, text, mime){
 $("#btn-csv").addEventListener("click",()=>{
   const arr = loadLog().sort((a,b)=>a.id-b.id);
   if(!arr.length){ toast("Keine Daten zum Export"); return; }
+  const maxSets=Math.max(2,...arr.flatMap(e=>e.sets.map(s=>workSetsOf(s).length)));
+  const setColumns=Array.from({length:maxSets},(_,idx)=>[`Satz${idx+1} kg`,`Satz${idx+1} Wdh`]).flat();
   const head = ["Datum","Einheit","Körpergewicht","Energie","Übung","Ziel",
-    "WarmUp kg","WarmUp Wdh","Satz1 kg","Satz1 Wdh","Satz2 kg","Satz2 Wdh","Satz3 kg","Satz3 Wdh","Volumen kg","Notiz"];
+    "WarmUp kg","WarmUp Wdh",...setColumns,"Volumen kg","Notiz"];
   const esc = v => `"${String(v??"").replace(/"/g,'""')}"`;
   const lines = [head.join(";")];
   arr.forEach(e=>{
     e.sets.forEach((s,i)=>{
+      const sets=workSetsOf(s), setValues=[];
+      for(let idx=0;idx<maxSets;idx++) setValues.push(sets[idx]&&sets[idx].kg||"",sets[idx]&&sets[idx].reps||"");
       lines.push([
         e.date, e.dayName, e.weight, e.energy, s.name, s.goal,
-        s.wkg, s.wwdh, s.kg1, s.wdh1, s.kg2, s.wdh2, s.kg3||"", s.wdh3||"",
+        s.wkg, s.wwdh, ...setValues,
         Math.round(exVolume(s)), i===0 ? e.note : ""
       ].map(esc).join(";"));
     });

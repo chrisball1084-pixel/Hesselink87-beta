@@ -1,5 +1,24 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.1 Beta – Testpaket 3
+
+### Was wurde verändert?
+
+- Arbeitssätze können ohne festes Limit über **Satz hinzufügen** ergänzt werden.
+- Der jeweils letzte optionale Satz kann wieder entfernt werden; bei vorhandenen Eingaben erscheint eine Sicherheitsabfrage.
+- Long-Press-Auswahl und Kontextmenüs auf Plus-/Minus-Tasten werden für iOS unterdrückt.
+- Der Pausentimer speichert seinen absoluten Endzeitpunkt und läuft auch nach App-Wechsel oder Neuladen korrekt weiter.
+- Verlauf, Volumen, Progression, Gewichtsübernahme und CSV-Export unterstützen dynamisch viele Sätze.
+- Bestehende Einheiten mit dem bisherigen Zwei-/Drei-Satz-Datenformat bleiben kompatibel.
+
+### Warum?
+
+Das Training soll unterschiedliche Programme und Satzanzahlen abbilden, ohne den einfachen Ablauf für Hesselink zu verschlechtern. Gleichzeitig werden versehentliche Eingaben leichter korrigierbar und der Timer robuster auf dem iPhone.
+
+### Datenkompatibilität
+
+Neue Einträge speichern zusätzlich eine dynamische Satzliste. Die bisherigen Felder bleiben für Kompatibilität erhalten. Historische Workouts werden nicht automatisch verändert oder gelöscht.
+
 ## v1.1 Beta – Testpaket 2
 
 ### Was wurde verändert?
