@@ -22,6 +22,7 @@
     --radius:20px; --radius-sm:13px; --shadow:0 20px 50px rgba(0,0,0,.32);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  button,.tab,.day-btn{touch-action:manipulation}
   html,body{margin:0;padding:0}
   body{
     background:radial-gradient(circle at 85% -10%,rgba(19,200,239,.12),transparent 512px),
@@ -148,21 +149,26 @@
     background:linear-gradient(90deg,#1d2a0e,#131c08);border-top:1px solid #3f5a14;
     font-size:12px;font-weight:800;color:var(--pr)}
 
-  .set-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);
+  .set-row{display:grid;grid-template-columns:62px minmax(0,1fr) minmax(0,1fr);align-items:end;
+    gap:7px;padding:9px 12px;border-top:1px solid var(--line);
     transition:background .2s,box-shadow .2s}
   .set-row.active-set{background:var(--blue-soft);box-shadow:inset 4px 0 0 var(--blue)}
   .set-row.active-set .set-lbl{color:var(--blue-bright)}
-  .set-lbl{flex:0 0 62px;font-size:12px;font-weight:800;color:var(--muted)}
+  .set-lbl{font-size:12px;font-weight:800;color:var(--muted);align-self:center}
   .set-row.warm .set-lbl{color:var(--warm)}
-  .stepper{flex:1;display:flex;align-items:center;gap:4px;min-width:0}
-  .stepper .st-btn{flex:0 0 36px;height:44px;border-radius:11px;border:1px solid var(--line);
+  .stepper{display:grid;grid-template-columns:34px minmax(46px,1fr) 34px;grid-template-rows:14px 44px;
+    align-items:center;gap:3px;min-width:0}
+  .stepper .st-btn{height:44px;border-radius:11px;border:1px solid var(--line);grid-row:2;
     background:var(--field);color:var(--blue-bright);font-size:18px;font-weight:800;cursor:pointer;
     font-family:inherit;padding:0}
   .stepper .st-btn:active{background:var(--blue-soft)}
-  .stepper input{flex:1;min-width:0;width:100%;height:44px;background:var(--field);border:1px solid var(--line);
+  .stepper input{min-width:46px;width:100%;height:44px;background:var(--field);border:1px solid var(--line);grid-row:2;
     border-radius:11px;color:var(--ink);padding:9px 3px;font-size:16px;text-align:center;font-family:inherit}
   .stepper input:focus{outline:none;border-color:var(--blue)}
-  .stepper .unit{font-size:9px;color:var(--muted);font-weight:700;flex:0 0 auto;width:24px;text-align:left}
+  .stepper .unit{grid-column:1/-1;grid-row:1;font-size:9px;color:var(--muted);font-weight:800;
+    width:auto;text-align:center;text-transform:uppercase;letter-spacing:.5px}
+  .ex.awaiting-finish .ex-done-btn{border-color:var(--blue);color:var(--blue-bright);
+    background:var(--blue-soft);box-shadow:0 0 0 1px rgba(19,200,239,.15)}
 
   .set3-toggle{display:block;width:calc(100% - 24px);margin:6px 12px;padding:8px;
     border-radius:9px;border:1px dashed var(--line);background:transparent;color:var(--muted);
@@ -208,6 +214,9 @@
   .plan-edit-btn.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
   .plan-note{display:none;color:var(--warm);font-size:11px;margin-right:auto;align-self:center}
   .plan-tools.editing .plan-note{display:block}
+  .swap-ex{display:block;width:calc(100% - 24px);margin:8px 12px;padding:11px;border-radius:11px;
+    border:1px solid var(--blue);background:var(--blue-soft);color:var(--blue-bright);
+    font:850 12px inherit;cursor:pointer;min-height:44px}
 
   .note-area{width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;
     color:var(--ink);padding:12px;font-size:14px;font-family:inherit;resize:vertical;min-height:52px}
@@ -262,12 +271,40 @@
   .exp-btn.solid{background:var(--blue);color:#fff}
   #import-file{display:none}
 
+  .beta-data-tools{display:flex;gap:8px;margin-bottom:14px;padding:12px;border-radius:var(--radius-sm);
+    background:rgba(255,204,102,.06);border:1px solid rgba(255,204,102,.22)}
+  .beta-data-tools .exp-btn{border-color:rgba(255,204,102,.42);color:var(--warm)}
+
+  .library-modal{max-width:420px;max-height:82vh;display:flex;flex-direction:column}
+  .library-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .library-head .m-title{margin-bottom:2px}
+  .library-close{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--muted);font-size:18px;cursor:pointer;touch-action:manipulation}
+  .library-search{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line-strong);
+    background:var(--field);color:var(--ink);padding:11px 12px;font:16px inherit}
+  .library-filters{display:flex;gap:6px;overflow-x:auto;padding:9px 0 10px;scrollbar-width:none}
+  .library-filter{white-space:nowrap;min-height:38px;border-radius:20px;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--muted);padding:7px 11px;font:800 11px inherit;cursor:pointer}
+  .library-filter.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
+  .library-list{overflow-y:auto;display:grid;gap:7px;padding-right:2px}
+  .library-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:56px;
+    text-align:left;border-radius:13px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);
+    padding:10px 12px;font-family:inherit;cursor:pointer}
+  .library-item strong{display:block;font-size:13px}
+  .library-item small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+  .library-goal{color:var(--blue-bright);font-size:11px;font-weight:850;white-space:nowrap}
+  .library-custom{margin-top:9px;width:100%;min-height:44px;border-radius:12px;border:1px dashed var(--blue);
+    background:transparent;color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
+
   @media(max-width:390px){
-    .set-row{gap:5px;padding-left:9px;padding-right:9px}
-    .set-lbl{flex-basis:54px;font-size:11px}
-    .stepper{gap:2px}
-    .stepper .st-btn{flex-basis:34px}
-    .stepper .unit{width:20px;font-size:8px}
+    .set-row{grid-template-columns:54px minmax(0,1fr) minmax(0,1fr);gap:5px;padding-left:9px;padding-right:9px}
+    .set-lbl{font-size:11px}
+    .stepper{grid-template-columns:34px minmax(46px,1fr) 34px;gap:2px}
+  }
+  @media(max-width:350px){
+    .set-row{grid-template-columns:1fr 1fr}
+    .set-lbl{grid-column:1/-1;padding:2px 3px}
+    .beta-data-tools{flex-direction:column}
   }
 
   .hist-item{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -457,6 +494,10 @@
     <button class="exp-btn" id="btn-import" type="button">⬆ Import</button>
     <input type="file" id="import-file" accept=".json,application/json">
   </div>
+  <div class="beta-data-tools">
+    <button class="exp-btn" id="btn-demo-load" type="button">Demo-Daten laden</button>
+    <button class="exp-btn" id="btn-beta-reset" type="button">Beta-Daten zurücksetzen</button>
+  </div>
   <div id="hist-list"></div>
 </div>
 
@@ -480,6 +521,23 @@
       <button class="m-btn m-cancel" id="m-cancel" type="button">Abbrechen</button>
       <button class="m-btn m-danger" id="m-ok" type="button">Löschen</button>
     </div>
+  </div>
+</div>
+
+<!-- Übungsbibliothek -->
+<div class="modal-bg" id="library-bg">
+  <div class="modal library-modal">
+    <div class="library-head">
+      <div>
+        <div class="m-title">Übung austauschen</div>
+        <div class="m-txt" style="margin:0">Wähle eine Übung oder trage eine eigene ein.</div>
+      </div>
+      <button class="library-close" id="library-close" type="button" aria-label="Übungsbibliothek schließen">✕</button>
+    </div>
+    <input class="library-search" id="library-search" type="search" placeholder="Übung suchen …" aria-label="Übung suchen">
+    <div class="library-filters" id="library-filters"></div>
+    <div class="library-list" id="library-list"></div>
+    <button class="library-custom" id="library-custom" type="button">Eigene Übung manuell eintragen</button>
   </div>
 </div>
 
@@ -510,7 +568,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 901;
+const APP_VERSION = 902;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -531,20 +589,69 @@ const OLD_LOG   = "hesselink_beta_log_v1";
 const DRAFT_KEY = "hesselink_beta_draft_v1";
 const KG_STEP   = 2.5;
 
+const EXERCISE_LIBRARY = [
+  {id:"leg-press",n:"Beinpresse",muscle:"Beine",goal:"10–15"},
+  {id:"squat",n:"Kniebeuge",muscle:"Beine",goal:"6–10"},
+  {id:"hack-squat",n:"Hackenschmidt-Kniebeuge",muscle:"Beine",goal:"8–12"},
+  {id:"leg-extension",n:"Beinstrecker",muscle:"Beine",goal:"10–15"},
+  {id:"leg-curl",n:"Beinbeuger Maschine",muscle:"Beine",goal:"10–15"},
+  {id:"romanian-deadlift",n:"Rumänisches Kreuzheben",muscle:"Beine",goal:"8–12"},
+  {id:"hip-thrust",n:"Hip Thrust",muscle:"Beine",goal:"8–12"},
+  {id:"calf-raise",n:"Wadenheben",muscle:"Beine",goal:"10–15"},
+  {id:"bench-machine",n:"Bankdrücken (Maschine)",muscle:"Brust",goal:"8–12"},
+  {id:"bench-barbell",n:"Bankdrücken Langhantel",muscle:"Brust",goal:"6–10"},
+  {id:"bench-dumbbell",n:"Bankdrücken Kurzhantel",muscle:"Brust",goal:"8–12"},
+  {id:"incline-machine",n:"Schrägbankdrücken Maschine",muscle:"Brust",goal:"8–12"},
+  {id:"incline-dumbbell",n:"Schrägbankdrücken Kurzhantel",muscle:"Brust",goal:"8–12"},
+  {id:"chest-fly",n:"Butterfly",muscle:"Brust",goal:"8–12"},
+  {id:"cable-fly",n:"Cable Fly",muscle:"Brust",goal:"10–15"},
+  {id:"push-up",n:"Liegestütze",muscle:"Brust",goal:"frei"},
+  {id:"lat-wide",n:"Latzug (weiter Griff)",muscle:"Rücken",goal:"8–12"},
+  {id:"lat-neutral",n:"Latzug neutraler Griff",muscle:"Rücken",goal:"8–12"},
+  {id:"pull-up",n:"Klimmzüge",muscle:"Rücken",goal:"frei"},
+  {id:"cable-row",n:"Rudern am Kabel",muscle:"Rücken",goal:"8–12"},
+  {id:"row-machine",n:"Rudern Maschine",muscle:"Rücken",goal:"8–12"},
+  {id:"row-dumbbell",n:"Kurzhantelrudern",muscle:"Rücken",goal:"8–12"},
+  {id:"deadlift",n:"Kreuzheben",muscle:"Rücken",goal:"5–8"},
+  {id:"pullover",n:"Überzüge am Kabel",muscle:"Rücken",goal:"10–15"},
+  {id:"shoulder-machine",n:"Schulterdrücken Maschine",muscle:"Schultern",goal:"8–12"},
+  {id:"shoulder-dumbbell",n:"Schulterdrücken Kurzhantel",muscle:"Schultern",goal:"8–12"},
+  {id:"lateral-raise",n:"Seitheben",muscle:"Schultern",goal:"10–15"},
+  {id:"rear-delt",n:"Reverse Butterfly",muscle:"Schultern",goal:"10–15"},
+  {id:"face-pull",n:"Face Pull",muscle:"Schultern",goal:"10–15"},
+  {id:"upright-row",n:"Aufrechtes Rudern",muscle:"Schultern",goal:"8–12"},
+  {id:"biceps-machine",n:"Bizeps Curl (Maschine)",muscle:"Bizeps",goal:"10–12"},
+  {id:"biceps-dumbbell",n:"Kurzhantel Curls",muscle:"Bizeps",goal:"8–12"},
+  {id:"hammer-curl",n:"Hammer Curls",muscle:"Bizeps",goal:"8–12"},
+  {id:"cable-curl",n:"Bizeps Curls am Kabel",muscle:"Bizeps",goal:"10–15"},
+  {id:"preacher-curl",n:"Scott Curls",muscle:"Bizeps",goal:"8–12"},
+  {id:"triceps-rope",n:"Trizeps Push (Seilzug)",muscle:"Trizeps",goal:"10–12"},
+  {id:"triceps-bar",n:"Trizepsdrücken am Kabel",muscle:"Trizeps",goal:"8–12"},
+  {id:"triceps-overhead",n:"Trizeps Overhead am Kabel",muscle:"Trizeps",goal:"10–15"},
+  {id:"dips",n:"Dips",muscle:"Trizeps",goal:"frei"},
+  {id:"skull-crusher",n:"French Press",muscle:"Trizeps",goal:"8–12"},
+  {id:"leg-raise",n:"Beinheben (Bauch)",muscle:"Core",goal:"frei"},
+  {id:"hyperextension",n:"Hyperextension (Core)",muscle:"Core",goal:"frei"},
+  {id:"plank",n:"Plank",muscle:"Core",goal:"Zeit"},
+  {id:"cable-crunch",n:"Cable Crunch",muscle:"Core",goal:"10–15"},
+  {id:"ab-machine",n:"Bauchmaschine",muscle:"Core",goal:"10–15"},
+];
+const libraryByName = name => EXERCISE_LIBRARY.find(x=>x.n.toLowerCase()===String(name||"").trim().toLowerCase());
+
 const DEFAULT_TPL = {
   "1":[
-    {n:"Beinpresse",             goal:"10–15"},
-    {n:"Bankdrücken (Maschine)", goal:"8–12"},
-    {n:"Latzug (weiter Griff)",  goal:"8–12"},
-    {n:"Bizeps Curl (Maschine)", goal:"10–12"},
-    {n:"Trizeps Push (Seilzug)", goal:"10–12"},
+    {id:"leg-press",n:"Beinpresse",goal:"10–15"},
+    {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},
+    {id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},
+    {id:"biceps-machine",n:"Bizeps Curl (Maschine)",goal:"10–12"},
+    {id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
   ],
   "2":[
-    {n:"Beinpresse",            goal:"10–15"},
-    {n:"Butterfly",             goal:"8–12"},
-    {n:"Rudern am Kabel",       goal:"8–12"},
-    {n:"Beinheben (Bauch)",     goal:"frei"},
-    {n:"Hyperextension (Core)", goal:"frei"},
+    {id:"leg-press",n:"Beinpresse",goal:"10–15"},
+    {id:"chest-fly",n:"Butterfly",goal:"8–12"},
+    {id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},
+    {id:"leg-raise",n:"Beinheben (Bauch)",goal:"frei"},
+    {id:"hyperextension",n:"Hyperextension (Core)",goal:"frei"},
   ],
 };
 
@@ -564,13 +671,23 @@ const loadJSON = (k,fb) => { try{ const v=JSON.parse(localStorage.getItem(k)); r
 const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 
 let templates  = loadJSON(TPL_KEY, null) || JSON.parse(JSON.stringify(DEFAULT_TPL));
+let templateIdsChanged = false;
+Object.values(templates).forEach(day=>day.forEach(ex=>{
+  if(ex.id) return;
+  const lib = libraryByName(ex.n);
+  ex.id = lib ? lib.id : `custom-${String(ex.n||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
+  templateIdsChanged = true;
+}));
+if(templateIdsChanged) saveJSON(TPL_KEY,templates);
 let currentDay = "1";
 let editing    = null;
 let chartFilter = "all";
 let planEditMode = false;
 let activeExIdx = 0;
-let activeSetKey = "1";
+let activeSetKey = "warm";
 let autoAdvanceT = null;
+let libraryTargetIdx = null;
+let libraryMuscle = "Alle";
 
 /* ---- Migration alter v1-Einträge ---- */
 (function migrate(){
@@ -642,6 +759,7 @@ function saveDraftNow(){
     ts: Date.now(),
     date: $("#f-date").value, weight: $("#f-weight").value,
     energy: $("#f-energy").value, note: $("#f-note").value,
+    activeExIdx, activeSetKey,
     sets: templates[currentDay].map((ex,i)=>{
       const s = readSets(i);
       s.done = !!document.querySelector(`.ex[data-i="${i}"].done`);
@@ -678,6 +796,54 @@ function askConfirm(title, txt, okLabel){
 $("#m-cancel").addEventListener("click",()=>{ $("#modal-bg").classList.remove("show"); modalResolve&&modalResolve(false); });
 $("#m-ok").addEventListener("click",()=>{ $("#modal-bg").classList.remove("show"); modalResolve&&modalResolve(true); });
 $("#modal-bg").addEventListener("click",e=>{ if(e.target.id==="modal-bg"){ $("#modal-bg").classList.remove("show"); modalResolve&&modalResolve(false); } });
+
+/* ============ Übungsbibliothek ============ */
+function renderLibraryFilters(){
+  const muscles = ["Alle",...[...new Set(EXERCISE_LIBRARY.map(x=>x.muscle))]];
+  $("#library-filters").innerHTML = muscles.map(m=>
+    `<button class="library-filter ${m===libraryMuscle?"active":""}" data-muscle="${escAttr(m)}" type="button">${m}</button>`).join("");
+  document.querySelectorAll(".library-filter").forEach(b=>b.addEventListener("click",()=>{
+    libraryMuscle=b.dataset.muscle; renderLibraryFilters(); renderLibraryList();
+  }));
+}
+function renderLibraryList(){
+  const query = $("#library-search").value.trim().toLowerCase();
+  const rows = EXERCISE_LIBRARY.filter(x=>(libraryMuscle==="Alle"||x.muscle===libraryMuscle)
+    && (!query||`${x.n} ${x.muscle}`.toLowerCase().includes(query)));
+  $("#library-list").innerHTML = rows.length ? rows.map(x=>
+    `<button class="library-item" data-library-id="${x.id}" type="button"><span><strong>${x.n}</strong><small>${x.muscle}</small></span><span class="library-goal">${x.goal}</span></button>`).join("")
+    : `<div class="empty" style="padding:20px 8px">Keine passende Übung gefunden.</div>`;
+  document.querySelectorAll("[data-library-id]").forEach(b=>b.addEventListener("click",()=>selectLibraryExercise(b.dataset.libraryId)));
+}
+function openLibrary(i){
+  libraryTargetIdx=i; libraryMuscle="Alle"; $("#library-search").value="";
+  renderLibraryFilters(); renderLibraryList(); $("#library-bg").classList.add("show");
+  setTimeout(()=>$("#library-search").focus(),50);
+}
+function closeLibrary(){ $("#library-bg").classList.remove("show"); }
+async function selectLibraryExercise(id){
+  const choice=EXERCISE_LIBRARY.find(x=>x.id===id);
+  if(!choice || libraryTargetIdx===null || !templates[currentDay][libraryTargetIdx]) return;
+  const drafts=loadDrafts(), dayDraft=drafts[currentDay], setDraft=dayDraft&&dayDraft.sets&&dayDraft.sets[libraryTargetIdx];
+  const hasValues=setDraft&&Object.entries(setDraft).some(([k,v])=>k!=="has3"&&k!=="touched"&&v);
+  if(hasValues){
+    closeLibrary();
+    const ok=await askConfirm("Übung trotz Eingaben austauschen?","Die bereits erfassten Werte dieser Übung im laufenden Beta-Training werden verworfen. Andere Übungen bleiben erhalten.","Austauschen");
+    if(!ok){ openLibrary(libraryTargetIdx); return; }
+    dayDraft.sets[libraryTargetIdx]={wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:"",done:false,has3:false,touched:false};
+    saveJSON(DRAFT_KEY,drafts);
+  }
+  templates[currentDay][libraryTargetIdx]={id:choice.id,n:choice.n,goal:choice.goal};
+  saveJSON(TPL_KEY,templates); closeLibrary(); renderExercises(); saveDraftNow(); toast("Übung ausgetauscht ✓");
+}
+$("#library-search").addEventListener("input",renderLibraryList);
+$("#library-close").addEventListener("click",closeLibrary);
+$("#library-bg").addEventListener("click",e=>{ if(e.target.id==="library-bg") closeLibrary(); });
+$("#library-custom").addEventListener("click",()=>{
+  const i=libraryTargetIdx; closeLibrary();
+  const inp=document.querySelector(`.ex-name-inp[data-i="${i}"]`);
+  if(inp){ inp.removeAttribute("readonly"); inp.focus(); inp.select(); }
+});
 
 /* ================= Exercise rendering ================= */
 function exerciseSource(){ return editing ? editing.sets : templates[currentDay]; }
@@ -721,6 +887,10 @@ function renderExercises(){
   const prev  = editing ? null : lastEntryForDay(currentDay);
   const prevBadge = editing ? null : prev;
 
+  if(!planEditMode && draft && Number.isInteger(draft.activeExIdx)){
+    activeExIdx=draft.activeExIdx;
+    activeSetKey=draft.activeSetKey||"warm";
+  }
   if(activeExIdx >= src.length) activeExIdx = Math.max(0,src.length-1);
 
   src.forEach((ex,i)=>{
@@ -750,6 +920,7 @@ function renderExercises(){
         </div>
         <div class="ex-summary" data-summary="${i}">Ziel ${escAttr(goal)}</div>
         <div class="ex-body">
+          ${(!editing && planEditMode) ? `<button class="swap-ex" data-swap="${i}" type="button">↔ Übung austauschen</button>` : ""}
           ${badge}
           ${lastBox}
           ${setRow(i,"warm","Warm-Up")}
@@ -796,7 +967,7 @@ function renderExercises(){
         });
       }
     }
-    if(done){ document.querySelector(`.ex[data-i="${i}"]`).classList.add("done"); setDoneLabel(i,true); }
+    if(done && !planEditMode){ document.querySelector(`.ex[data-i="${i}"]`).classList.add("done"); setDoneLabel(i,true); }
     updateVolume(i);
     updateExerciseSummary(i);
   });
@@ -851,10 +1022,15 @@ function showSet3(i){
   if(!slot || slot.children.length) return;
   slot.insertAdjacentHTML("beforeend", setRow(i,"3","Satz 3",'data-s3="1"'));
   if(toggle) toggle.style.display = "none";
+  const ex = document.querySelector(`.ex[data-i="${i}"]`);
+  if(ex) ex.classList.remove("awaiting-finish");
+  setDoneLabel(i,!!(ex&&ex.classList.contains("done")));
   bindRowEvents(slot);
 }
 function bindRowEvents(scope){
   scope.querySelectorAll(".st-btn").forEach(b=>{
+    if(b.dataset.rowBound) return;
+    b.dataset.rowBound="1";
     b.addEventListener("click",()=>{
       const inp = document.querySelector(`#ex-container input[type=number][data-ex="${b.dataset.ex}"][data-f="${b.dataset.f}"]`);
       if(!inp) return;
@@ -870,6 +1046,8 @@ function bindRowEvents(scope){
     });
   });
   scope.querySelectorAll("input[type=number]").forEach(inp=>{
+    if(inp.dataset.rowBound) return;
+    inp.dataset.rowBound="1";
     const activate = ()=>{
       const key = /^(wkg|wwdh)$/.test(inp.dataset.f) ? "warm" : inp.dataset.f.replace(/\D/g,"");
       setActiveExercise(+inp.dataset.ex,false); setActiveSet(+inp.dataset.ex,key,false);
@@ -895,7 +1073,12 @@ function bindExerciseEvents(){
     inp.addEventListener("input",()=>{
       const i = +inp.dataset.i;
       if(editing){ editing.sets[i].name = inp.value; }
-      else { templates[currentDay][i].n = inp.value; saveJSON(TPL_KEY,templates); saveDraftNow(); }
+      else {
+        templates[currentDay][i].n = inp.value;
+        const lib = libraryByName(inp.value);
+        templates[currentDay][i].id = lib ? lib.id : `custom-${String(inp.value||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
+        saveJSON(TPL_KEY,templates); saveDraftNow();
+      }
     });
   });
   document.querySelectorAll(".ex-goal-inp").forEach(inp=>{
@@ -911,9 +1094,14 @@ function bindExerciseEvents(){
       const ex = document.querySelector(`.ex[data-i="${i}"]`);
       const nowDone = !ex.classList.contains("done");
       ex.classList.toggle("done", nowDone);
+      ex.classList.remove("awaiting-finish");
       setDoneLabel(i, nowDone);
-      if(nowDone && +i+1<exerciseSource().length){ activeSetKey="1"; setActiveExercise(+i+1,true); }
-      else if(!nowDone){ setActiveExercise(+i,false); }
+      if(nowDone && +i+1<exerciseSource().length){ activeSetKey="warm"; setActiveExercise(+i+1,true); }
+      else if(nowDone){
+        ex.classList.remove("focus"); ex.classList.add("compact");
+        document.querySelectorAll("#ex-container .set-row").forEach(r=>r.classList.remove("active-set"));
+        activeExIdx = -1;
+      } else { setActiveExercise(+i,false); }
       saveDraftNow();
       updateProgress();
       updateExerciseSummary(i); renderTodayCard();
@@ -941,6 +1129,9 @@ function bindExerciseEvents(){
   });
   document.querySelectorAll(".set3-toggle").forEach(b=>{
     b.addEventListener("click",()=>{ showSet3(+b.dataset.i); setActiveExercise(+b.dataset.i,false); setActiveSet(+b.dataset.i,"3",true); saveDraftNow(); });
+  });
+  document.querySelectorAll("[data-swap]").forEach(b=>{
+    b.addEventListener("click",()=>openLibrary(+b.dataset.swap));
   });
   document.querySelectorAll("[data-copy-last]").forEach(b=>{
     b.addEventListener("click",()=>{
@@ -983,10 +1174,18 @@ function updateExerciseSummary(i){
   const goal = (src[i]&&src[i].goal)||"–";
   el.textContent = values==="Noch keine Werte" ? `Ziel ${goal}` : values;
 }
+function firstPendingSet(i){
+  if(!setIsComplete(i,"warm")) return "warm";
+  if(!setIsComplete(i,"1")) return "1";
+  if(!setIsComplete(i,"2")) return "2";
+  if(document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`) && !setIsComplete(i,"3")) return "3";
+  return document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`) ? "3" : "2";
+}
 function setActiveExercise(i,scroll=true){
   if(planEditMode || editing) return;
   const src = exerciseSource();
   if(i<0 || i>=src.length) return;
+  if(i!==activeExIdx) activeSetKey = firstPendingSet(i);
   activeExIdx = i;
   document.querySelectorAll("#ex-container .ex").forEach(ex=>{
     const mine = +ex.dataset.i===i;
@@ -995,6 +1194,7 @@ function setActiveExercise(i,scroll=true){
   });
   setActiveSet(i,activeSetKey,false);
   const ex = document.querySelector(`.ex[data-i="${i}"]`);
+  saveDraftNow();
   if(scroll&&ex) ex.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function setActiveSet(i,key,focusInput=true){
@@ -1011,8 +1211,9 @@ function setActiveSet(i,key,focusInput=true){
   }
 }
 function setIsComplete(i,key){
-  if(key==="warm") return false;
-  const s = readSets(i), kg = s[`kg${key}`], reps = s[`wdh${key}`];
+  const s = readSets(i);
+  const kg = key==="warm" ? s.wkg : s[`kg${key}`];
+  const reps = key==="warm" ? s.wwdh : s[`wdh${key}`];
   const src = exerciseSource(), ex = src[i]||{};
   const bodyweight = /frei|körpergewicht|bodyweight/i.test(`${ex.goal||""} ${sourceName(ex)||""}`);
   return num(reps)>0 && (String(kg||"").trim()!=="" || bodyweight);
@@ -1025,22 +1226,18 @@ function queueSetAdvance(i,key){
   },5000);
 }
 function advanceFromSet(i,key){
-  const keys = ["1","2"];
+  const keys = ["warm","1","2"];
   if(document.querySelector(`.set-row[data-row-ex="${i}"][data-set="3"]`)) keys.push("3");
   const pos = keys.indexOf(key);
   startPauseFor(i);
   if(pos>=0 && pos<keys.length-1){
     setActiveExercise(i,false);
     setActiveSet(i,keys[pos+1],true);
+    saveDraftNow();
   }else{
     const ex = document.querySelector(`.ex[data-i="${i}"]`);
-    if(ex){ ex.classList.add("done"); setDoneLabel(i,true); }
+    if(ex){ ex.classList.add("awaiting-finish"); setDoneLabel(i,false,true); }
     updateExerciseSummary(i); saveDraftNow(); updateProgress(); renderTodayCard();
-    if(i+1<exerciseSource().length){
-      activeSetKey="1";
-      setActiveExercise(i+1,true);
-      setActiveSet(i+1,"1",true);
-    }
   }
 }
 
@@ -1093,7 +1290,7 @@ $("#btn-plan-edit").addEventListener("click",()=>{
   $("#btn-plan-edit").classList.toggle("active",planEditMode);
   $("#btn-plan-edit").textContent = planEditMode ? "Planbearbeitung beenden" : "Plan bearbeiten";
   $("#plan-tools").classList.toggle("editing",planEditMode);
-  activeExIdx=0; activeSetKey="1";
+  activeExIdx=0; activeSetKey="warm";
   renderExercises();
 });
 document.querySelectorAll(".day-btn").forEach(b=>{
@@ -1103,7 +1300,7 @@ document.querySelectorAll(".day-btn").forEach(b=>{
     document.querySelectorAll(".day-btn").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     currentDay = b.dataset.day;
-    activeExIdx=0; activeSetKey="1";
+    activeExIdx=0; activeSetKey="warm";
     renderExercises();
   });
 });
@@ -1123,7 +1320,7 @@ document.querySelectorAll(".tab").forEach(t=>{
 /* ================= Add exercise ================= */
 $("#btn-add-ex").addEventListener("click",()=>{
   if(editing){ editing.sets.push({name:"", goal:"8–12", wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:""}); }
-  else { templates[currentDay].push({n:"", goal:"8–12"}); saveJSON(TPL_KEY,templates); }
+  else { templates[currentDay].push({id:`custom-${Date.now()}`,n:"", goal:"8–12"}); saveJSON(TPL_KEY,templates); }
   renderExercises();
   if(!editing) saveDraftNow();
   const inps = document.querySelectorAll(".ex-name-inp");
@@ -1221,6 +1418,7 @@ $("#btn-save").addEventListener("click", async ()=>{
   const arr = loadLog(); arr.push(entry); saveLog(arr);
   clearDraft(currentDay);
   clearFormMeta();
+  activeExIdx=0; activeSetKey="warm";
   showDone(entry, prev, prevMaxByEx);
   renderExercises();
 });
@@ -1231,6 +1429,7 @@ $("#btn-clear").addEventListener("click", async ()=>{
   if(!ok) return;
   clearDraft(currentDay);
   clearFormMeta();
+  activeExIdx=0; activeSetKey="warm";
   renderExercises();
 });
 function clearFormMeta(){
@@ -1311,9 +1510,9 @@ let tIdx = 0, tRemain = 0, tInterval = null, tState = "idle", timerExIdx = null,
 const tMain = $("#timer-main"), tX = $("#timer-x");
 const fmtT = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 
-function setDoneLabel(i, done){
+function setDoneLabel(i, done, awaiting=false){
   const b = document.querySelector(`.ex-done-btn[data-done="${i}"]`);
-  if(b) b.textContent = done ? "✓ Abgeschlossen" : "✓ Übung abgeschlossen";
+  if(b) b.textContent = done ? "✓ Abgeschlossen" : awaiting ? "Sätze fertig – Übung abschließen" : "✓ Übung abgeschlossen";
 }
 function renderHints(){
   document.querySelectorAll(".pause-hint").forEach(h=>{
@@ -1498,6 +1697,53 @@ function renderChart(){
 }
 
 /* ================= Export / Import ================= */
+function betaDate(daysAgo){
+  const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-daysAgo);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function demoExercise(ex,session){
+  const bodyweight=/frei|zeit/i.test(ex.goal||"");
+  if(bodyweight){
+    const reps=ex.id==="plank" ? 45+session*5 : 9+session;
+    return {name:ex.n,goal:ex.goal,wkg:"",wwdh:"",kg1:"",wdh1:String(reps),kg2:"",wdh2:String(Math.max(6,reps-1)),kg3:"",wdh3:""};
+  }
+  const base={
+    "leg-press":75,"bench-machine":37.5,"lat-wide":42.5,"biceps-machine":17.5,"triceps-rope":15,
+    "chest-fly":32.5,"cable-row":37.5
+  }[ex.id] || 20;
+  const kg=base+Math.floor(session/2)*2.5;
+  const reps1=Math.min(15,9+session), reps2=Math.max(8,reps1-1);
+  return {name:ex.n,goal:ex.goal,wkg:String(Math.max(5,kg-10)),wwdh:"12",kg1:String(kg),wdh1:String(reps1),kg2:String(kg),wdh2:String(reps2),kg3:"",wdh3:""};
+}
+function buildDemoLog(){
+  const schedule=[25,22,18,15,11,8,4,1];
+  return schedule.map((daysAgo,index)=>{
+    const day=index%2===0?"1":"2", session=Math.floor(index/2);
+    const plan=DEFAULT_TPL[day];
+    return {
+      id:new Date(`${betaDate(daysAgo)}T18:00:00`).getTime()+index,
+      day,dayName:`Day ${day}`,date:betaDate(daysAgo),weight:String(83.8-session*.3),
+      energy:["Gut","Sehr gut","Okay","Gut"][session%4],
+      note:index===7?"Saubere Wiederholungen, bei Rudern nächstes Mal leicht steigern.":"",
+      sets:plan.map(ex=>demoExercise(ex,session)),
+    };
+  });
+}
+$("#btn-demo-load").addEventListener("click",async()=>{
+  const ok=await askConfirm("Demo-Daten laden?","Die Trainingshistorie der Beta wird durch 8 realistische Testeinheiten ersetzt. Die Live-App bleibt unberührt.","Demo laden");
+  if(!ok) return;
+  saveLog(buildDemoLog()); saveJSON(DRAFT_KEY,{}); renderHistory(); renderTodayCard(); toast("8 Demo-Einheiten geladen ✓");
+});
+$("#btn-beta-reset").addEventListener("click",async()=>{
+  const ok=await askConfirm("Beta-Daten zurücksetzen?","Trainingshistorie, Entwürfe und angepasste Pläne dieser Beta werden gelöscht und auf den Ausgangszustand gesetzt.","Beta zurücksetzen");
+  if(!ok) return;
+  templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
+  currentDay="1"; activeExIdx=0; activeSetKey="warm"; editing=null; planEditMode=false; clearFormMeta();
+  document.querySelectorAll(".day-btn").forEach(x=>x.classList.toggle("active",x.dataset.day==="1"));
+  $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
+  renderExercises(); renderHistory(); toast("Beta-Daten zurückgesetzt ✓");
+});
+
 function download(filename, text, mime){
   const blob = new Blob([text],{type:mime});
   const a = document.createElement("a");
