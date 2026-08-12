@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HESSELINK">
+<meta name="apple-mobile-web-app-title" content="HESSELINK BETA">
 <meta name="theme-color" content="#0a0e1a">
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>HESSELINK · Trainingstagebuch</title>
+<title>HESSELINK BETA · Trainingstagebuch</title>
 <style>
   :root{
     --bg:#050b13; --bg-deep:#03070d; --panel:#0a1523; --panel-2:#0e1c2c; --panel-3:#122338;
@@ -47,6 +48,9 @@
   }
   .brand-sub{color:var(--blue-bright);font-size:11px;font-weight:700;font-style:italic;
     letter-spacing:1.5px;margin-top:6px;text-transform:uppercase}
+  .beta-badge{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:20px;
+    border:1px solid rgba(255,204,102,.45);background:rgba(255,204,102,.1);color:var(--warm);
+    font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
   .tabs{display:flex;gap:8px;padding:14px 14px 0;position:sticky;top:0;z-index:20;
     background:rgba(5,11,19,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
   .tab{flex:1;text-align:center;padding:11px 6px;border-radius:12px;
@@ -343,6 +347,7 @@
 <div class="topbar">
   <div class="brand">HESSELINK</div>
   <div class="brand-sub">Trainingstagebuch · 2 Einheiten / Woche</div>
+  <div class="beta-badge">Beta-Test · getrennte Testdaten</div>
 </div>
 
 <div class="tabs">
@@ -505,11 +510,11 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 9;
+const APP_VERSION = 901;
 (function ensureLatestVersion(){
-  const seen = parseInt(localStorage.getItem("hesselink_app_version")||"0", 10);
+  const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
-    localStorage.setItem("hesselink_app_version", String(APP_VERSION));
+    localStorage.setItem("hesselink_beta_app_version", String(APP_VERSION));
     if(seen !== 0){ // nicht beim allerersten Start neu laden, nur bei echten Updates
       const url = new URL(window.location.href);
       url.searchParams.set("_v", String(APP_VERSION) + "_" + Date.now());
@@ -520,10 +525,10 @@ const APP_VERSION = 9;
 })();
 
 /* ================= Keys & Defaults ================= */
-const TPL_KEY   = "hesselink_templates_v2";
-const LOG_KEY   = "hesselink_log_v2";
-const OLD_LOG   = "hesselink_log_v1";
-const DRAFT_KEY = "hesselink_draft_v1";
+const TPL_KEY   = "hesselink_beta_templates_v2";
+const LOG_KEY   = "hesselink_beta_log_v2";
+const OLD_LOG   = "hesselink_beta_log_v1";
+const DRAFT_KEY = "hesselink_beta_draft_v1";
 const KG_STEP   = 2.5;
 
 const DEFAULT_TPL = {
@@ -1518,14 +1523,14 @@ $("#btn-csv").addEventListener("click",()=>{
       ].map(esc).join(";"));
     });
   });
-  download(`hesselink-training-${todayISO()}.csv`, "\uFEFF"+lines.join("\r\n"), "text/csv;charset=utf-8");
+  download(`hesselink-beta-training-${todayISO()}.csv`, "\uFEFF"+lines.join("\r\n"), "text/csv;charset=utf-8");
   toast("CSV exportiert ✓");
 });
 
 $("#btn-backup").addEventListener("click",()=>{
-  const payload = {app:"hesselink", version:3, exported:new Date().toISOString(),
+  const payload = {app:"hesselink-beta", version:3, exported:new Date().toISOString(),
     templates, log: loadLog()};
-  download(`hesselink-backup-${todayISO()}.json`, JSON.stringify(payload,null,2), "application/json");
+  download(`hesselink-beta-backup-${todayISO()}.json`, JSON.stringify(payload,null,2), "application/json");
   toast("Backup exportiert ✓");
 });
 
@@ -1536,7 +1541,7 @@ $("#import-file").addEventListener("change",ev=>{
   r.onload = () => {
     try{
       const p = JSON.parse(r.result);
-      if(p.app!=="hesselink" || !Array.isArray(p.log)) throw new Error("Format");
+      if(p.app!=="hesselink-beta" || !Array.isArray(p.log)) throw new Error("Format");
       const existing = loadLog();
       const ids = new Set(existing.map(e=>e.id));
       const merged = existing.concat(p.log.filter(e=>!ids.has(e.id)));
