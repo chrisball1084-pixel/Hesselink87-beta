@@ -571,7 +571,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 903;
+const APP_VERSION = 904;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -689,6 +689,7 @@ let chartFilter = "all";
 let planEditMode = false;
 let activeExIdx = 0;
 let activeSetKey = "warm";
+let openExIndices = new Set([0]);
 let autoAdvanceT = null;
 let libraryTargetIdx = null;
 let libraryMuscle = "Alle";
@@ -772,7 +773,7 @@ function saveDraftNow(){
     ts: Date.now(),
     date: $("#f-date").value, weight: $("#f-weight").value,
     energy: $("#f-energy").value, note: $("#f-note").value,
-    activeExIdx, activeSetKey,
+    activeExIdx, activeSetKey, openExIndices:[...openExIndices],
     sets: templates[currentDay].map((ex,i)=>{
       const s = readSets(i);
       s.done = !!document.querySelector(`.ex[data-i="${i}"].done`);
@@ -900,6 +901,7 @@ function renderExercises(){
   if(!planEditMode && draft && Number.isInteger(draft.activeExIdx)){
     activeExIdx=draft.activeExIdx;
     activeSetKey=draft.activeSetKey||"warm";
+    openExIndices=new Set(Array.isArray(draft.openExIndices)?draft.openExIndices:[activeExIdx]);
   }
   if(activeExIdx >= src.length) activeExIdx = Math.max(0,src.length-1);
 
@@ -914,7 +916,7 @@ function renderExercises(){
     }
     const lockAttr = (!editing && !planEditMode) ? 'readonly aria-readonly="true"' : "";
     const delStyle = (editing||planEditMode) ? "" : 'style="display:none"';
-    const exClass = planEditMode ? "" : (i===activeExIdx ? "focus" : "compact");
+    const exClass = planEditMode ? "" : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact"));
     const lastBox = (!editing && previous) ? `<div class="last-box">
       <div><div class="last-k">Letztes Training</div><div class="last-v">${previousText(previous)}</div></div>
       <button class="last-copy" type="button" data-copy-last="${i}">Gewichte übernehmen</button>
@@ -1118,6 +1120,7 @@ function bindExerciseEvents(){
       ex.classList.toggle("done", nowDone);
       ex.classList.remove("awaiting-finish");
       setDoneLabel(i, nowDone);
+      if(nowDone) openExIndices.delete(+i); else openExIndices.add(+i);
       if(nowDone && +i+1<exerciseSource().length){ activeSetKey="warm"; setActiveExercise(+i+1,true); }
       else if(nowDone){
         ex.classList.remove("focus"); ex.classList.add("compact");
@@ -1182,6 +1185,10 @@ function bindExerciseEvents(){
       const prev = lastEntryForDay(currentDay);
       const p = prev && prev.sets.find(s=>(s.name||"").trim().toLowerCase()===(sourceName(ex)||"").trim().toLowerCase());
       if(!p) return;
+      if(p.wkg){
+        setVal(i,"wkg",p.wkg);
+        const warmInput=document.querySelector(`input[data-ex="${i}"][data-f="wkg"]`); if(warmInput) warmInput.dataset.touched="1";
+      }
       const previousSets=workSetsOf(p); ensureSetCount(i,previousSets.length);
       previousSets.forEach((set,idx)=>{
         const k=String(idx+1);
@@ -1233,12 +1240,18 @@ function setActiveExercise(i,scroll=true){
   if(planEditMode || editing) return;
   const src = exerciseSource();
   if(i<0 || i>=src.length) return;
-  if(i!==activeExIdx) activeSetKey = firstPendingSet(i);
+  if(i!==activeExIdx){ clearTimeout(autoAdvanceT); activeSetKey = firstPendingSet(i); }
+  if(activeExIdx>=0){
+    const previous=document.querySelector(`.ex[data-i="${activeExIdx}"]`);
+    if(previous&&previous.classList.contains("done")) openExIndices.delete(activeExIdx);
+    else openExIndices.add(activeExIdx);
+  }
+  openExIndices.add(i);
   activeExIdx = i;
   document.querySelectorAll("#ex-container .ex").forEach(ex=>{
     const mine = +ex.dataset.i===i;
     ex.classList.toggle("focus",mine);
-    ex.classList.toggle("compact",!mine);
+    ex.classList.toggle("compact",!openExIndices.has(+ex.dataset.i));
   });
   setActiveSet(i,activeSetKey,false);
   const ex = document.querySelector(`.ex[data-i="${i}"]`);
@@ -1337,7 +1350,7 @@ $("#btn-plan-edit").addEventListener("click",()=>{
   $("#btn-plan-edit").classList.toggle("active",planEditMode);
   $("#btn-plan-edit").textContent = planEditMode ? "Planbearbeitung beenden" : "Plan bearbeiten";
   $("#plan-tools").classList.toggle("editing",planEditMode);
-  activeExIdx=0; activeSetKey="warm";
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   renderExercises();
 });
 document.querySelectorAll(".day-btn").forEach(b=>{
@@ -1347,7 +1360,7 @@ document.querySelectorAll(".day-btn").forEach(b=>{
     document.querySelectorAll(".day-btn").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     currentDay = b.dataset.day;
-    activeExIdx=0; activeSetKey="warm";
+    activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
     renderExercises();
   });
 });
@@ -1465,7 +1478,7 @@ $("#btn-save").addEventListener("click", async ()=>{
   const arr = loadLog(); arr.push(entry); saveLog(arr);
   clearDraft(currentDay);
   clearFormMeta();
-  activeExIdx=0; activeSetKey="warm";
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   showDone(entry, prev, prevMaxByEx);
   renderExercises();
 });
@@ -1476,7 +1489,7 @@ $("#btn-clear").addEventListener("click", async ()=>{
   if(!ok) return;
   clearDraft(currentDay);
   clearFormMeta();
-  activeExIdx=0; activeSetKey="warm";
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   renderExercises();
 });
 function clearFormMeta(){
@@ -1794,7 +1807,7 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
   tStop();
-  currentDay="1"; activeExIdx=0; activeSetKey="warm"; editing=null; planEditMode=false; clearFormMeta();
+  currentDay="1"; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; planEditMode=false; clearFormMeta();
   document.querySelectorAll(".day-btn").forEach(x=>x.classList.toggle("active",x.dataset.day==="1"));
   $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
   renderExercises(); renderHistory(); toast("Beta-Daten zurückgesetzt ✓");

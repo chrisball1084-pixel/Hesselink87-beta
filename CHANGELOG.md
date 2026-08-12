@@ -1,5 +1,19 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.1 Beta – Testpaket 4
+
+### Was wurde verändert?
+
+- **Gewichte übernehmen** kopiert jetzt zusätzlich das Warm-up-Gewicht aus der letzten passenden Einheit.
+- Die Anzahl der Arbeitssätze aus der letzten Einheit wird beim nächsten Workout automatisch wieder bereitgestellt.
+- Beim manuellen Wechsel zu einer anderen Übung bleibt eine noch nicht abgeschlossene Übung geöffnet – geeignet für Supersätze und alternierende Übungen.
+- Abgeschlossene Übungen werden weiterhin automatisch eingeklappt.
+- Geöffnete Übungskarten werden im laufenden Entwurf gespeichert und nach einem Neuladen wiederhergestellt.
+
+### Warum?
+
+Supersätze sollen ohne unnötiges Auf- und Zuklappen funktionieren. Gleichzeitig sollen Warm-up und individuelle Satzanzahl beim nächsten Training weniger erneute Eingaben erfordern.
+
 ## v1.1 Beta – Testpaket 3
 
 ### Was wurde verändert?
