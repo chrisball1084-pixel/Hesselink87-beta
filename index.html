@@ -98,6 +98,10 @@
   .split-card.active .split-apply{border-color:var(--good);color:var(--good);background:rgba(55,214,172,.08)}
 
   .picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .picker.days-3{flex-wrap:nowrap;gap:6px}
+  .picker.days-3 .day-btn{flex:1 1 0;min-width:0;padding:12px 6px;text-align:center}
+  .picker.days-3 .day-btn .d-name{font-size:14px;white-space:nowrap}
+  .picker.days-3 .day-btn .d-lbl{font-size:8px;letter-spacing:.5px}
   .day-btn{flex:1 1 calc(50% - 5px);padding:14px 12px;border-radius:14px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--ink);text-align:left;cursor:pointer;font-family:inherit}
   .day-btn.active{border-color:var(--blue);background:linear-gradient(135deg,#0e1e3c,#0a1730);
@@ -146,20 +150,34 @@
     box-shadow:0 0 0 2px rgba(43,143,255,.25)}
   .fld input[type=date]{color-scheme:dark}
 
+  .session-card{padding:0;overflow:hidden}
+  .session-toggle{display:flex;align-items:center;gap:9px;width:100%;padding:14px;border:0;background:transparent;
+    color:var(--ink);text-align:left;font-family:inherit;cursor:pointer;touch-action:manipulation}
+  .session-toggle .bar{width:4px;height:20px;background:var(--blue);border-radius:2px;box-shadow:0 0 8px var(--blue)}
+  .session-toggle-copy{display:flex;flex:1;min-width:0;align-items:baseline;gap:8px}
+  .session-toggle-copy strong{font-size:15px;font-weight:900;font-style:italic}
+  .session-summary{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px}
+  .session-chevron{color:var(--blue-bright);font-size:18px;transition:transform .2s}
+  .session-toggle[aria-expanded="true"] .session-chevron{transform:rotate(180deg)}
+  .session-fields{padding:0 14px 14px;border-top:1px solid var(--line)}
+  .session-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:9px;padding-top:12px}
+  .session-grid .fld{margin:0}
+  .session-grid .fld.energy{grid-column:1/-1}
+
   .ex{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;background:var(--panel);
     transition:opacity .2s,border-color .2s,box-shadow .2s}
   .ex.focus{border-color:var(--blue);box-shadow:0 0 0 1px rgba(19,200,239,.25),0 16px 38px rgba(0,0,0,.25)}
   .ex.done{opacity:.72;border-color:rgba(55,214,172,.45)}
-  .ex-top{display:flex;align-items:center;gap:7px;padding:12px;
+  .ex-top{display:flex;align-items:flex-start;gap:7px;padding:12px;
     background:linear-gradient(90deg,var(--panel-3),var(--panel-2))}
   .ex-top{cursor:pointer}
   .ex.done .ex-top{background:linear-gradient(90deg,#0e2417,#0b1a10)}
   .ex-num{font-weight:900;color:var(--blue-bright);font-size:14px;flex:0 0 auto}
-  .ex-name-inp{flex:1;min-width:0;background:transparent;border:none;font-weight:800;font-size:15px;
-    color:var(--ink);font-family:inherit;padding:4px 2px;border-bottom:1px dashed transparent}
-  .ex-name-inp[readonly]{pointer-events:none}
+  .ex-name-inp{flex:1;min-width:0;min-height:28px;height:28px;overflow:hidden;resize:none;background:transparent;border:none;font-weight:800;font-size:15px;
+    line-height:20px;color:var(--ink);font-family:inherit;padding:4px 2px;border-bottom:1px dashed transparent}
+  .ex-name-inp[readonly]{cursor:default}
   .ex-name-inp:focus{outline:none;border-bottom-color:var(--blue)}
-  .ex-goal-inp{flex:0 0 54px;background:var(--blue-bright);border:none;border-radius:20px;
+  .ex-goal-inp{flex:0 0 54px;width:54px;min-width:0;background:var(--blue-bright);border:none;border-radius:20px;
     font-size:12px;font-weight:800;color:#04101f;text-align:center;padding:5px 6px;font-family:inherit}
   .ex-goal-inp[readonly]{pointer-events:none}
   .ex-goal-inp:focus{outline:2px solid var(--blue)}
@@ -321,7 +339,7 @@
   .library-close{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);font-size:18px;cursor:pointer;touch-action:manipulation}
   .library-search{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line-strong);
-    background:var(--field);color:var(--ink);padding:11px 12px;font:16px inherit}
+    background:var(--field);color:var(--ink);padding:11px 12px;font-family:inherit;font-size:16px;line-height:22px}
   .library-filters{display:flex;gap:6px;overflow-x:auto;padding:9px 0 10px;scrollbar-width:none}
   .library-filter{white-space:nowrap;min-height:38px;border-radius:20px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--muted);padding:7px 11px;font:800 11px inherit;cursor:pointer}
@@ -340,6 +358,10 @@
     .set-row{grid-template-columns:54px minmax(0,1fr) minmax(0,1fr);gap:5px;padding-left:9px;padding-right:9px}
     .set-lbl{font-size:11px}
     .stepper{grid-template-columns:34px minmax(46px,1fr) 34px;gap:2px}
+  }
+  @media(min-width:370px){
+    .session-grid{grid-template-columns:1.15fr .75fr 1.3fr}
+    .session-grid .fld.energy{grid-column:auto}
   }
   @media(max-width:350px){
     .set-row{grid-template-columns:1fr 1fr}
@@ -491,18 +513,26 @@
     <button class="plan-edit-btn" id="btn-plan-edit" type="button">Plan bearbeiten</button>
   </div>
 
-  <div class="card">
-    <div class="card-head"><span class="bar"></span><h2>Session</h2></div>
-    <div class="fld"><label>Datum</label><input type="date" id="f-date"></div>
-    <div class="fld"><label>Körpergewicht (kg)</label><input type="number" inputmode="decimal" id="f-weight" placeholder="–"></div>
-    <div class="fld"><label>Energie / Schlaf</label>
-      <select id="f-energy">
-        <option value="">– wählen –</option>
-        <option>🔋 Top / ausgeruht</option>
-        <option>🙂 Solide</option>
-        <option>😐 Okay</option>
-        <option>😴 Müde / wenig Schlaf</option>
-      </select>
+  <div class="card session-card" id="session-card">
+    <button class="session-toggle" id="session-toggle" type="button" aria-expanded="false" aria-controls="session-fields">
+      <span class="bar"></span>
+      <span class="session-toggle-copy"><strong>Session</strong><span class="session-summary" id="session-summary">Datum, Körpergewicht &amp; Energie</span></span>
+      <span class="session-chevron">⌄</span>
+    </button>
+    <div class="session-fields" id="session-fields" hidden>
+      <div class="session-grid">
+        <div class="fld"><label>Datum</label><input type="date" id="f-date"></div>
+        <div class="fld"><label>Körpergewicht (kg)</label><input type="number" inputmode="decimal" id="f-weight" placeholder="–"></div>
+        <div class="fld energy"><label>Energie / Schlaf</label>
+          <select id="f-energy">
+            <option value="">– wählen –</option>
+            <option>🔋 Top / ausgeruht</option>
+            <option>🙂 Solide</option>
+            <option>😐 Okay</option>
+            <option>😴 Müde / wenig Schlaf</option>
+          </select>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -640,7 +670,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 905;
+const APP_VERSION = 906;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -818,6 +848,7 @@ let currentDay = planConfig.dayOrder[0];
 let editing    = null;
 let chartFilter = "all";
 let planEditMode = false;
+let sessionExpanded = false;
 let activeExIdx = 0;
 let activeSetKey = "warm";
 let openExIndices = new Set([0]);
@@ -868,6 +899,22 @@ function workSetsOf(s){
     .filter(n=>(s||{})[`kg${n}`]||(s||{})[`wdh${n}`]).sort((a,b)=>a-b);
   const count=Math.max(2,num((s||{}).setCount),keys.length?Math.max(...keys):2);
   return Array.from({length:count},(_,idx)=>({kg:(s||{})[`kg${idx+1}`]||"",reps:(s||{})[`wdh${idx+1}`]||""}));
+}
+
+function updateSessionSummary(){
+  const parts=[];
+  const date=$("#f-date").value;
+  const weight=$("#f-weight").value;
+  const energy=$("#f-energy").value;
+  if(date) parts.push(fmtShort(date));
+  if(weight) parts.push(`${weight} kg`);
+  if(energy) parts.push(energy);
+  $("#session-summary").textContent=parts.join(" · ") || "Datum, Körpergewicht & Energie";
+}
+function setSessionExpanded(expanded){
+  sessionExpanded=!!expanded;
+  $("#session-toggle").setAttribute("aria-expanded",String(sessionExpanded));
+  $("#session-fields").hidden=!sessionExpanded;
 }
 const hasSetValues = s => !!(s&&(s.wkg||s.wwdh||workSetsOf(s).some(set=>set.kg||set.reps)));
 const exVolume = s => workSetsOf(s).reduce((sum,set)=>sum+num(set.kg)*num(set.reps),0);
@@ -991,7 +1038,10 @@ $("#library-bg").addEventListener("click",e=>{ if(e.target.id==="library-bg") cl
 $("#library-custom").addEventListener("click",()=>{
   const i=libraryTargetIdx; closeLibrary();
   const inp=document.querySelector(`.ex-name-inp[data-i="${i}"]`);
-  if(inp){ inp.removeAttribute("readonly"); inp.focus(); inp.select(); }
+  if(inp){
+    inp.removeAttribute("readonly"); inp.removeAttribute("aria-readonly"); inp.dataset.manual="1";
+    inp.focus(); inp.select();
+  }
 });
 
 /* ================= Exercise rendering ================= */
@@ -999,6 +1049,13 @@ function exerciseSource(){ return editing ? editing.sets : templates[currentDay]
 function sourceName(ex){ return editing ? ex.name : ex.n; }
 
 const escAttr = v => String(v||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function resizeExerciseName(el){
+  if(!el) return;
+  el.style.height="0px";
+  el.style.height=Math.max(28,el.scrollHeight)+"px";
+}
+function resizeExerciseNames(){ document.querySelectorAll(".ex-name-inp").forEach(resizeExerciseName); }
+window.addEventListener("resize",()=>requestAnimationFrame(resizeExerciseNames));
 function previousText(s){
   if(!s) return "Noch keine Werte";
   const parts = workSetsOf(s).filter(set=>set.kg||set.reps).map(set=>`${set.kg||"–"} kg × ${set.reps||"–"}`);
@@ -1049,7 +1106,8 @@ function renderExercises(){
     if(prevBadge){
       if(previous && hitTop(previous, goal)) badge = `<div class="prog-badge">↑ ${targetText(previous,goal)}</div>`;
     }
-    const lockAttr = (!editing && !planEditMode) ? 'readonly aria-readonly="true"' : "";
+    const nameLockAttr = !editing ? 'readonly aria-readonly="true"' : "";
+    const goalLockAttr = (!editing && !planEditMode) ? 'readonly aria-readonly="true"' : "";
     const delStyle = (editing||planEditMode) ? "" : 'style="display:none"';
     const exClass = planEditMode ? "" : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact"));
     const lastBox = (!editing && previous) ? `<div class="last-box">
@@ -1060,9 +1118,9 @@ function renderExercises(){
       <div class="ex ${exClass}" data-i="${i}">
         <div class="ex-top">
           <span class="ex-num">${i+1}.</span>
-          <input class="ex-name-inp" value="${escAttr(name)}" data-i="${i}" placeholder="Übung" ${lockAttr} aria-label="Übungsname">
+          <textarea class="ex-name-inp" data-i="${i}" rows="1" placeholder="Übung" ${nameLockAttr} aria-label="Übungsname">${escAttr(name)}</textarea>
           <span class="now-pill">Jetzt</span>
-          <input class="ex-goal-inp" value="${escAttr(goal)}" data-i="${i}" placeholder="Ziel" ${lockAttr} aria-label="Wiederholungsziel">
+          <input class="ex-goal-inp" value="${escAttr(goal)}" data-i="${i}" placeholder="Ziel" ${goalLockAttr} aria-label="Wiederholungsziel">
           <button class="ex-del" data-i="${i}" title="Übung entfernen" type="button" ${delStyle}>✕</button>
         </div>
         <div class="ex-summary" data-summary="${i}">Ziel ${escAttr(goal)}</div>
@@ -1090,6 +1148,7 @@ function renderExercises(){
         </div>
       </div>`);
   });
+  resizeExerciseNames();
   bindExerciseEvents();
 
   /* Werte einsetzen: Entwurf > letzte Einheit */
@@ -1137,6 +1196,8 @@ function renderExercises(){
       $("#f-date").value = todayISO();
     }
   }
+  updateSessionSummary();
+  requestAnimationFrame(resizeExerciseNames);
 }
 
 function setVal(i,f,v){
@@ -1229,7 +1290,13 @@ function bindExerciseEvents(){
     });
   });
   document.querySelectorAll(".ex-name-inp").forEach(inp=>{
+    inp.addEventListener("click",e=>{
+      if(planEditMode && !editing && inp.dataset.manual!=="1"){
+        e.stopPropagation(); openLibrary(+inp.dataset.i);
+      }
+    });
     inp.addEventListener("input",()=>{
+      resizeExerciseName(inp);
       const i = +inp.dataset.i;
       if(editing){ editing.sets[i].name = inp.value; }
       else {
@@ -1237,6 +1304,12 @@ function bindExerciseEvents(){
         const lib = libraryByName(inp.value);
         templates[currentDay][i].id = lib ? lib.id : `custom-${String(inp.value||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
         markPlanCustomized(); saveJSON(TPL_KEY,templates); saveDraftNow();
+      }
+    });
+    inp.addEventListener("blur",()=>{
+      if(planEditMode && !editing && inp.dataset.manual==="1"){
+        delete inp.dataset.manual;
+        inp.setAttribute("readonly",""); inp.setAttribute("aria-readonly","true");
       }
     });
   });
@@ -1360,6 +1433,7 @@ function selectDay(day,render=true){
 }
 function renderDayPicker(){
   const picker=$("#day-picker");
+  picker.className=`picker days-${planConfig.dayOrder.length}`;
   picker.innerHTML=planConfig.dayOrder.map((day,idx)=>`<button class="day-btn ${day===currentDay?"active":""}" data-day="${escAttr(day)}" type="button">
     <div class="d-lbl">Einheit ${idx+1}</div><div class="d-name">${escAttr(PLANNAME(day))}</div></button>`).join("");
   picker.querySelectorAll(".day-btn").forEach(b=>b.addEventListener("click",()=>selectDay(b.dataset.day)));
@@ -1568,10 +1642,12 @@ $("#resume-btn").addEventListener("click",()=>{
   setView("log");
 });
 
-/* ================= Meta-Felder -> Entwurf ================= */
+/* ================= Session-Metadaten ================= */
+$("#session-toggle").addEventListener("click",()=>setSessionExpanded(!sessionExpanded));
 ["f-date","f-weight","f-energy","f-note"].forEach(id=>{
-  document.getElementById(id).addEventListener("input", saveDraftNow);
-  document.getElementById(id).addEventListener("change", saveDraftNow);
+  const saveMeta=()=>{ saveDraftNow(); if(id!=="f-note") updateSessionSummary(); };
+  document.getElementById(id).addEventListener("input", saveMeta);
+  document.getElementById(id).addEventListener("change", saveMeta);
 });
 
 /* ================= Day / Tabs ================= */
@@ -1598,7 +1674,8 @@ $("#btn-add-ex").addEventListener("click",()=>{
   renderExercises();
   if(!editing) saveDraftNow();
   const inps = document.querySelectorAll(".ex-name-inp");
-  inps[inps.length-1].focus();
+  if(editing) inps[inps.length-1].focus();
+  else openLibrary(inps.length-1);
 });
 
 /* ================= Bearbeiten ================= */
@@ -1628,6 +1705,7 @@ function startEdit(id){
   $("#f-weight").value = editing.weight || "";
   $("#f-energy").value = editing.energy || "";
   $("#f-note").value = editing.note || "";
+  setSessionExpanded(true);
   renderExercises();
   window.scrollTo({top:0, behavior:"smooth"});
 }
@@ -1639,6 +1717,7 @@ function stopEdit(){
   $("#today-card").style.display = "block";
   $("#plan-tools").style.display = "flex";
   $("#btn-save").textContent = "Training beenden";
+  setSessionExpanded(false);
   renderDayPicker();
   renderExercises(); // lädt Entwurf oder Vorbefüllung des aktuellen Tages
 }
@@ -1713,6 +1792,7 @@ $("#btn-clear").addEventListener("click", async ()=>{
 function clearFormMeta(){
   $("#f-date").value = todayISO();
   $("#f-weight").value=""; $("#f-energy").value=""; $("#f-note").value="";
+  updateSessionSummary();
 }
 
 /* ================= Geschafft-Screen ================= */
@@ -2100,6 +2180,8 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2000);
 }
 $("#f-date").value = todayISO();
+updateSessionSummary();
+setSessionExpanded(false);
 renderDayPicker();
 renderChartFilters();
 updateBrand();

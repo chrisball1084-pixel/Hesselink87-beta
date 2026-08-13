@@ -1,5 +1,29 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.2 Beta – Testpaket 6
+
+### Was wurde verändert?
+
+- In der Planbearbeitung öffnet ein Tipp auf den Übungsnamen direkt die Übungsbibliothek; die freie Texteingabe bleibt dort als bewusste Option erhalten.
+- Lange Übungsnamen wachsen automatisch auf mehrere Zeilen und bleiben dadurch auch auf kleinen iPhones vollständig lesbar.
+- Bei Push / Pull / Legs stehen alle drei Trainingstage kompakt in einer Zeile.
+- Das Suchfeld der Übungsbibliothek verwendet explizit 16 Pixel Schriftgröße, damit iOS beim Fokussieren nicht in die Seite hineinzoomt.
+- Datum, Körpergewicht und Energie sind in einem kompakten, einklappbaren Session-Bereich zusammengefasst. Die Zusammenfassung bleibt nach dem Einklappen sichtbar.
+
+### Datenkompatibilität
+
+Die Änderungen betreffen Darstellung und Bedienung. Trainingspläne, laufende Entwürfe und historische Workouts behalten ihr bisheriges Datenformat.
+
+### Getestet
+
+- JavaScript-Syntax und Git-Diff-Prüfung
+- mobile Browser-Tests bei 390 × 844 und 320 × 700 Pixeln
+- Übungsauswahl und freie Eingabe in der Planbearbeitung
+- mehrzeilige Übungsnamen ohne Abschneiden
+- dreispaltige PPL-Tagesauswahl ohne horizontales Überlaufen
+- Suchfeld ohne iOS-Schriftgrößen-Zoom
+- Ein-/Ausklappen der Session-Daten inklusive Werterhalt
+
 ## v1.2 Beta – Testpaket 5
 
 ### Was wurde verändert?
