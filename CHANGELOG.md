@@ -1,5 +1,36 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.2 Beta – Testpaket 5
+
+### Was wurde verändert?
+
+- Eine neue **Übersicht** zeigt das nächste sinnvolle Training, Wochenfortschritt, Gesamtworkouts, Gesamtvolumen und den aktuellen Trainingsplan.
+- Trainingstage lassen sich direkt aus dem Dashboard öffnen oder fortsetzen.
+- Ein dauerhafter Menüpunkt **Setup** wurde ergänzt.
+- Drei Trainingsvorlagen stehen bereit: **Ganzkörper · 2 Tage**, **Push / Pull / Legs · 3 Tage** und **Upper / Lower · 4 Tage**.
+- Tagesauswahl, Wochenziel, Verlauf-Filter und App-Untertitel passen sich dynamisch an den gewählten Split an.
+- Ein Splitwechsel erfolgt nur nach Sicherheitsabfrage und weist ausdrücklich auf laufende Trainingsentwürfe hin.
+- Angepasste Vorlagen werden im Setup als individuell angepasster Plan gekennzeichnet.
+- Plan-Metadaten und eine Planversions-ID trennen Leistungsübernahmen verschiedener Splits voneinander.
+- Backup, Import und Beta-Reset berücksichtigen die neuen Split-Einstellungen.
+
+### Datenkompatibilität
+
+Bestehende Zwei-Tage-Pläne werden automatisch als bisheriges Ganzkörper-Setup übernommen. Historische Workouts werden beim Splitwechsel nicht verändert oder gelöscht. Ein neuer Split erhält eine eigene Planversions-ID, damit alte Day-1-/Day-2-Daten nicht irrtümlich als Vorwerte eines anderen Splits erscheinen.
+
+### Getestet
+
+- JavaScript-Syntax und Git-Diff-Prüfung
+- Dashboard und dynamische Navigation
+- 2er-, 3er- und 4er-Split inklusive Speicherung nach Neuladen
+- Abbruch und Bestätigung eines Splitwechsels
+- Warnung bei laufendem Trainingsentwurf
+- Erhalt historischer Workouts nach Splitwechsel
+- Trennung der Vorwerte verschiedener Planversionen
+- mobile Browser-Tests bei 390 × 844 und 320 × 700 Pixeln
+- kein horizontales Überlaufen bei vier Hauptmenüpunkten und fünf Verlauf-Filtern
+- keine Browserfehler
+
 ## v1.1 Beta – Testpaket 4
 
 ### Was wurde verändert?

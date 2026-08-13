@@ -52,17 +52,53 @@
   .beta-badge{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:20px;
     border:1px solid rgba(255,204,102,.45);background:rgba(255,204,102,.1);color:var(--warm);
     font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
-  .tabs{display:flex;gap:8px;padding:14px 14px 0;position:sticky;top:0;z-index:20;
+  .tabs{display:flex;gap:5px;padding:14px 8px 0;position:sticky;top:0;z-index:20;
     background:rgba(5,11,19,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-  .tab{flex:1;text-align:center;padding:11px 6px;border-radius:12px;
-    font-weight:800;font-size:13px;letter-spacing:.5px;font-style:italic;text-transform:uppercase;
+  .tab{flex:1;min-width:0;text-align:center;padding:11px 2px;border-radius:12px;
+    font-weight:800;font-size:11px;letter-spacing:.1px;font-style:italic;text-transform:uppercase;
     background:var(--panel-2);color:var(--muted);border:1px solid var(--line);cursor:pointer;min-height:44px}
   .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
   .view{display:none;padding:14px;max-width:720px;margin:0 auto}
   .view.active{display:block}
 
-  .picker{display:flex;gap:10px;margin-bottom:14px}
-  .day-btn{flex:1;padding:14px 12px;border-radius:14px;border:1px solid var(--line);
+  .dash-hero{background:linear-gradient(145deg,#10253a,#07131f);border:1px solid rgba(19,200,239,.3);
+    border-radius:24px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .dash-hero::after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-90px;top:-100px;
+    background:rgba(19,200,239,.12);filter:blur(2px)}
+  .dash-kicker{font-size:10px;color:var(--blue-bright);font-weight:900;letter-spacing:1.2px;text-transform:uppercase}
+  .dash-title{font-size:27px;line-height:1.05;font-weight:900;font-style:italic;margin:6px 0 4px;text-transform:uppercase}
+  .dash-sub{font-size:12px;color:var(--muted);line-height:1.5;max-width:460px}
+  .dash-start{width:100%;min-height:50px;margin-top:15px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--blue-bright),var(--blue));
+    color:#001018;font:900 15px inherit;font-style:italic;cursor:pointer;position:relative;z-index:1}
+  .dash-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .dash-metric{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px 9px;min-width:0}
+  .dash-metric span{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.6px;font-weight:800}
+  .dash-metric strong{display:block;color:var(--ink);font-size:17px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dash-plan{display:grid;gap:8px}
+  .dash-day{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:58px;padding:11px 12px;
+    border-radius:14px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font-family:inherit;text-align:left;cursor:pointer}
+  .dash-day.next{border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
+  .dash-day.done-week{border-color:rgba(55,214,172,.32)}
+  .dash-day span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+  .dash-day em{font-style:normal;font-size:11px;font-weight:900;color:var(--blue-bright);white-space:nowrap}
+  .dash-day.done-week em{color:var(--good)}
+
+  .setup-current{padding:15px;border:1px solid rgba(19,200,239,.3);background:var(--blue-soft);border-radius:16px;margin-bottom:14px}
+  .setup-current small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:800}
+  .setup-current strong{display:block;font-size:18px;margin-top:4px}
+  .setup-current span{display:block;color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45}
+  .split-grid{display:grid;gap:10px}
+  .split-card{border:1px solid var(--line);background:var(--panel);border-radius:17px;padding:14px}
+  .split-card.active{border-color:var(--good)}
+  .split-card h3{margin:0;font-size:16px}
+  .split-card p{margin:5px 0 11px;color:var(--muted);font-size:12px;line-height:1.45}
+  .split-card .split-days{font-size:11px;color:var(--blue-bright);font-weight:800;margin-bottom:11px}
+  .split-apply{width:100%;min-height:44px;border-radius:11px;border:1px solid var(--blue);background:var(--blue-soft);
+    color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
+  .split-card.active .split-apply{border-color:var(--good);color:var(--good);background:rgba(55,214,172,.08)}
+
+  .picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .day-btn{flex:1 1 calc(50% - 5px);padding:14px 12px;border-radius:14px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--ink);text-align:left;cursor:pointer;font-family:inherit}
   .day-btn.active{border-color:var(--blue);background:linear-gradient(135deg,#0e1e3c,#0a1730);
     box-shadow:0 0 0 1px var(--blue) inset,0 6px 18px rgba(43,143,255,.15)}
@@ -262,8 +298,9 @@
   /* ---------- Chart ---------- */
   .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;
     padding:14px;margin-bottom:14px}
-  .chart-filters{display:flex;gap:6px;margin-bottom:10px}
-  .cf-btn{flex:1;padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);
+  .chart-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  #chart-day-filters{display:contents}
+  .cf-btn{flex:1 1 calc(33.333% - 6px);padding:8px 4px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;text-transform:uppercase;min-height:44px}
   .cf-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
   .chart-empty{text-align:center;color:var(--muted);font-size:12px;padding:24px 0}
@@ -386,17 +423,42 @@
 
 <div class="topbar">
   <div class="brand">HESSELINK</div>
-  <div class="brand-sub">Trainingstagebuch · 2 Einheiten / Woche</div>
+  <div class="brand-sub" id="brand-sub">Trainingstagebuch · 2 Einheiten / Woche</div>
   <div class="beta-badge">Beta-Test · getrennte Testdaten</div>
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-view="log">Training</div>
+  <div class="tab active" data-view="dashboard">Übersicht</div>
+  <div class="tab" data-view="log">Training</div>
   <div class="tab" data-view="history">Verlauf</div>
+  <div class="tab" data-view="setup">Setup</div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="view active" id="view-dashboard">
+  <div class="dash-hero">
+    <div class="dash-kicker" id="dash-kicker">Als Nächstes</div>
+    <div class="dash-title" id="dash-title">Day 1</div>
+    <div class="dash-sub" id="dash-sub">Dein nächstes Training ist bereit.</div>
+    <button class="dash-start" id="dash-start" type="button">Training öffnen</button>
+  </div>
+  <div class="dash-metrics">
+    <div class="dash-metric"><span>Diese Woche</span><strong id="dash-week">0 / 2</strong></div>
+    <div class="dash-metric"><span>Workouts</span><strong id="dash-total">0</strong></div>
+    <div class="dash-metric"><span>Volumen</span><strong id="dash-volume">0 t</strong></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="bar"></span><h2>Dein Trainingsplan</h2></div>
+    <div class="dash-plan" id="dash-plan"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="bar"></span><h2>Letztes Training</h2></div>
+    <div class="dash-sub" id="dash-last">Noch kein Training gespeichert.</div>
+  </div>
 </div>
 
 <!-- ============ LOG VIEW ============ -->
-<div class="view active" id="view-log">
+<div class="view" id="view-log">
 
   <div class="edit-banner" id="edit-banner">
     <span id="edit-banner-txt">✏️ Einheit wird bearbeitet</span>
@@ -408,14 +470,7 @@
     <span class="pb-txt" id="pb-txt">0 von 5 Übungen abgeschlossen</span>
   </div>
 
-  <div class="picker" id="day-picker">
-    <button class="day-btn active" data-day="1">
-      <div class="d-lbl">Einheit</div><div class="d-name">DAY 1</div>
-    </button>
-    <button class="day-btn" data-day="2">
-      <div class="d-lbl">Einheit</div><div class="d-name">DAY 2</div>
-    </button>
-  </div>
+  <div class="picker" id="day-picker"></div>
 
   <div class="today-card" id="today-card">
     <div class="today-top">
@@ -485,8 +540,7 @@
     <div class="card-head"><span class="bar"></span><h2>Volumen-Verlauf</h2></div>
     <div class="chart-filters">
       <button class="cf-btn active" data-cf="all" type="button">Alle</button>
-      <button class="cf-btn" data-cf="1" type="button">Day 1</button>
-      <button class="cf-btn" data-cf="2" type="button">Day 2</button>
+      <span id="chart-day-filters"></span>
     </div>
     <div id="chart-holder"></div>
   </div>
@@ -504,13 +558,28 @@
   <div id="hist-list"></div>
 </div>
 
-<div class="save-bar" id="save-bar">
+<!-- ============ SETUP VIEW ============ -->
+<div class="view" id="view-setup">
+  <div class="setup-current" id="setup-current"></div>
+  <div class="card">
+    <div class="card-head"><span class="bar"></span><h2>Trainingssplit wählen</h2></div>
+    <p class="dash-sub" style="margin:0 0 13px">Wähle eine Vorlage und passe die Übungen anschließend im Training über <strong>Plan bearbeiten</strong> an.</p>
+    <div class="split-grid" id="split-grid"></div>
+  </div>
+  <div class="rule">
+    <div class="ico">🛡️</div>
+    <div><div class="r-title">Deine Historie bleibt erhalten</div>
+      <div class="r-txt">Ein Splitwechsel ersetzt nur den zukünftigen Trainingsplan. Bereits gespeicherte Einheiten werden nicht verändert.</div></div>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar" style="display:none">
   <button class="btn btn-primary" id="btn-save" type="button">Training beenden</button>
   <button class="btn btn-ghost" id="btn-clear" type="button">Reset</button>
 </div>
 
 <!-- Pausentimer -->
-<div class="timer-fab" id="timer-fab-wrap">
+<div class="timer-fab" id="timer-fab-wrap" style="display:none">
   <button class="timer-x" id="timer-x" type="button">✕</button>
   <button class="timer-main" id="timer-main" type="button">⏱ 2:00</button>
 </div>
@@ -571,7 +640,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 904;
+const APP_VERSION = 905;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -591,6 +660,7 @@ const LOG_KEY   = "hesselink_beta_log_v2";
 const OLD_LOG   = "hesselink_beta_log_v1";
 const DRAFT_KEY = "hesselink_beta_draft_v1";
 const TIMER_KEY = "hesselink_beta_timer_v1";
+const PLAN_KEY  = "hesselink_beta_plan_config_v1";
 const KG_STEP   = 2.5;
 
 const EXERCISE_LIBRARY = [
@@ -659,6 +729,54 @@ const DEFAULT_TPL = {
   ],
 };
 
+const SPLIT_PRESETS = {
+  fullbody2:{
+    name:"Ganzkörper · 2 Tage", short:"2er Ganzkörper", description:"Einfacher Einstieg mit zwei Ganzkörpereinheiten pro Woche.",
+    dayOrder:["1","2"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}, templates:DEFAULT_TPL,
+  },
+  ppl3:{
+    name:"Push / Pull / Legs · 3 Tage", short:"Push / Pull / Legs", description:"Drei klar getrennte Einheiten für Drücken, Ziehen und Beine.",
+    dayOrder:["1","2","3"], dayNames:{"1":"Push","2":"Pull","3":"Legs"}, templates:{
+      "1":[
+        {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},{id:"incline-dumbbell",n:"Schrägbankdrücken Kurzhantel",goal:"8–12"},
+        {id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},{id:"lateral-raise",n:"Seitheben",goal:"10–15"},{id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
+      ],
+      "2":[
+        {id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},{id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},
+        {id:"rear-delt",n:"Reverse Butterfly",goal:"10–15"},{id:"hyperextension",n:"Hyperextension (Core)",goal:"frei"},{id:"biceps-machine",n:"Bizeps Curl (Maschine)",goal:"10–12"},
+      ],
+      "3":[
+        {id:"leg-press",n:"Beinpresse",goal:"10–15"},{id:"romanian-deadlift",n:"Rumänisches Kreuzheben",goal:"8–12"},
+        {id:"leg-curl",n:"Beinbeuger Maschine",goal:"10–15"},{id:"calf-raise",n:"Wadenheben",goal:"10–15"},{id:"leg-raise",n:"Beinheben (Bauch)",goal:"frei"},
+      ],
+    },
+  },
+  upperlower4:{
+    name:"Upper / Lower · 4 Tage", short:"Upper / Lower", description:"Vier Einheiten mit zwei Oberkörper- und zwei Unterkörpertagen.",
+    dayOrder:["1","2","3","4"], dayNames:{"1":"Upper A","2":"Lower A","3":"Upper B","4":"Lower B"}, templates:{
+      "1":[
+        {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},{id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},
+        {id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},{id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},{id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
+      ],
+      "2":[
+        {id:"leg-press",n:"Beinpresse",goal:"10–15"},{id:"romanian-deadlift",n:"Rumänisches Kreuzheben",goal:"8–12"},
+        {id:"leg-curl",n:"Beinbeuger Maschine",goal:"10–15"},{id:"calf-raise",n:"Wadenheben",goal:"10–15"},{id:"leg-raise",n:"Beinheben (Bauch)",goal:"frei"},
+      ],
+      "3":[
+        {id:"incline-dumbbell",n:"Schrägbankdrücken Kurzhantel",goal:"8–12"},{id:"row-machine",n:"Rudern Maschine",goal:"8–12"},
+        {id:"lateral-raise",n:"Seitheben",goal:"10–15"},{id:"lat-neutral",n:"Latzug neutraler Griff",goal:"8–12"},{id:"biceps-machine",n:"Bizeps Curl (Maschine)",goal:"10–12"},
+      ],
+      "4":[
+        {id:"hack-squat",n:"Hackenschmidt-Kniebeuge",goal:"8–12"},{id:"leg-curl",n:"Beinbeuger Maschine",goal:"10–15"},
+        {id:"leg-extension",n:"Beinstrecker",goal:"10–15"},{id:"calf-raise",n:"Wadenheben",goal:"10–15"},{id:"cable-crunch",n:"Cable Crunch",goal:"10–15"},
+      ],
+    },
+  },
+};
+
+const defaultPlanConfig = () => ({id:"fullbody2",name:SPLIT_PRESETS.fullbody2.name,versionId:"legacy",
+  dayOrder:["1","2"],dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}});
+
 const QUOTES = [
   '\u201eIntensit\u00e4t schl\u00e4gt Volumen.\u201c \u2013 Heavy-Duty-Prinzip',
   '\u201eDer letzte Satz z\u00e4hlt am meisten.\u201c',
@@ -675,6 +793,19 @@ const loadJSON = (k,fb) => { try{ const v=JSON.parse(localStorage.getItem(k)); r
 const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 
 let templates  = loadJSON(TPL_KEY, null) || JSON.parse(JSON.stringify(DEFAULT_TPL));
+const storedPlanConfig = loadJSON(PLAN_KEY, null);
+let planConfig = storedPlanConfig || defaultPlanConfig();
+if(!storedPlanConfig && JSON.stringify(templates)!==JSON.stringify(DEFAULT_TPL)){
+  planConfig.id="custom"; planConfig.name="Bisheriger 2-Tage-Plan · angepasst";
+}
+if(!Array.isArray(planConfig.dayOrder) || !planConfig.dayOrder.length){ planConfig=defaultPlanConfig(); }
+if(!planConfig.versionId) planConfig.versionId="legacy";
+planConfig.dayOrder=planConfig.dayOrder.filter(day=>Array.isArray(templates[day]));
+Object.keys(templates).forEach(day=>{ if(!planConfig.dayOrder.includes(day)) planConfig.dayOrder.push(day); });
+if(!planConfig.dayOrder.length){ templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); planConfig=defaultPlanConfig(); }
+planConfig.dayNames=planConfig.dayNames||{};
+planConfig.dayOrder.forEach((day,idx)=>{ if(!planConfig.dayNames[day]) planConfig.dayNames[day]=`Day ${idx+1}`; });
+saveJSON(PLAN_KEY,planConfig);
 let templateIdsChanged = false;
 Object.values(templates).forEach(day=>day.forEach(ex=>{
   if(ex.id) return;
@@ -683,7 +814,7 @@ Object.values(templates).forEach(day=>day.forEach(ex=>{
   templateIdsChanged = true;
 }));
 if(templateIdsChanged) saveJSON(TPL_KEY,templates);
-let currentDay = "1";
+let currentDay = planConfig.dayOrder[0];
 let editing    = null;
 let chartFilter = "all";
 let planEditMode = false;
@@ -693,6 +824,7 @@ let openExIndices = new Set([0]);
 let autoAdvanceT = null;
 let libraryTargetIdx = null;
 let libraryMuscle = "Alle";
+let editingReturnDay = null;
 
 /* ---- Migration alter v1-Einträge ---- */
 (function migrate(){
@@ -759,7 +891,7 @@ function hitTop(s, goal){
 
 function lastEntryForDay(day, excludeId){
   return loadLog()
-    .filter(e=>e.day===day && e.id!==excludeId)
+    .filter(e=>e.day===day && e.id!==excludeId && belongsToCurrentPlan(e))
     .sort((a,b)=> (a.date===b.date ? a.id-b.id : (a.date<b.date?-1:1)))
     .pop() || null;
 }
@@ -820,6 +952,9 @@ function renderLibraryFilters(){
     libraryMuscle=b.dataset.muscle; renderLibraryFilters(); renderLibraryList();
   }));
 }
+function belongsToCurrentPlan(entry){
+  return planConfig.versionId==="legacy" ? !entry.planVersionId || entry.planVersionId==="legacy" : entry.planVersionId===planConfig.versionId;
+}
 function renderLibraryList(){
   const query = $("#library-search").value.trim().toLowerCase();
   const rows = EXERCISE_LIBRARY.filter(x=>(libraryMuscle==="Alle"||x.muscle===libraryMuscle)
@@ -848,7 +983,7 @@ async function selectLibraryExercise(id){
     saveJSON(DRAFT_KEY,drafts);
   }
   templates[currentDay][libraryTargetIdx]={id:choice.id,n:choice.n,goal:choice.goal};
-  saveJSON(TPL_KEY,templates); closeLibrary(); renderExercises(); saveDraftNow(); toast("Übung ausgetauscht ✓");
+  markPlanCustomized(); saveJSON(TPL_KEY,templates); closeLibrary(); renderExercises(); saveDraftNow(); toast("Übung ausgetauscht ✓");
 }
 $("#library-search").addEventListener("input",renderLibraryList);
 $("#library-close").addEventListener("click",closeLibrary);
@@ -879,13 +1014,13 @@ function targetText(s, goal){
 }
 function renderTodayCard(){
   const arr = loadLog();
-  const weekCount = arr.filter(e=>weekKey(e.date)===weekKey(todayISO())).length;
+  const weekCount = arr.filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO())).length;
   const last = lastEntryForDay(currentDay);
   const draft = loadDrafts()[currentDay];
   const hasDraft = !!(draft && ((draft.sets||[]).some(s=>s && (s.done||hasSetValues(s)))
     || draft.weight || draft.energy || draft.note));
   $("#today-title").textContent = PLANNAME();
-  $("#today-week").textContent = `${weekCount} von 2 Einheiten`;
+  $("#today-week").textContent = `${weekCount} von ${planConfig.dayOrder.length} Einheiten`;
   $("#today-last").textContent = last ? `${fmtShort(last.date)} · ${Math.round(sessionVolume(last)).toLocaleString("de-DE")} kg` : "Noch kein Eintrag";
   $("#today-status").textContent = hasDraft ? "Training läuft" : "Bereit";
 }
@@ -1101,7 +1236,7 @@ function bindExerciseEvents(){
         templates[currentDay][i].n = inp.value;
         const lib = libraryByName(inp.value);
         templates[currentDay][i].id = lib ? lib.id : `custom-${String(inp.value||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
-        saveJSON(TPL_KEY,templates); saveDraftNow();
+        markPlanCustomized(); saveJSON(TPL_KEY,templates); saveDraftNow();
       }
     });
   });
@@ -1109,7 +1244,7 @@ function bindExerciseEvents(){
     inp.addEventListener("input",()=>{
       const i = +inp.dataset.i;
       if(editing){ editing.sets[i].goal = inp.value; }
-      else { templates[currentDay][i].goal = inp.value; saveJSON(TPL_KEY,templates); saveDraftNow(); }
+      else { templates[currentDay][i].goal = inp.value; markPlanCustomized(); saveJSON(TPL_KEY,templates); saveDraftNow(); }
     });
   });
   document.querySelectorAll(".ex-done-btn").forEach(b=>{
@@ -1146,7 +1281,7 @@ function bindExerciseEvents(){
       const ok = await askConfirm("Übung entfernen?", txt);
       if(!ok) return;
       src.splice(i,1);
-      if(!editing){ saveJSON(TPL_KEY,templates); }
+      if(!editing){ markPlanCustomized(); saveJSON(TPL_KEY,templates); }
       renderExercises();
       if(!editing) saveDraftNow();
       toast("Übung entfernt ✓");
@@ -1204,7 +1339,108 @@ function bindExerciseEvents(){
   bindRowEvents(document.querySelector("#ex-container"));
 }
 
-const PLANNAME = () => currentDay==="1" ? "Day 1" : "Day 2";
+const PLANNAME = (day=currentDay) => planConfig.dayNames[day] || `Day ${planConfig.dayOrder.indexOf(day)+1}`;
+
+function meaningfulDraft(day){
+  const d=loadDrafts()[day];
+  return !!(d&&((d.sets||[]).some(s=>s&&(s.done||hasSetValues(s)))||d.weight||d.energy||d.note));
+}
+function nextPlannedDay(){
+  const draftDay=planConfig.dayOrder.find(meaningfulDraft);
+  if(draftDay) return draftDay;
+  const doneThisWeek=new Set(loadLog().filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO())).map(e=>e.day));
+  return planConfig.dayOrder.find(day=>!doneThisWeek.has(day)) || planConfig.dayOrder[0];
+}
+function selectDay(day,render=true){
+  if(!planConfig.dayOrder.includes(day)||editing) return;
+  if(templates[currentDay]) saveDraftNow();
+  currentDay=day; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
+  renderDayPicker();
+  if(render) renderExercises();
+}
+function renderDayPicker(){
+  const picker=$("#day-picker");
+  picker.innerHTML=planConfig.dayOrder.map((day,idx)=>`<button class="day-btn ${day===currentDay?"active":""}" data-day="${escAttr(day)}" type="button">
+    <div class="d-lbl">Einheit ${idx+1}</div><div class="d-name">${escAttr(PLANNAME(day))}</div></button>`).join("");
+  picker.querySelectorAll(".day-btn").forEach(b=>b.addEventListener("click",()=>selectDay(b.dataset.day)));
+}
+function renderChartFilters(){
+  $("#chart-day-filters").innerHTML=planConfig.dayOrder.map(day=>
+    `<button class="cf-btn ${chartFilter===day?"active":""}" data-cf="${escAttr(day)}" type="button">${escAttr(PLANNAME(day))}</button>`).join("");
+  document.querySelectorAll(".cf-btn").forEach(b=>{
+    b.classList.toggle("active",b.dataset.cf===chartFilter);
+    b.onclick=()=>{
+      document.querySelectorAll(".cf-btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active"); chartFilter=b.dataset.cf; renderChart();
+    };
+  });
+}
+function renderDashboard(){
+  const arr=loadLog().sort((a,b)=>b.id-a.id), next=nextPlannedDay(), draft=meaningfulDraft(next);
+  const thisWeek=arr.filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO()));
+  const totalVol=arr.reduce((sum,e)=>sum+sessionVolume(e),0);
+  const last=arr[0];
+  $("#dash-kicker").textContent=draft?"Training fortsetzen":"Als Nächstes";
+  $("#dash-title").textContent=PLANNAME(next);
+  $("#dash-sub").textContent=draft?"Deine Eingaben sind gespeichert. Du kannst direkt weitermachen.":`${templates[next].length} Übungen · dein nächster sinnvoller Trainingstag.`;
+  $("#dash-start").textContent=draft?"Training fortsetzen":"Training starten";
+  $("#dash-start").dataset.day=next;
+  $("#dash-week").textContent=`${thisWeek.length} / ${planConfig.dayOrder.length}`;
+  $("#dash-total").textContent=arr.length;
+  $("#dash-volume").textContent=`${(totalVol/1000).toLocaleString("de-DE",{maximumFractionDigits:1})} t`;
+  const doneDays=new Set(thisWeek.map(e=>e.day));
+  $("#dash-plan").innerHTML=planConfig.dayOrder.map((day,idx)=>{
+    const isNext=day===next, done=doneDays.has(day), hasDraft=meaningfulDraft(day);
+    const state=hasDraft?"Fortsetzen":done?"Diese Woche erledigt":isNext?"Als Nächstes":"Öffnen";
+    return `<button class="dash-day ${isNext?"next":""} ${done?"done-week":""}" data-dash-day="${escAttr(day)}" type="button">
+      <div><strong>${idx+1}. ${escAttr(PLANNAME(day))}</strong><span>${templates[day].length} Übungen</span></div><em>${state}</em></button>`;
+  }).join("");
+  $("#dash-plan").querySelectorAll("[data-dash-day]").forEach(b=>b.addEventListener("click",()=>openTrainingDay(b.dataset.dashDay)));
+  $("#dash-last").textContent=last?`${last.dayName} · ${fmtDate(last.date)} · ${Math.round(sessionVolume(last)).toLocaleString("de-DE")} kg Volumen`:"Noch kein Training gespeichert.";
+}
+function openTrainingDay(day){ selectDay(day); setView("log"); }
+
+function renderSetup(){
+  $("#setup-current").innerHTML=`<small>Aktueller Trainingsplan</small><strong>${escAttr(planConfig.name)}</strong>
+    <span>${planConfig.dayOrder.length} Einheiten: ${planConfig.dayOrder.map(PLANNAME).join(" · ")}</span>`;
+  $("#split-grid").innerHTML=Object.entries(SPLIT_PRESETS).map(([id,p])=>`<div class="split-card ${planConfig.id===id?"active":""}">
+    <h3>${escAttr(p.name)}</h3><p>${escAttr(p.description)}</p><div class="split-days">${p.dayOrder.map(day=>p.dayNames[day]).join(" · ")}</div>
+    <button class="split-apply" data-split="${id}" type="button">${planConfig.id===id?"Vorlage erneut laden":"Diesen Split verwenden"}</button></div>`).join("");
+  $("#split-grid").querySelectorAll("[data-split]").forEach(b=>b.addEventListener("click",()=>applySplitPreset(b.dataset.split)));
+}
+function markPlanCustomized(){
+  if(planConfig.id==="custom") return;
+  planConfig.id="custom"; planConfig.name=`${planConfig.name} · angepasst`;
+  saveJSON(PLAN_KEY,planConfig);
+}
+async function applySplitPreset(id){
+  const preset=SPLIT_PRESETS[id]; if(!preset) return;
+  const draftCount=planConfig.dayOrder.filter(meaningfulDraft).length;
+  const draftWarning=draftCount===1?" Ein laufender Trainingsentwurf wird verworfen.":draftCount>1?` ${draftCount} laufende Trainingsentwürfe werden verworfen.`:"";
+  const msg=`Der aktuelle zukünftige Plan wird durch „${preset.name}“ ersetzt.${draftWarning} Deine gespeicherte Trainingshistorie bleibt unverändert.`;
+  const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
+  if(!ok) return;
+  templates=JSON.parse(JSON.stringify(preset.templates));
+  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
+  planEditMode=false; chartFilter="all"; clearFormMeta();
+  $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
+  renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
+  toast("Trainingssplit übernommen ✓");
+}
+function updateBrand(){ $("#brand-sub").textContent=`Trainingstagebuch · ${planConfig.dayOrder.length} Einheiten / Woche`; }
+function setView(view){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===view));
+  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===`view-${view}`));
+  const training=view==="log";
+  $("#save-bar").style.display=training?"flex":"none"; $("#timer-fab-wrap").style.display=training?"flex":"none";
+  if(view==="dashboard") renderDashboard();
+  if(view==="history"){ renderChartFilters(); renderHistory(); updateResumeBanner(); }
+  if(view==="setup") renderSetup();
+}
+
+$("#dash-start").addEventListener("click",e=>openTrainingDay(e.currentTarget.dataset.day||nextPlannedDay()));
 
 function readSets(i){
   const g = f => (document.querySelector(`#ex-container input[data-ex="${i}"][data-f="${f}"]`)||{}).value||"";
@@ -1329,12 +1565,7 @@ function updateResumeBanner(){
   banner.classList.add("show");
 }
 $("#resume-btn").addEventListener("click",()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
-  document.querySelector('.tab[data-view="log"]').classList.add("active");
-  $("#view-log").classList.add("active");
-  $("#save-bar").style.display = "flex";
-  $("#timer-fab-wrap").style.display = "flex";
+  setView("log");
 });
 
 /* ================= Meta-Felder -> Entwurf ================= */
@@ -1353,34 +1584,17 @@ $("#btn-plan-edit").addEventListener("click",()=>{
   activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   renderExercises();
 });
-document.querySelectorAll(".day-btn").forEach(b=>{
-  b.addEventListener("click",()=>{
-    if(editing) return;
-    saveDraftNow(); // aktuellen Tag sichern, bevor gewechselt wird
-    document.querySelectorAll(".day-btn").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    currentDay = b.dataset.day;
-    activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
-    renderExercises();
-  });
-});
 document.querySelectorAll(".tab").forEach(t=>{
   t.addEventListener("click",()=>{
     saveDraftNow(); // Sicherheitsnetz: Meta-Felder (u.a. Energie/Schlaf) explizit sichern, bevor der Tab wechselt
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
-    t.classList.add("active");
-    $("#view-"+t.dataset.view).classList.add("active");
-    $("#save-bar").style.display = t.dataset.view==="log" ? "flex" : "none";
-    $("#timer-fab-wrap").style.display = t.dataset.view==="log" ? "flex" : "none";
-    if(t.dataset.view==="history"){ renderHistory(); updateResumeBanner(); }
+    setView(t.dataset.view);
   });
 });
 
 /* ================= Add exercise ================= */
 $("#btn-add-ex").addEventListener("click",()=>{
   if(editing){ editing.sets.push({name:"", goal:"8–12", wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:""}); }
-  else { templates[currentDay].push({id:`custom-${Date.now()}`,n:"", goal:"8–12"}); saveJSON(TPL_KEY,templates); }
+  else { templates[currentDay].push({id:`custom-${Date.now()}`,n:"", goal:"8–12"}); markPlanCustomized(); saveJSON(TPL_KEY,templates); }
   renderExercises();
   if(!editing) saveDraftNow();
   const inps = document.querySelectorAll(".ex-name-inp");
@@ -1391,6 +1605,7 @@ $("#btn-add-ex").addEventListener("click",()=>{
 function startEdit(id){
   const entry = loadLog().find(e=>e.id==id);
   if(!entry) return;
+  editingReturnDay = planConfig.dayOrder.includes(currentDay) ? currentDay : planConfig.dayOrder[0];
   editing = JSON.parse(JSON.stringify(entry));
   editing.sets.forEach(s=>{ s.workSets=workSetsOf(s); s.setCount=s.workSets.length; });
   currentDay = editing.day;
@@ -1418,11 +1633,13 @@ function startEdit(id){
 }
 function stopEdit(){
   editing = null;
+  currentDay = planConfig.dayOrder.includes(editingReturnDay) ? editingReturnDay : planConfig.dayOrder[0];
+  editingReturnDay = null;
   $("#edit-banner").classList.remove("show");
   $("#today-card").style.display = "block";
   $("#plan-tools").style.display = "flex";
   $("#btn-save").textContent = "Training beenden";
-  document.querySelectorAll(".day-btn").forEach(x=>x.style.opacity="1");
+  renderDayPicker();
   renderExercises(); // lädt Entwurf oder Vorbefüllung des aktuellen Tages
 }
 $("#edit-cancel").addEventListener("click",stopEdit);
@@ -1438,7 +1655,7 @@ $("#btn-save").addEventListener("click", async ()=>{
 
   if(editing){
     const updated = {
-      id: editing.id, day: editing.day, dayName: editing.dayName,
+      id: editing.id, day: editing.day, dayName: editing.dayName, planVersionId: editing.planVersionId,
       date: $("#f-date").value || editing.date,
       weight: $("#f-weight").value, energy: $("#f-energy").value,
       note: $("#f-note").value, sets,
@@ -1462,6 +1679,7 @@ $("#btn-save").addEventListener("click", async ()=>{
   const entry = {
     id: Date.now(),
     day: currentDay, dayName: PLANNAME(),
+    planVersionId: planConfig.versionId,
     date: $("#f-date").value || todayISO(),
     weight: $("#f-weight").value,
     energy: $("#f-energy").value,
@@ -1716,18 +1934,10 @@ function renderHistory(){
 }
 
 /* ================= Volumen-Chart (SVG) ================= */
-document.querySelectorAll(".cf-btn").forEach(b=>{
-  b.addEventListener("click",()=>{
-    document.querySelectorAll(".cf-btn").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    chartFilter = b.dataset.cf;
-    renderChart();
-  });
-});
 function renderChart(){
   const holder = $("#chart-holder");
   let data = loadLog()
-    .filter(e=> chartFilter==="all" ? true : e.day===chartFilter)
+    .filter(e=> chartFilter==="all" ? true : (belongsToCurrentPlan(e)&&e.day===chartFilter))
     .sort((a,b)=> (a.date===b.date ? a.id-b.id : (a.date<b.date?-1:1)))
     .map(e=>({date:e.date, vol:sessionVolume(e), day:e.day}));
   data = data.filter(d=>d.vol>0);
@@ -1744,8 +1954,10 @@ function renderChart(){
   const y = v => P.t + (H-P.t-P.b) * (1-(v-lo)/(hi-lo));
   const pts = data.map((d,i)=>`${x(i).toFixed(1)},${y(d.vol).toFixed(1)}`).join(" ");
   const area = `${x(0).toFixed(1)},${(H-P.b).toFixed(1)} ${pts} ${x(data.length-1).toFixed(1)},${(H-P.b).toFixed(1)}`;
+  const chartColors=["#4ea8ff","#f5c451","#37d6ac","#c58cff"];
+  const dayColor=day=>chartColors[Math.max(0,planConfig.dayOrder.indexOf(day))%chartColors.length];
   const dots = data.map((d,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(d.vol).toFixed(1)}" r="3.5"
-      fill="${d.day==="1"?"#4ea8ff":"#f5c451"}" stroke="#0a0e1a" stroke-width="1.5"/>`).join("");
+      fill="${dayColor(d.day)}" stroke="#0a0e1a" stroke-width="1.5"/>`).join("");
   const gridY = [lo + (hi-lo)*0.25, lo+(hi-lo)*0.5, lo+(hi-lo)*0.75].map(v=>
     `<line x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}" stroke="#1e2d4a" stroke-width="1" stroke-dasharray="3,4"/>`).join("");
   const kLbl = v => v>=1000 ? (v/1000).toLocaleString("de-DE",{maximumFractionDigits:1})+"t" : Math.round(v);
@@ -1760,8 +1972,8 @@ function renderChart(){
     <text x="${P.l}" y="${H-6}" font-size="9" fill="#8ba0c4">${fmtShort(data[0].date)}</text>
     <text x="${W-P.r}" y="${H-6}" text-anchor="end" font-size="9" fill="#8ba0c4">${fmtShort(data[data.length-1].date)}</text>
   </svg>
-  ${chartFilter==="all" ? `<div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:10px;color:#8ba0c4">
-    <span>● <span style="color:#4ea8ff">Day 1</span></span><span>● <span style="color:#f5c451">Day 2</span></span></div>` : ""}`;
+  ${chartFilter==="all" ? `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;font-size:10px;color:#8ba0c4">
+    ${planConfig.dayOrder.map(day=>`<span style="color:${dayColor(day)}">● ${escAttr(PLANNAME(day))}</span>`).join("")}</div>` : ""}`;
 }
 
 /* ================= Export / Import ================= */
@@ -1806,11 +2018,11 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   const ok=await askConfirm("Beta-Daten zurücksetzen?","Trainingshistorie, Entwürfe und angepasste Pläne dieser Beta werden gelöscht und auf den Ausgangszustand gesetzt.","Beta zurücksetzen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
+  planConfig=defaultPlanConfig(); saveJSON(PLAN_KEY,planConfig);
   tStop();
-  currentDay="1"; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; planEditMode=false; clearFormMeta();
-  document.querySelectorAll(".day-btn").forEach(x=>x.classList.toggle("active",x.dataset.day==="1"));
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; planEditMode=false; chartFilter="all"; clearFormMeta();
   $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
-  renderExercises(); renderHistory(); toast("Beta-Daten zurückgesetzt ✓");
+  renderDayPicker(); renderChartFilters(); renderExercises(); renderHistory(); renderDashboard(); renderSetup(); updateBrand(); toast("Beta-Daten zurückgesetzt ✓");
 });
 
 function download(filename, text, mime){
@@ -1847,8 +2059,8 @@ $("#btn-csv").addEventListener("click",()=>{
 });
 
 $("#btn-backup").addEventListener("click",()=>{
-  const payload = {app:"hesselink-beta", version:3, exported:new Date().toISOString(),
-    templates, log: loadLog()};
+  const payload = {app:"hesselink-beta", version:4, exported:new Date().toISOString(),
+    planConfig, templates, log: loadLog()};
   download(`hesselink-beta-backup-${todayISO()}.json`, JSON.stringify(payload,null,2), "application/json");
   toast("Backup exportiert ✓");
 });
@@ -1865,7 +2077,14 @@ $("#import-file").addEventListener("change",ev=>{
       const ids = new Set(existing.map(e=>e.id));
       const merged = existing.concat(p.log.filter(e=>!ids.has(e.id)));
       saveLog(merged);
-      if(p.templates){ templates = p.templates; saveJSON(TPL_KEY,templates); renderExercises(); }
+      if(p.templates){
+        templates=p.templates; saveJSON(TPL_KEY,templates);
+        planConfig=p.planConfig&&Array.isArray(p.planConfig.dayOrder)?p.planConfig:{id:"imported",name:"Importierter Trainingsplan",versionId:"imported-"+Date.now(),
+          dayOrder:Object.keys(templates),dayNames:Object.fromEntries(Object.keys(templates).map((day,idx)=>[day,`Day ${idx+1}`]))};
+        if(!planConfig.versionId) planConfig.versionId="imported-"+Date.now();
+        saveJSON(PLAN_KEY,planConfig); currentDay=planConfig.dayOrder[0]; chartFilter="all";
+        renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
+      }
       renderHistory();
       toast(`Import ✓ (${merged.length} Einheiten gesamt)`);
     }catch(e){ toast("Import fehlgeschlagen – falsche Datei?"); }
@@ -1881,7 +2100,13 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2000);
 }
 $("#f-date").value = todayISO();
+renderDayPicker();
+renderChartFilters();
+updateBrand();
 renderExercises();
+renderDashboard();
+renderSetup();
+setView("dashboard");
 </script>
 </body>
 </html>
