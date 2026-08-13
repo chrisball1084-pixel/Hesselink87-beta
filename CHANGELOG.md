@@ -1,5 +1,27 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 8
+
+### Was wurde verändert?
+
+- **Gewichte übernehmen** kopiert weiterhin Warm-up und Arbeitssatzgewichte, öffnet aber kein Zahlenfeld und keine iPhone-Tastatur mehr.
+- Nach der Übernahme ist die Warm-up-Zeile statt Satz 1 markiert.
+- Der Abschlussbildschirm führt über **Zur Historie** direkt zur gespeicherten Einheit; die Trainingsansicht öffnet sich nicht erneut.
+- Der Menüpunkt **Verlauf** heißt jetzt durchgängig **Historie**; die Volumengrafik ist als **Volumenentwicklung** bezeichnet.
+
+### Datenkompatibilität
+
+Die Änderungen betreffen ausschließlich Fokussteuerung und Navigation. Trainingsdaten, Entwürfe, Pläne und historische Einheiten behalten ihre bisherigen Formate.
+
+### Getestet
+
+- Gewichtsübernahme inklusive Warm-up und Arbeitssätzen
+- kein fokussiertes Zahlenfeld nach der Übernahme
+- aktive Warm-up-Zeile statt Satz 1
+- Trainingsabschluss, Erfolgsbildschirm und Navigation zur Historie
+- mobile Browser-Tests bei 390 × 844 und 320 × 700 Pixeln
+- kein horizontales Überlaufen mit der Bezeichnung **Historie**
+
 ## v1.3 Beta – Testpaket 7
 
 ### Was wurde verändert?

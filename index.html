@@ -460,7 +460,7 @@
 <div class="tabs">
   <div class="tab active" data-view="dashboard">Übersicht</div>
   <div class="tab" data-view="log">Training</div>
-  <div class="tab" data-view="history">Verlauf</div>
+  <div class="tab" data-view="history">Historie</div>
   <div class="tab" data-view="setup">Setup</div>
 </div>
 
@@ -583,7 +583,7 @@
   </div>
 
   <div class="chart-card">
-    <div class="card-head"><span class="bar"></span><h2>Volumen-Verlauf</h2></div>
+    <div class="card-head"><span class="bar"></span><h2>Volumenentwicklung</h2></div>
     <div class="chart-filters">
       <button class="cf-btn active" data-cf="all" type="button">Alle</button>
       <span id="chart-day-filters"></span>
@@ -669,7 +669,7 @@
       <div id="d-prog-lines"></div>
     </div>
     <div class="d-quote" id="d-quote"></div>
-    <button class="d-close" id="d-close" type="button">Weiter so! 🔥</button>
+    <button class="d-close" id="d-close" type="button">Zur Historie</button>
   </div>
 </div>
 
@@ -680,7 +680,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 907;
+const APP_VERSION = 908;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -1408,7 +1408,9 @@ function bindExerciseEvents(){
     b.addEventListener("click",()=>openLibrary(+b.dataset.swap));
   });
   document.querySelectorAll("[data-copy-last]").forEach(b=>{
-    b.addEventListener("click",()=>{
+    b.addEventListener("click",e=>{
+      e.preventDefault();
+      if(document.activeElement instanceof HTMLElement) document.activeElement.blur();
       const i = +b.dataset.copyLast, src = exerciseSource(), ex = src[i];
       const prev = lastEntryForDay(currentDay);
       const p = prev && prev.sets.find(s=>(s.name||"").trim().toLowerCase()===(sourceName(ex)||"").trim().toLowerCase());
@@ -1425,7 +1427,7 @@ function bindExerciseEvents(){
           const inp=document.querySelector(`input[data-ex="${i}"][data-f="kg${k}"]`); if(inp) inp.dataset.touched="1";
         }
       });
-      updateVolume(i); updateExerciseSummary(i); saveDraftNow(); setActiveExercise(i,false); setActiveSet(i,"1",true);
+      updateVolume(i); updateExerciseSummary(i); saveDraftNow(); setActiveExercise(i,false); setActiveSet(i,"warm",false);
       toast("Letzte Gewichte übernommen ✓");
     });
   });
@@ -1776,8 +1778,8 @@ $("#btn-save").addEventListener("click", async ()=>{
   const ok = await askConfirm(
     openCount ? `${openCount} ${openCount===1?"Übung ist":"Übungen sind"} noch offen` : "Training beenden?",
     openCount
-      ? `Wenn du jetzt beendest, werden offene Übungen nicht automatisch als abgeschlossen markiert. Gespeichert werden ${sets.length} tatsächlich bearbeitete ${sets.length===1?"Übung":"Übungen"}. Du kannst die Einheit später im Verlauf bearbeiten.`
-      : `Alle ${totalCount} Übungen sind abgeschlossen. Das Training wird jetzt gespeichert und kann später im Verlauf bearbeitet werden.`,
+      ? `Wenn du jetzt beendest, werden offene Übungen nicht automatisch als abgeschlossen markiert. Gespeichert werden ${sets.length} tatsächlich bearbeitete ${sets.length===1?"Übung":"Übungen"}. Du kannst die Einheit später in der Historie bearbeiten.`
+      : `Alle ${totalCount} Übungen sind abgeschlossen. Das Training wird jetzt gespeichert und kann später in der Historie bearbeitet werden.`,
     "Beenden & speichern"
   );
   if(!ok) return;
@@ -1802,6 +1804,7 @@ $("#btn-save").addEventListener("click", async ()=>{
   const arr = loadLog(); arr.push(entry); saveLog(arr);
   clearDraft(currentDay);
   clearFormMeta();
+  tStop();
   activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   showDone(entry, prev, prevMaxByEx);
   renderExercises();
@@ -1887,7 +1890,11 @@ function showDone(entry, prev, prevMaxByEx){
   $("#d-sub").textContent = `${entry.dayName} · ${fmtDate(entry.date)}`;
   $("#done-bg").classList.add("show");
 }
-$("#d-close").addEventListener("click",()=>$("#done-bg").classList.remove("show"));
+$("#d-close").addEventListener("click",()=>{
+  $("#done-bg").classList.remove("show");
+  setView("history");
+  window.scrollTo({top:0,behavior:"auto"});
+});
 
 /* ================= Pausentimer ================= */
 const T_PRESETS = [120];
