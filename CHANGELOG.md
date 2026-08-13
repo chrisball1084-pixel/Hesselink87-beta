@@ -1,5 +1,30 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 7
+
+### Was wurde verändert?
+
+- Die Übungsbibliothek ist in klar erkennbare Muskelgruppen mit eigenen Überschriften gegliedert.
+- Abgeschlossene Übungen lassen sich wieder öffnen und korrigieren, ohne ihren Abschlussstatus zu verlieren.
+- Beim Hinzufügen einer weiteren Übung bleiben abgeschlossene Karten geschlossen; nach der Auswahl wird gezielt zur neuen Übung gescrollt.
+- Der Pausentimer ist als gut sichtbares, mitlaufendes Feld in den Trainingsfluss integriert.
+- Nach dem Abschluss einer Übung startet automatisch eine zweiminütige Pause. Zwischen Sätzen lässt sich dieselbe Pause weiterhin manuell starten und jederzeit abbrechen.
+- Der Abschlussdialog nennt offene Übungen verständlich und erklärt ausdrücklich, dass sie nicht automatisch als abgeschlossen markiert werden.
+
+### Datenkompatibilität
+
+Trainingspläne, laufende Entwürfe, Timer-Endzeitpunkt und historische Workouts behalten ihre bisherigen Datenformate.
+
+### Getestet
+
+- JavaScript-Syntax und Git-Diff-Prüfung
+- gruppierte Bibliothek mit Suche und Muskelgruppenfilter
+- Wiederöffnen und Bearbeiten abgeschlossener Übungen
+- Hinzufügen einer sechsten Übung ohne unerwartetes Aufklappen
+- automatischer und manueller 2-Minuten-Timer inklusive Abbruch und Wiederherstellung
+- verständliche Abschlusswarnung bei offenen Übungen
+- mobile Browser-Tests bei 390 × 844 und 320 × 700 Pixeln
+
 ## v1.2 Beta – Testpaket 6
 
 ### Was wurde verändert?
