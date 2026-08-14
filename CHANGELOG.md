@@ -1,5 +1,42 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 15
+
+### Was wurde verändert?
+
+- Das vollständige Backup verwendet jetzt Format 5 und enthält neben Trainingsplan und Historie auch laufende Workout-Entwürfe.
+- Aktiver Trainingstag, aktuelle Übung, aktueller Satz, offene Übungskarten und Session-Angaben werden über den vorhandenen Entwurf mitgesichert.
+- Nur für das aktuelle Workout ersetzte Übungen werden gesichert und nach dem Import wiederhergestellt.
+- Ein noch laufender Pausentimer wird ins Backup aufgenommen; abgelaufene Timer werden beim Import bewusst nicht neu gestartet.
+- Vor der Wiederherstellung erklärt eine Sicherheitsabfrage, ob lokale Trainingsentwürfe ersetzt werden.
+- Historieneinträge werden weiterhin anhand ihrer ID ohne Duplikate ergänzt; bestehende lokale Einträge werden nicht überschrieben.
+- Ältere Backups ohne Workout-Entwürfe bleiben importierbar und löschen vorhandene lokale Entwürfe nicht.
+- Das Autosave ist während des abschließenden Import-Neuladens gesperrt, damit es den gerade wiederhergestellten Entwurf nicht überschreiben kann.
+- Ein automatisierter Browser-Regressionslauf prüft Backup und Wiederherstellung sowie zentrale Trainings-, Historien- und Setup-Abläufe bei 390 × 844 und 320 × 700 Pixeln.
+
+### Datenkompatibilität
+
+Das neue Backup-Format ist rückwärtskompatibel. Vorhandene lokale Datenformate für Trainingsplan, Historie, Entwürfe und Timer bleiben unverändert. Backups bis einschließlich Format 4 können weiterhin importiert werden; da sie keine Entwürfe enthalten, bleiben lokale laufende Workouts dabei erhalten.
+
+### Automatisiert getestet
+
+- vollständiger Export eines laufenden Day-2-Workouts inklusive temporärer Ersatzübung und Timer
+- Wiederherstellung des aktiven Trainingstags, des aktuellen Satzes und der gesperrten abgeschlossenen Übungen
+- Warnung und kontrolliertes Ersetzen eines lokalen Entwurfskonflikts
+- verlustfreie Zusammenführung der Historie ohne doppelte Einträge
+- Import eines älteren Format-4-Backups ohne Löschen lokaler Entwürfe
+- Historienbearbeitung mit vollständig geöffneten Übungen
+- Setup-Reihenfolge und horizontaler Überlauf auf zwei mobilen Viewports
+- keine Browser- oder JavaScript-Fehler im kompletten Testlauf
+
+### Auf dem iPhone zu testen
+
+- Day 1 teilweise ausfüllen und gegebenenfalls eine Übung nur für heute ersetzen
+- Backup exportieren und die Datei sicher aufbewahren
+- Beta-Daten zurücksetzen
+- Backup importieren und die Sicherheitsabfrage bestätigen
+- kontrollieren, dass das laufende Workout exakt an der vorherigen Stelle fortgesetzt werden kann
+
 ## v1.3 Beta – Testpaket 14
 
 ### Was wurde verändert?

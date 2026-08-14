@@ -722,7 +722,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 914;
+const APP_VERSION = 915;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -743,7 +743,9 @@ const OLD_LOG   = "hesselink_beta_log_v1";
 const DRAFT_KEY = "hesselink_beta_draft_v1";
 const TIMER_KEY = "hesselink_beta_timer_v1";
 const PLAN_KEY  = "hesselink_beta_plan_config_v1";
+const RESTORE_DAY_KEY = "hesselink_beta_restore_day_v1";
 const KG_STEP   = 2.5;
+const BACKUP_FORMAT_VERSION = 5;
 
 const EXERCISE_LIBRARY = [
   {id:"leg-press",n:"Beinpresse",muscle:"Beine",goal:"10–15"},
@@ -874,6 +876,38 @@ const $ = s => document.querySelector(s);
 const loadJSON = (k,fb) => { try{ const v=JSON.parse(localStorage.getItem(k)); return v??fb }catch(e){ return fb } };
 const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 
+/* TESTABLE_BACKUP_HELPERS_START */
+function isObjectRecord(value){ return !!value && typeof value==="object" && !Array.isArray(value); }
+function draftHasMeaningfulData(draft){
+  if(!isObjectRecord(draft)) return false;
+  if(draft.weight || draft.energy || draft.note || Object.keys(draft.exerciseOverrides||{}).length) return true;
+  return (Array.isArray(draft.sets)?draft.sets:[]).some(set=>{
+    if(!isObjectRecord(set)) return false;
+    if(set.done || set.wkg || set.wwdh) return true;
+    if(Array.isArray(set.workSets) && set.workSets.some(s=>s&&(s.kg||s.reps))) return true;
+    return Object.keys(set).some(key=>/^(kg|wdh)\d+$/.test(key) && set[key]!=="" && set[key]!==null && set[key]!==undefined);
+  });
+}
+function meaningfulDraftCount(drafts){
+  return isObjectRecord(drafts) ? Object.values(drafts).filter(draftHasMeaningfulData).length : 0;
+}
+function validateBackupPayload(payload){
+  if(!isObjectRecord(payload) || payload.app!=="hesselink-beta" || !Array.isArray(payload.log)) throw new Error("Format");
+  if(payload.templates!==undefined && !isObjectRecord(payload.templates)) throw new Error("Format");
+  const version=Number(payload.version)||1;
+  return {version,hasDraftSnapshot:version>=5&&isObjectRecord(payload.drafts)};
+}
+function mergeBackupLogs(existing, imported){
+  const current=Array.isArray(existing)?existing:[], incoming=Array.isArray(imported)?imported:[];
+  const ids=new Set(current.map(entry=>entry&&entry.id));
+  return current.concat(incoming.filter(entry=>entry&&!ids.has(entry.id)));
+}
+function restorableBackupTimer(timer, now=Date.now()){
+  if(!isObjectRecord(timer) || Number(timer.endAt)<=now) return null;
+  return {endAt:Number(timer.endAt),tIdx:Math.max(0,Number(timer.tIdx)||0),timerExIdx:timer.timerExIdx===null?null:String(timer.timerExIdx)};
+}
+/* TESTABLE_BACKUP_HELPERS_END */
+
 let templates  = loadJSON(TPL_KEY, null) || JSON.parse(JSON.stringify(DEFAULT_TPL));
 const storedPlanConfig = loadJSON(PLAN_KEY, null);
 let planConfig = storedPlanConfig || defaultPlanConfig();
@@ -896,7 +930,9 @@ Object.values(templates).forEach(day=>day.forEach(ex=>{
   templateIdsChanged = true;
 }));
 if(templateIdsChanged) saveJSON(TPL_KEY,templates);
-let currentDay = planConfig.dayOrder[0];
+const restoredDay=sessionStorage.getItem(RESTORE_DAY_KEY);
+let currentDay = planConfig.dayOrder.includes(restoredDay)?restoredDay:planConfig.dayOrder[0];
+sessionStorage.removeItem(RESTORE_DAY_KEY);
 let editing    = null;
 let chartFilter = "all";
 let sessionExpanded = false;
@@ -913,6 +949,7 @@ let editingReturnDay = null;
 let setupPlanDraft = null;
 let setupPlanDay = null;
 let setupPlanDirty = false;
+let suppressDraftSave = false;
 
 /* ---- Migration alter v1-Einträge ---- */
 (function migrate(){
@@ -1003,7 +1040,7 @@ function lastEntryForDay(day, excludeId){
 /* ================= Entwurf (Autosave) ================= */
 function loadDrafts(){ return loadJSON(DRAFT_KEY, {}); }
 function saveDraftNow(){
-  if(editing) return; // im Bearbeitungsmodus keinen Entwurf überschreiben
+  if(editing || suppressDraftSave) return; // Import/Editor dürfen keinen Entwurf überschreiben
   const drafts = loadDrafts();
   const previousDraft=drafts[currentDay]||{};
   const workoutSource=workoutExerciseSource(currentDay);
@@ -1213,8 +1250,7 @@ function renderTodayCard(){
   const weekCount = arr.filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO())).length;
   const last = lastEntryForDay(currentDay);
   const draft = loadDrafts()[currentDay];
-  const hasDraft = !!(draft && ((draft.sets||[]).some(s=>s && (s.done||hasSetValues(s)))
-    || Object.keys(draft.exerciseOverrides||{}).length || draft.weight || draft.energy || draft.note));
+  const hasDraft = draftHasMeaningfulData(draft);
   $("#today-title").textContent = PLANNAME();
   $("#today-week").textContent = `${weekCount} von ${planConfig.dayOrder.length} Einheiten`;
   $("#today-last").textContent = last ? `${fmtShort(last.date)} · ${Math.round(sessionVolume(last)).toLocaleString("de-DE")} kg` : "Noch kein Eintrag";
@@ -1626,8 +1662,7 @@ function bindExerciseEvents(){
 const PLANNAME = (day=currentDay) => planConfig.dayNames[day] || `Day ${planConfig.dayOrder.indexOf(day)+1}`;
 
 function meaningfulDraft(day){
-  const d=loadDrafts()[day];
-  return !!(d&&((d.sets||[]).some(s=>s&&(s.done||hasSetValues(s)))||Object.keys(d.exerciseOverrides||{}).length||d.weight||d.energy||d.note));
+  return draftHasMeaningfulData(loadDrafts()[day]);
 }
 function nextPlannedDay(){
   const draftDay=planConfig.dayOrder.find(meaningfulDraft);
@@ -1872,8 +1907,7 @@ function updateResumeBanner(){
   if(!d){ banner.classList.remove("show"); return; }
   const total = templates[currentDay].length;
   const done  = (d.sets||[]).filter(s=>s && s.done).length;
-  const hasAnyValue = (d.sets||[]).some(s=>hasSetValues(s))
-    || Object.keys(d.exerciseOverrides||{}).length || d.weight || d.energy || d.note;
+  const hasAnyValue = draftHasMeaningfulData(d);
   if(!hasAnyValue){ banner.classList.remove("show"); return; }
   $("#resume-sub").textContent = `${PLANNAME()} · ${done}/${total} Übungen abgeschlossen`;
   banner.classList.add("show");
@@ -2421,23 +2455,34 @@ $("#btn-csv").addEventListener("click",()=>{
 });
 
 $("#btn-backup").addEventListener("click",()=>{
-  const payload = {app:"hesselink-beta", version:4, exported:new Date().toISOString(),
-    planConfig, templates, log: loadLog()};
+  saveDraftNow();
+  const payload = {app:"hesselink-beta", version:BACKUP_FORMAT_VERSION, exported:new Date().toISOString(),
+    planConfig, templates, log:loadLog(), drafts:loadDrafts(), timer:loadJSON(TIMER_KEY,null), activeDay:currentDay};
   download(`hesselink-beta-backup-${todayISO()}.json`, JSON.stringify(payload,null,2), "application/json");
-  toast("Backup exportiert ✓");
+  const draftCount=meaningfulDraftCount(payload.drafts);
+  toast(draftCount?`Backup inkl. ${draftCount} laufendem Workout ✓`:"Backup exportiert ✓");
 });
 
 $("#btn-import").addEventListener("click",()=>$("#import-file").click());
 $("#import-file").addEventListener("change",ev=>{
   const file = ev.target.files[0]; if(!file) return;
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
     try{
       const p = JSON.parse(r.result);
-      if(p.app!=="hesselink-beta" || !Array.isArray(p.log)) throw new Error("Format");
+      const backupInfo=validateBackupPayload(p);
+      const backupDraftCount=backupInfo.hasDraftSnapshot?meaningfulDraftCount(p.drafts):0;
+      const localDraftCount=meaningfulDraftCount(loadDrafts());
+      const restoredDraftText=backupDraftCount===1?"1 laufendes Workout wird aus dem Backup wiederhergestellt.":`${backupDraftCount} laufende Workouts werden aus dem Backup wiederhergestellt.`;
+      const replacedDraftText=localDraftCount===1?" 1 lokaler Trainingsentwurf wird dabei ersetzt.":` ${localDraftCount} lokale Trainingsentwürfe werden dabei ersetzt.`;
+      const draftText=backupInfo.hasDraftSnapshot
+        ? `${backupDraftCount?restoredDraftText:"Das Backup enthält kein laufendes Workout."}${localDraftCount?replacedDraftText:""}`
+        : "Dieses ältere Backup enthält keine laufenden Workouts; vorhandene lokale Entwürfe bleiben erhalten.";
+      const ok=await askConfirm("Backup wiederherstellen?",`${draftText} Der Trainingsplan wird aus dem Backup übernommen. Deine vorhandene Historie bleibt erhalten und wird ergänzt.`,"Backup importieren");
+      if(!ok) return;
+      suppressDraftSave=true;
       const existing = loadLog();
-      const ids = new Set(existing.map(e=>e.id));
-      const merged = existing.concat(p.log.filter(e=>!ids.has(e.id)));
+      const merged = mergeBackupLogs(existing,p.log);
       saveLog(merged);
       if(p.templates){
         templates=p.templates; saveJSON(TPL_KEY,templates);
@@ -2446,11 +2491,19 @@ $("#import-file").addEventListener("change",ev=>{
         if(!planConfig.versionId) planConfig.versionId="imported-"+Date.now();
         saveJSON(PLAN_KEY,planConfig); currentDay=planConfig.dayOrder[0]; chartFilter="all";
         setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
-        renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
       }
-      renderHistory();
-      toast(`Import ✓ (${merged.length} Einheiten gesamt)`);
-    }catch(e){ toast("Import fehlgeschlagen – falsche Datei?"); }
+      if(backupInfo.hasDraftSnapshot){
+        saveJSON(DRAFT_KEY,p.drafts);
+        const restoredTimer=restorableBackupTimer(p.timer);
+        if(restoredTimer) saveJSON(TIMER_KEY,restoredTimer); else localStorage.removeItem(TIMER_KEY);
+        const preferredDay=String(p.activeDay||"");
+        const firstDraftDay=planConfig.dayOrder.find(day=>draftHasMeaningfulData(p.drafts[day]));
+        currentDay=planConfig.dayOrder.includes(preferredDay)?preferredDay:(firstDraftDay||planConfig.dayOrder[0]);
+        sessionStorage.setItem(RESTORE_DAY_KEY,currentDay);
+      }
+      toast(`Backup wiederhergestellt ✓ (${merged.length} Einheiten)`);
+      setTimeout(()=>window.location.reload(),700);
+    }catch(e){ suppressDraftSave=false; toast("Import fehlgeschlagen – falsche Datei?"); }
   };
   r.readAsText(file);
   ev.target.value = "";
