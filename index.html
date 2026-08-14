@@ -121,17 +121,14 @@
   .setup-plan-discard{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);padding:0 14px}
   .setup-plan-status{min-height:18px;margin-top:9px;color:var(--muted);font-size:11px}
 
-  .picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
-  .picker.days-3{flex-wrap:nowrap;gap:6px}
-  .picker.days-3 .day-btn{flex:1 1 0;min-width:0;padding:12px 6px;text-align:center}
-  .picker.days-3 .day-btn .d-name{font-size:14px;white-space:nowrap}
-  .picker.days-3 .day-btn .d-lbl{font-size:8px;letter-spacing:.5px}
-  .day-btn{flex:1 1 calc(50% - 5px);padding:14px 12px;border-radius:14px;border:1px solid var(--line);
-    background:var(--panel-2);color:var(--ink);text-align:left;cursor:pointer;font-family:inherit}
+  .picker{display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .picker::-webkit-scrollbar{display:none}
+  .day-btn{flex:1 0 auto;min-width:88px;padding:9px 10px;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--ink);text-align:center;cursor:pointer;font-family:inherit}
   .day-btn.active{border-color:var(--blue);background:linear-gradient(135deg,#0e1e3c,#0a1730);
     box-shadow:0 0 0 1px var(--blue) inset,0 6px 18px rgba(43,143,255,.15)}
-  .day-btn .d-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700}
-  .day-btn .d-name{font-size:17px;font-weight:900;font-style:italic;margin-top:2px}
+  .day-btn .d-lbl{font-size:8px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-weight:700}
+  .day-btn .d-name{font-size:12px;font-weight:900;margin-top:2px;white-space:nowrap}
   .day-btn.active .d-name{color:var(--blue-bright)}
 
   .edit-banner{display:none;background:linear-gradient(90deg,#3a2a08,#241a05);
@@ -276,16 +273,9 @@
   .ex.done.editing-completed{opacity:1;border-color:var(--blue)}
   .ex.done.editing-completed .ex-done-btn{background:rgba(40,199,111,.1);color:var(--good)}
 
-  .pause-hint{display:none;align-items:center;justify-content:space-between;gap:8px;
-    margin:4px 12px 8px;padding:9px 12px;border-radius:10px;
-    background:linear-gradient(90deg,#0e2036,#0a1626);border:1px solid var(--blue-deep);
-    font-size:12px;font-weight:800;color:var(--blue-bright)}
-  .pause-hint.show{display:flex}
-  .pause-hint .ph-cancel{background:transparent;border:1px solid var(--line);color:var(--muted);
-    border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;min-height:44px}
-
   .vol-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
     border-top:1px solid var(--line);background:#0c1526}
+  .vol-meta{display:flex;align-items:center;gap:8px;min-width:0}
   .vol-lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
   .vol-val{font-size:14px;font-weight:900;color:var(--blue-bright);font-variant-numeric:tabular-nums}
 
@@ -324,12 +314,9 @@
     box-shadow:0 6px 20px rgba(43,143,255,.35)}
   .btn-ghost{flex:0 0 auto;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
-  /* ---------- Pausentimer ---------- */
+  /* ---------- Pausentimer in der aktiven Übung ---------- */
   #view-log{padding-bottom:104px}
-  .timer-panel{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:29;
-    width:min(calc(100% - 28px),692px);display:flex;align-items:center;gap:10px;margin:0;padding:9px 12px;
-    border:1px solid rgba(255,204,102,.34);border-radius:var(--radius);background:linear-gradient(135deg,rgba(86,65,24,.42),#0a1626 72%);
-    box-shadow:0 10px 28px rgba(0,0,0,.42);backdrop-filter:blur(12px)}
+  .timer-panel{display:none!important}
   .timer-copy{flex:1;min-width:0}
   .timer-copy strong{display:block;font-size:13px;color:var(--warm)}
   .timer-copy small{display:block;margin-top:2px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -344,6 +331,26 @@
   .timer-x{display:none;min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);
     background:var(--panel);color:var(--muted);font-size:14px;cursor:pointer;font-family:inherit;padding:0}
   .timer-x.show{display:block}
+  .card-timer{display:none;align-items:center;gap:5px;flex:0 0 auto}
+  .card-timer.show{display:flex}
+  .card-timer-main{min-width:70px;min-height:36px;border-radius:18px;padding:6px 10px;border:1px solid rgba(19,200,239,.35);
+    background:rgba(19,200,239,.08);color:var(--blue-bright);font:900 12px inherit;font-variant-numeric:tabular-nums;cursor:pointer}
+  .card-timer-main.running{background:rgba(43,143,255,.18);border-color:var(--blue);color:#bfeaff}
+  .card-timer-main.finished{background:rgba(55,214,172,.14);border-color:var(--good);color:var(--good)}
+  .card-timer-x{display:none;min-width:36px;min-height:36px;border-radius:18px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:800 16px inherit;cursor:pointer}
+  .card-timer-x.show{display:block}
+
+  .onboarding-modal{max-width:520px}
+  .onboarding-step{font-size:10px;color:var(--blue-bright);font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+  .onboarding-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+  .onboarding-option{min-height:58px;border-radius:13px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:900 15px inherit;cursor:pointer}
+  .onboarding-option.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright);box-shadow:inset 0 0 0 1px var(--blue)}
+  .onboarding-preview{border:1px solid rgba(19,200,239,.3);background:var(--blue-soft);border-radius:15px;padding:14px;margin:14px 0}
+  .onboarding-preview strong{display:block;font-size:16px}
+  .onboarding-preview span{display:block;color:var(--muted);font-size:12px;line-height:1.45;margin-top:5px}
+  .onboarding-actions{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;margin-top:14px}
+  .onboarding-actions .m-btn{min-height:48px}
+  .setup-onboarding{width:100%;min-height:44px;margin-top:11px;border:1px solid var(--blue);border-radius:11px;background:transparent;color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
 
   .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 8px;text-align:center}
@@ -444,6 +451,7 @@
   .modal .m-btn{flex:1;padding:13px;border-radius:12px;border:none;font-weight:800;
     font-size:14px;cursor:pointer;font-family:inherit}
   .modal .m-cancel{background:var(--panel-2);color:var(--ink);border:1px solid var(--line)}
+  .modal .m-ok{background:linear-gradient(135deg,var(--blue-bright),var(--blue));color:#001018}
   .modal .m-danger{background:var(--danger);color:#fff}
 
   .done-bg{position:fixed;inset:0;background:rgba(4,8,16,.88);z-index:65;display:none;
@@ -537,7 +545,7 @@
 
   <div class="picker" id="day-picker"></div>
 
-  <div class="today-card" id="today-card">
+  <div class="today-card" id="today-card" style="display:none">
     <div class="today-top">
       <div>
         <div class="today-kicker">Heute</div>
@@ -637,6 +645,7 @@
 <!-- ============ SETUP VIEW ============ -->
 <div class="view" id="view-setup">
   <div class="setup-current" id="setup-current"></div>
+  <button class="setup-onboarding" id="setup-onboarding" type="button">Einrichtung erneut starten</button>
   <div class="card">
     <div class="card-head"><span class="bar"></span><h2>Trainingssplit wählen</h2></div>
     <p class="dash-sub" style="margin:0 0 13px">Wähle zuerst eine Vorlage und passe die Übungen anschließend darunter an.</p>
@@ -664,6 +673,21 @@
 <div class="save-bar" id="save-bar" style="display:none">
   <button class="btn btn-primary" id="btn-save" type="button">Training beenden</button>
   <button class="btn btn-ghost" id="btn-clear" type="button">Reset</button>
+</div>
+
+<!-- Anfänger-Einrichtung -->
+<div class="modal-bg" id="onboarding-bg">
+  <div class="modal onboarding-modal">
+    <div class="onboarding-step" id="onboarding-step">Schritt 1 von 3</div>
+    <div class="m-title" id="onboarding-title">Wie oft möchtest du trainieren?</div>
+    <div class="m-txt" id="onboarding-text">Wähle dein realistisches Wochenziel. Du kannst es später im Setup ändern.</div>
+    <div class="onboarding-options" id="onboarding-options"></div>
+    <div class="onboarding-preview" id="onboarding-preview" hidden></div>
+    <div class="onboarding-actions">
+      <button class="m-btn m-cancel" id="onboarding-back" type="button">Zurück</button>
+      <button class="m-btn m-ok" id="onboarding-next" type="button">Weiter</button>
+    </div>
+  </div>
 </div>
 
 <!-- Bestätigungsdialog -->
@@ -722,7 +746,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 915;
+const APP_VERSION = 916;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -744,6 +768,8 @@ const DRAFT_KEY = "hesselink_beta_draft_v1";
 const TIMER_KEY = "hesselink_beta_timer_v1";
 const PLAN_KEY  = "hesselink_beta_plan_config_v1";
 const RESTORE_DAY_KEY = "hesselink_beta_restore_day_v1";
+const ONBOARDING_KEY = "hesselink_beta_onboarding_v1";
+const hadExistingAppData = [TPL_KEY,LOG_KEY,OLD_LOG,DRAFT_KEY,PLAN_KEY].some(key=>localStorage.getItem(key)!==null);
 const KG_STEP   = 2.5;
 const BACKUP_FORMAT_VERSION = 5;
 
@@ -814,13 +840,17 @@ const DEFAULT_TPL = {
 };
 
 const SPLIT_PRESETS = {
+  fullbody1:{
+    name:"Ganzkörper · 1 Workout", short:"1er Ganzkörper", description:"Ein Ganzkörpertraining, das an jedem Trainingstag wiederholt wird.",
+    weeklyTarget:2, dayOrder:["1"], dayNames:{"1":"Ganzkörper"}, templates:{"1":DEFAULT_TPL["1"]},
+  },
   fullbody2:{
     name:"Ganzkörper · 2 Tage", short:"2er Ganzkörper", description:"Einfacher Einstieg mit zwei Ganzkörpereinheiten pro Woche.",
-    dayOrder:["1","2"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}, templates:DEFAULT_TPL,
+    weeklyTarget:2, dayOrder:["1","2"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}, templates:DEFAULT_TPL,
   },
   ppl3:{
     name:"Push / Pull / Legs · 3 Tage", short:"Push / Pull / Legs", description:"Drei klar getrennte Einheiten für Drücken, Ziehen und Beine.",
-    dayOrder:["1","2","3"], dayNames:{"1":"Push","2":"Pull","3":"Legs"}, templates:{
+    weeklyTarget:3, dayOrder:["1","2","3"], dayNames:{"1":"Push","2":"Pull","3":"Legs"}, templates:{
       "1":[
         {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},{id:"incline-dumbbell",n:"Schrägbankdrücken Kurzhantel",goal:"8–12"},
         {id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},{id:"lateral-raise",n:"Seitheben",goal:"10–15"},{id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
@@ -835,9 +865,22 @@ const SPLIT_PRESETS = {
       ],
     },
   },
+  upperlower2:{
+    name:"Upper / Lower · 2 Workouts", short:"Upper / Lower", description:"Zwei Einheiten, die fortlaufend im Wechsel trainiert werden.",
+    weeklyTarget:4, dayOrder:["1","2"], dayNames:{"1":"Upper","2":"Lower"}, templates:{
+      "1":[
+        {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},{id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},
+        {id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},{id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},{id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
+      ],
+      "2":[
+        {id:"leg-press",n:"Beinpresse",goal:"10–15"},{id:"romanian-deadlift",n:"Rumänisches Kreuzheben",goal:"8–12"},
+        {id:"leg-curl",n:"Beinbeuger Maschine",goal:"10–15"},{id:"calf-raise",n:"Wadenheben",goal:"10–15"},{id:"leg-raise",n:"Beinheben (Bauch)",goal:"frei"},
+      ],
+    },
+  },
   upperlower4:{
     name:"Upper / Lower · 4 Tage", short:"Upper / Lower", description:"Vier Einheiten mit zwei Oberkörper- und zwei Unterkörpertagen.",
-    dayOrder:["1","2","3","4"], dayNames:{"1":"Upper A","2":"Lower A","3":"Upper B","4":"Lower B"}, templates:{
+    weeklyTarget:4, dayOrder:["1","2","3","4"], dayNames:{"1":"Upper A","2":"Lower A","3":"Upper B","4":"Lower B"}, templates:{
       "1":[
         {id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},{id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},
         {id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},{id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},{id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
@@ -859,7 +902,7 @@ const SPLIT_PRESETS = {
 };
 
 const defaultPlanConfig = () => ({id:"fullbody2",name:SPLIT_PRESETS.fullbody2.name,versionId:"legacy",
-  dayOrder:["1","2"],dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}});
+  weeklyTarget:2,dayOrder:["1","2"],dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}});
 
 const QUOTES = [
   '\u201eIntensit\u00e4t schl\u00e4gt Volumen.\u201c \u2013 Heavy-Duty-Prinzip',
@@ -916,6 +959,7 @@ if(!storedPlanConfig && JSON.stringify(templates)!==JSON.stringify(DEFAULT_TPL))
 }
 if(!Array.isArray(planConfig.dayOrder) || !planConfig.dayOrder.length){ planConfig=defaultPlanConfig(); }
 if(!planConfig.versionId) planConfig.versionId="legacy";
+planConfig.weeklyTarget=Math.max(1,Math.min(7,Number(planConfig.weeklyTarget)||planConfig.dayOrder.length));
 planConfig.dayOrder=planConfig.dayOrder.filter(day=>Array.isArray(templates[day]));
 Object.keys(templates).forEach(day=>{ if(!planConfig.dayOrder.includes(day)) planConfig.dayOrder.push(day); });
 if(!planConfig.dayOrder.length){ templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); planConfig=defaultPlanConfig(); }
@@ -1246,13 +1290,14 @@ function targetText(s, goal){
   return `Ziel heute: ${goal||"saubere Wiederholungen"}`;
 }
 function renderTodayCard(){
+  if(!$("#today-title")) return;
   const arr = loadLog();
   const weekCount = arr.filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO())).length;
   const last = lastEntryForDay(currentDay);
   const draft = loadDrafts()[currentDay];
   const hasDraft = draftHasMeaningfulData(draft);
   $("#today-title").textContent = PLANNAME();
-  $("#today-week").textContent = `${weekCount} von ${planConfig.dayOrder.length} Einheiten`;
+  $("#today-week").textContent = `${weekCount} von ${planConfig.weeklyTarget} Einheiten`;
   $("#today-last").textContent = last ? `${fmtShort(last.date)} · ${Math.round(sessionVolume(last)).toLocaleString("de-DE")} kg` : "Noch kein Eintrag";
   $("#today-status").textContent = hasDraft ? "Training läuft" : "Bereit";
 }
@@ -1315,13 +1360,11 @@ function renderExercises(){
           </div>
           <button class="ex-edit-btn" data-edit-completed="${i}" type="button">✎ Übung bearbeiten</button>
           ${editing ? "" : `<button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abschließen</button>`}
-          <div class="pause-hint" data-hint="${i}">
-            <span class="ph-txt">⏱ Pause läuft · 2:00</span>
-            <button class="ph-cancel" type="button">Abbrechen</button>
-          </div>
           <div class="vol-row">
             <span class="vol-lbl">Volumen (Arbeitssätze)</span>
-            <span class="vol-val" data-vol="${i}">0 kg</span>
+            <div class="vol-meta"><span class="vol-val" data-vol="${i}">0 kg</span>
+              ${editing?"":`<div class="card-timer" data-card-timer="${i}"><button class="card-timer-main" data-timer-start="${i}" type="button">▶ 2:00</button><button class="card-timer-x" data-timer-stop="${i}" type="button" aria-label="Timer abbrechen">×</button></div>`}
+            </div>
           </div>
         </div>
       </div>`);
@@ -1364,6 +1407,7 @@ function renderExercises(){
   setActiveSet(activeExIdx,activeSetKey,false);
   updateProgress();
   renderTodayCard();
+  tRender();
   $("#btn-add-ex").style.display = editing ? "block" : "none";
 
   /* Meta aus Entwurf */
@@ -1581,9 +1625,13 @@ function bindExerciseEvents(){
       saveDraftNow(); toast("Bearbeitung aktiviert");
     });
   });
-  document.querySelectorAll(".pause-hint .ph-cancel").forEach(b=>{
-    b.addEventListener("click",()=>tStop());
-  });
+  document.querySelectorAll("[data-timer-start]").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    const i=+b.dataset.timerStart;
+    if(tState==="idle"){ timerExIdx=String(i); activeExIdx=i; tStart(); }
+    else if(tState==="finished"){ tState="idle"; timerExIdx=String(i); tStart(); }
+  }));
+  document.querySelectorAll("[data-timer-stop]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); tStop(); }));
   document.querySelectorAll(".ex-del").forEach(b=>{
     b.addEventListener("click", async ()=>{
       const i = +b.dataset.i;
@@ -1667,8 +1715,10 @@ function meaningfulDraft(day){
 function nextPlannedDay(){
   const draftDay=planConfig.dayOrder.find(meaningfulDraft);
   if(draftDay) return draftDay;
-  const doneThisWeek=new Set(loadLog().filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO())).map(e=>e.day));
-  return planConfig.dayOrder.find(day=>!doneThisWeek.has(day)) || planConfig.dayOrder[0];
+  const last=loadLog().filter(e=>belongsToCurrentPlan(e)&&planConfig.dayOrder.includes(e.day)).sort((a,b)=>b.id-a.id)[0];
+  if(!last) return planConfig.dayOrder[0];
+  const idx=planConfig.dayOrder.indexOf(last.day);
+  return planConfig.dayOrder[(idx+1)%planConfig.dayOrder.length];
 }
 function selectDay(day,render=true){
   if(!planConfig.dayOrder.includes(day)||editing) return;
@@ -1705,13 +1755,13 @@ function renderDashboard(){
   $("#dash-sub").textContent=draft?"Deine Eingaben sind gespeichert. Du kannst direkt weitermachen.":`${templates[next].length} Übungen · dein nächster sinnvoller Trainingstag.`;
   $("#dash-start").textContent=draft?"Training fortsetzen":"Training starten";
   $("#dash-start").dataset.day=next;
-  $("#dash-week").textContent=`${thisWeek.length} / ${planConfig.dayOrder.length}`;
+  $("#dash-week").textContent=`${thisWeek.length} / ${planConfig.weeklyTarget}`;
   $("#dash-total").textContent=arr.length;
   $("#dash-volume").textContent=`${(totalVol/1000).toLocaleString("de-DE",{maximumFractionDigits:1})} t`;
   const doneDays=new Set(thisWeek.map(e=>e.day));
   $("#dash-plan").innerHTML=planConfig.dayOrder.map((day,idx)=>{
     const isNext=day===next, done=doneDays.has(day), hasDraft=meaningfulDraft(day);
-    const state=hasDraft?"Fortsetzen":done?"Diese Woche erledigt":isNext?"Als Nächstes":"Öffnen";
+    const state=hasDraft?"Fortsetzen":isNext?"Als Nächstes":done?"Diese Woche erledigt":"Öffnen";
     return `<button class="dash-day ${isNext?"next":""} ${done?"done-week":""}" data-dash-day="${escAttr(day)}" type="button">
       <div><strong>${idx+1}. ${escAttr(PLANNAME(day))}</strong><span>${templates[day].length} Übungen</span></div><em>${state}</em></button>`;
   }).join("");
@@ -1757,7 +1807,7 @@ function renderSetupPlan(){
 
 function renderSetup(){
   $("#setup-current").innerHTML=`<small>Aktueller Trainingsplan</small><strong>${escAttr(planConfig.name)}</strong>
-    <span>${planConfig.dayOrder.length} Einheiten: ${planConfig.dayOrder.map(PLANNAME).join(" · ")}</span>`;
+    <span>${planConfig.dayOrder.length} unterschiedliche ${planConfig.dayOrder.length===1?"Einheit":"Einheiten"} · Ziel ${planConfig.weeklyTarget}× pro Woche<br>${planConfig.dayOrder.map(PLANNAME).join(" · ")}</span>`;
   renderSetupPlan();
   $("#split-grid").innerHTML=Object.entries(SPLIT_PRESETS).map(([id,p])=>`<div class="split-card ${planConfig.id===id?"active":""}">
     <h3>${escAttr(p.name)}</h3><p>${escAttr(p.description)}</p><div class="split-days">${p.dayOrder.map(day=>p.dayNames[day]).join(" · ")}</div>
@@ -1773,19 +1823,79 @@ async function applySplitPreset(id){
   const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(preset.templates));
-  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
   chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
   toast("Trainingssplit übernommen ✓");
 }
-function updateBrand(){ $("#brand-sub").textContent=`Trainingstagebuch · ${planConfig.dayOrder.length} Einheiten / Woche`; }
+
+/* ---------- Einfacher Beginner-Einstieg ---------- */
+let onboardingStep=0, onboardingDays=3, onboardingWorkouts=2;
+function onboardingRecommendation(days=onboardingDays,workouts=onboardingWorkouts){
+  if(workouts===1) return {id:"fullbody1",reason:`Ein Ganzkörpertraining ${days}× pro Woche – maximal einfach und gut planbar.`};
+  if(workouts===2&&days>=4) return {id:"upperlower2",reason:`Upper und Lower wechseln sich über ${days} Trainingstage fortlaufend ab.`};
+  if(workouts===2) return {id:"fullbody2",reason:`Ganzkörper A und B wechseln sich über ${days} Trainingstage fortlaufend ab.`};
+  if(workouts===3) return {id:"ppl3",reason:`Push, Pull und Legs laufen fortlaufend weiter – auch über den Wochenwechsel.`};
+  return {id:"upperlower4",reason:`Vier unterschiedliche Einheiten rotieren fortlaufend in ihrer festen Reihenfolge.`};
+}
+function showOnboarding(startAt=0){
+  onboardingStep=startAt; onboardingDays=Number(planConfig.weeklyTarget)||3; onboardingWorkouts=planConfig.dayOrder.length||2;
+  onboardingDays=Math.max(2,Math.min(4,onboardingDays)); onboardingWorkouts=Math.max(1,Math.min(4,onboardingWorkouts));
+  $("#onboarding-bg").classList.add("show"); renderOnboarding();
+}
+function closeOnboarding(){ $("#onboarding-bg").classList.remove("show"); }
+function renderOnboarding(){
+  const options=$("#onboarding-options"), preview=$("#onboarding-preview"), next=$("#onboarding-next"), back=$("#onboarding-back");
+  $("#onboarding-step").textContent=`Schritt ${onboardingStep+1} von 3`;
+  preview.hidden=true; options.style.display="grid"; back.textContent=onboardingStep===0?"Später":"Zurück";
+  if(onboardingStep===0){
+    $("#onboarding-title").textContent="Wie oft möchtest du trainieren?";
+    $("#onboarding-text").textContent="Wähle ein realistisches Wochenziel. Das ist unabhängig davon, wie viele verschiedene Workouts du hast.";
+    options.style.gridTemplateColumns="repeat(3,1fr)";
+    options.innerHTML=[2,3,4].map(n=>`<button class="onboarding-option ${n===onboardingDays?"active":""}" data-onboarding-days="${n}" type="button">${n}×<br><small>pro Woche</small></button>`).join("");
+    next.textContent="Weiter";
+  }else if(onboardingStep===1){
+    $("#onboarding-title").textContent="Wie viele verschiedene Workouts?";
+    $("#onboarding-text").textContent="Ein Workout kann mehrfach pro Woche vorkommen. A und B können sich zum Beispiel an drei Tagen abwechseln.";
+    options.style.gridTemplateColumns="repeat(2,1fr)";
+    options.innerHTML=[1,2,3,4].map(n=>`<button class="onboarding-option ${n===onboardingWorkouts?"active":""}" data-onboarding-workouts="${n}" type="button">${n}<br><small>${n===1?"Workout":"Workouts"}</small></button>`).join("");
+    next.textContent="Empfehlung ansehen";
+  }else{
+    const rec=onboardingRecommendation(), preset=SPLIT_PRESETS[rec.id];
+    $("#onboarding-title").textContent="Dein einfacher Einstieg";
+    $("#onboarding-text").textContent="Wir füllen einen passenden Plan vor. Übungen und Wochenziel bleiben später im Setup anpassbar.";
+    options.style.display="none"; preview.hidden=false;
+    preview.innerHTML=`<strong>${escAttr(preset.short)}</strong><span>${escAttr(rec.reason)}<br><br><b>${onboardingDays} Trainingstage · ${onboardingWorkouts} unterschiedliche ${onboardingWorkouts===1?"Einheit":"Einheiten"}</b></span>`;
+    next.textContent="Plan übernehmen";
+  }
+  options.querySelectorAll("[data-onboarding-days]").forEach(b=>b.addEventListener("click",()=>{ onboardingDays=+b.dataset.onboardingDays; renderOnboarding(); }));
+  options.querySelectorAll("[data-onboarding-workouts]").forEach(b=>b.addEventListener("click",()=>{ onboardingWorkouts=+b.dataset.onboardingWorkouts; renderOnboarding(); }));
+}
+async function applyOnboardingPlan(){
+  const rec=onboardingRecommendation(), preset=SPLIT_PRESETS[rec.id], draftCount=planConfig.dayOrder.filter(meaningfulDraft).length;
+  if(draftCount){
+    const ok=await askConfirm("Einrichtung übernehmen?",`${draftCount===1?"Ein laufendes Workout wird":"Laufende Workouts werden"} verworfen. Deine Historie bleibt unverändert.`,"Plan übernehmen");
+    if(!ok) return;
+  }
+  templates=JSON.parse(JSON.stringify(preset.templates));
+  planConfig={id:preset.id||rec.id,name:preset.name,versionId:`onboarding-${rec.id}-${Date.now()}`,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{}); saveJSON(ONBOARDING_KEY,{completed:true,version:1});
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
+  renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand(); closeOnboarding(); setView("dashboard");
+  toast("Dein Einstieg ist eingerichtet ✓");
+}
+$("#onboarding-next").addEventListener("click",()=>{ if(onboardingStep<2){ onboardingStep++; renderOnboarding(); } else applyOnboardingPlan(); });
+$("#onboarding-back").addEventListener("click",()=>{ if(onboardingStep===0) closeOnboarding(); else { onboardingStep--; renderOnboarding(); } });
+$("#setup-onboarding").addEventListener("click",()=>showOnboarding(0));
+
+function updateBrand(){ $("#brand-sub").textContent=`Trainingstagebuch · ${planConfig.dayOrder.length} Workouts · ${planConfig.weeklyTarget} Trainingstage / Woche`; }
 function setView(view){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===view));
   document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id===`view-${view}`));
   const training=view==="log";
-  $("#save-bar").style.display=training?"flex":"none"; $("#timer-fab-wrap").style.display=training?"flex":"none";
+  $("#save-bar").style.display=training?"flex":"none"; $("#timer-fab-wrap").style.display="none";
   if(view==="dashboard") renderDashboard();
   if(view==="history"){ renderChartFilters(); renderHistory(); updateResumeBanner(); }
   if(view==="setup") renderSetup();
@@ -1842,6 +1952,7 @@ function setActiveExercise(i,scroll=true){
   setActiveSet(i,activeSetKey,false);
   const ex = document.querySelector(`.ex[data-i="${i}"]`);
   saveDraftNow();
+  tRender();
   if(scroll&&ex) ex.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function setActiveSet(i,key,focusInput=true){
@@ -2004,10 +2115,10 @@ function stopEdit(){
   currentDay = planConfig.dayOrder.includes(editingReturnDay) ? editingReturnDay : planConfig.dayOrder[0];
   editingReturnDay = null;
   $("#edit-banner").classList.remove("show");
-  $("#today-card").style.display = "block";
+  $("#today-card").style.display = "none";
   $("#btn-save").textContent = "Training beenden";
   $("#btn-clear").textContent = "Reset";
-  $("#timer-fab-wrap").style.display = "flex";
+  $("#timer-fab-wrap").style.display = "none";
   setSessionExpanded(false);
   renderDayPicker();
   renderExercises(); // lädt Entwurf oder Vorbefüllung des aktuellen Tages
@@ -2183,18 +2294,19 @@ function setDoneLabel(i, done, awaiting=false, editingDone=false){
   if(b) b.textContent = editingDone ? "✓ Änderungen speichern" : done ? "✓ Übung abgeschlossen" : awaiting ? "Sätze fertig – Übung abschließen" : "✓ Übung abschließen";
 }
 function renderHints(){
-  document.querySelectorAll(".pause-hint").forEach(h=>{
-    const mine = h.dataset.hint === timerExIdx;
-    const txt  = h.querySelector(".ph-txt");
-    const btn  = h.querySelector(".ph-cancel");
-    if(mine && tState==="running"){
-      h.classList.add("show"); txt.textContent = `⏱ Pause läuft · ${fmtT(tRemain)}`;
-      btn.style.display = "block";
-    } else if(mine && tState==="finished"){
-      h.classList.add("show"); txt.textContent = "✅ Pause vorbei – nächster Satz!";
-      btn.style.display = "none";
-    } else {
-      h.classList.remove("show");
+  const fallback=timerExIdx===null?0:Number(timerExIdx);
+  const target=activeExIdx>=0?activeExIdx:fallback;
+  document.querySelectorAll("[data-card-timer]").forEach(wrap=>{
+    const mine=+wrap.dataset.cardTimer===target;
+    const main=wrap.querySelector(".card-timer-main"), stop=wrap.querySelector(".card-timer-x");
+    wrap.classList.toggle("show",mine);
+    if(!mine||!main||!stop) return;
+    if(tState==="idle"){
+      main.textContent=`▶ ${fmtT(T_PRESETS[tIdx])}`; main.className="card-timer-main"; stop.classList.remove("show");
+    }else if(tState==="running"){
+      main.textContent=fmtT(tRemain); main.className="card-timer-main running"; stop.classList.add("show");
+    }else{
+      main.textContent="Pause vorbei"; main.className="card-timer-main finished"; stop.classList.remove("show");
     }
   });
 }
@@ -2415,10 +2527,12 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
   planConfig=defaultPlanConfig(); saveJSON(PLAN_KEY,planConfig);
+  localStorage.removeItem(ONBOARDING_KEY);
   tStop();
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; chartFilter="all"; clearFormMeta();
   setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
   renderDayPicker(); renderChartFilters(); renderExercises(); renderHistory(); renderDashboard(); renderSetup(); updateBrand(); toast("Beta-Daten zurückgesetzt ✓");
+  setTimeout(()=>showOnboarding(0),350);
 });
 
 function download(filename, text, mime){
@@ -2489,6 +2603,7 @@ $("#import-file").addEventListener("change",ev=>{
         planConfig=p.planConfig&&Array.isArray(p.planConfig.dayOrder)?p.planConfig:{id:"imported",name:"Importierter Trainingsplan",versionId:"imported-"+Date.now(),
           dayOrder:Object.keys(templates),dayNames:Object.fromEntries(Object.keys(templates).map((day,idx)=>[day,`Day ${idx+1}`]))};
         if(!planConfig.versionId) planConfig.versionId="imported-"+Date.now();
+        planConfig.weeklyTarget=Math.max(1,Math.min(7,Number(planConfig.weeklyTarget)||planConfig.dayOrder.length));
         saveJSON(PLAN_KEY,planConfig); currentDay=planConfig.dayOrder[0]; chartFilter="all";
         setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
       }
@@ -2525,6 +2640,8 @@ renderExercises();
 renderDashboard();
 renderSetup();
 setView("dashboard");
+if(hadExistingAppData&&!localStorage.getItem(ONBOARDING_KEY)) saveJSON(ONBOARDING_KEY,{completed:true,version:1,migrated:true});
+if(!hadExistingAppData&&!localStorage.getItem(ONBOARDING_KEY)) setTimeout(()=>showOnboarding(0),120);
 </script>
 </body>
 </html>

@@ -1,5 +1,41 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 16
+
+### Was wurde verändert?
+
+- Die Trainingsansicht wurde beruhigt: Der doppelte **Heute**-Block entfällt, Wochenfortschritt und Wochenziel bleiben im Dashboard.
+- Die Trainingstage erscheinen als kompakte, horizontal angeordnete Auswahl statt als große Karten.
+- Der Pausentimer liegt nicht mehr global über der Bedienoberfläche. Er sitzt dezent blau unten rechts in der aktuell aktiven Übungskarte und wandert nach einem Übungsabschluss zur nächsten aktiven Übung.
+- Ein neuer Beginner-Einstieg fragt getrennt nach Trainingstagen pro Woche und Anzahl unterschiedlicher Workouts.
+- Die App empfiehlt daraus einen vorbefüllten Ganzkörper-, A/B-, Push/Pull/Legs- oder Upper/Lower-Plan.
+- Bestehende Nutzer werden nicht ungefragt durch das Onboarding geführt. Unter **Setup → Einrichtung erneut starten** kann es bewusst erneut geöffnet werden.
+- `weeklyTarget` speichert das Wochenziel getrennt von der Anzahl unterschiedlicher Workouts.
+- Die nächste Einheit rotiert anhand der zuletzt gespeicherten Einheit fortlaufend über Wochenwechsel hinweg. Ein A/B-Plan an drei Trainingstagen läuft damit A/B/A, danach B/A/B.
+- Der Beta-Reset öffnet anschließend wieder den Beginner-Einstieg.
+
+### Datenkompatibilität
+
+Bestehende Pläne erhalten beim Laden automatisch ein Wochenziel entsprechend ihrer bisherigen Anzahl an Einheiten. Historie, Entwürfe, Planversionen und Backup-Format bleiben erhalten. Backups ohne `weeklyTarget` werden beim Import sicher ergänzt.
+
+### Automatisiert und visuell getestet
+
+- Beginner-Onboarding bei 320 × 700 Pixeln
+- getrennte Speicherung von drei Trainingstagen und zwei unterschiedlichen Workouts
+- fortlaufende A/B-Rotation
+- kompakte Trainingsansicht ohne doppelten Heute-Block und ohne globalen Timer
+- Timer innerhalb der aktiven Übungskarte
+- kein horizontaler Überlauf bei 320 und 390 Pixeln
+- bestehende Backup-v5-/v4-, Historien- und Datensicherheitstests weiterhin grün
+
+### Auf dem iPhone zu testen
+
+- Onboarding über **Setup → Einrichtung erneut starten** vollständig durchlaufen
+- A/B mit drei Trainingstagen auswählen und Empfehlung übernehmen
+- Training starten und die kompakte Tagesauswahl prüfen
+- Timer zwischen Sätzen und nach Übungsabschluss starten; Position und Wechsel zur nächsten Übung prüfen
+- prüfen, dass Training beenden und Reset zu keinem Zeitpunkt verdeckt werden
+
 ## v1.3 Beta – Testpaket 15
 
 ### Was wurde verändert?

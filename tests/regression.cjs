@@ -85,6 +85,10 @@ async function importBackup(page,payload,fileName){
     assert.match(await page.locator('.ex[data-i="2"] .ex-name-inp').inputValue(),/Rudern Maschine/);
     assert.equal(await page.locator(".temporary-ex-note").count(),1,"Temporärer Übungstausch muss sichtbar sein");
     assert.equal(await page.locator('.ex[data-i="0"] .set-row input').first().isDisabled(),true,"Abgeschlossene Übungen müssen gesperrt bleiben");
+    assert.equal(await page.locator("#today-card").isVisible(),false,"Der doppelte Heute-Block muss ausgeblendet bleiben");
+    assert.equal(await page.locator("#timer-fab-wrap").isVisible(),false,"Der globale Pausentimer darf die Trainingsansicht nicht überlagern");
+    assert.equal(await page.locator('.card-timer.show[data-card-timer="2"]').count(),1,"Der Timer muss in der aktiven Übungskarte sitzen");
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-training-916.png"),fullPage:true});
 
     await page.locator('.tab[data-view="setup"]').click();
     const setupHeadings=await page.locator('#view-setup .card-head h2').allTextContents();
@@ -139,8 +143,37 @@ async function importBackup(page,payload,fileName){
     const afterLegacy=await page.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_draft_v1")));
     assert.deepEqual(afterLegacy,beforeLegacy,"Ältere Backups dürfen lokale Entwürfe nicht löschen");
 
+    const onboardingContext=await browser.newContext({viewport:{width:320,height:700}});
+    const onboardingPage=await onboardingContext.newPage();
+    const onboardingErrors=[];
+    onboardingPage.on("pageerror",error=>onboardingErrors.push(error.message));
+    await onboardingPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await onboardingPage.locator("#onboarding-bg.show").waitFor();
+    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-916.png"),fullPage:false});
+    await onboardingPage.locator('[data-onboarding-days="3"]').click();
+    await onboardingPage.locator("#onboarding-next").click();
+    await onboardingPage.locator('[data-onboarding-workouts="2"]').click();
+    await onboardingPage.locator("#onboarding-next").click();
+    assert.match(await onboardingPage.locator("#onboarding-preview").textContent(),/fortlaufend/);
+    await onboardingPage.locator("#onboarding-next").click();
+    await onboardingPage.locator("#onboarding-bg").waitFor({state:"hidden"});
+    const onboardingPlan=await onboardingPage.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1")));
+    assert.equal(onboardingPlan.weeklyTarget,3,"Wochenziel muss unabhängig vom 2er-Split gespeichert werden");
+    assert.equal(onboardingPlan.dayOrder.length,2,"Die Zahl unterschiedlicher Workouts muss erhalten bleiben");
+    await onboardingPage.evaluate(()=>{
+      const plan=JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1"));
+      localStorage.setItem("hesselink_beta_log_v2",JSON.stringify([
+        {id:1,day:"1",date:"2026-08-10",planVersionId:plan.versionId,sets:[]},
+        {id:2,day:"2",date:"2026-08-12",planVersionId:plan.versionId,sets:[]},
+      ]));
+    });
+    assert.equal(await onboardingPage.evaluate(()=>nextPlannedDay()),"1","A/B muss über den Wochenverlauf fortlaufend rotieren");
+    assert.equal(await onboardingPage.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,"Onboarding darf bei 320 px nicht horizontal überlaufen");
+    assert.deepEqual(onboardingErrors,[],`Onboarding-Browserfehler: ${onboardingErrors.join(" | ")}`);
+    await onboardingContext.close();
+
     assert.deepEqual(errors,[],`Browserfehler: ${errors.join(" | ")}`);
-    console.log("PASS: Backup v5, v4-Kompatibilität und kritische Mobile-Flows");
+    console.log("PASS: Backup v5, Beginner-Onboarding, Rotation, Timer und kritische Mobile-Flows");
   } finally {
     await browser.close();
     await new Promise(resolve=>server.close(resolve));
