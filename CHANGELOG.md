@@ -1,5 +1,30 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 10
+
+### Was wurde verändert?
+
+- Im Bearbeitungsmodus einer bereits abgeschlossenen Übung heißt der Aktionsbutton jetzt eindeutig **Änderungen speichern**.
+- Nach dem Speichern wird die korrigierte Übung wieder gesperrt und automatisch zugeklappt.
+- Die App springt anschließend zurück zu der Übung, an der das laufende Training vor der Korrektur fortgesetzt wurde.
+- Noch ausstehende automatische Satzsprünge werden beim Bearbeiten und Speichern verworfen; dadurch kann sich die korrigierte Übung nicht verzögert erneut öffnen.
+- Der Rücksprung erfolgt ohne konkurrierende Scrollanimation direkt an die zuletzt aktive Stelle.
+- Falls keine vorher aktive Übung verfügbar ist, wird die nächste noch nicht abgeschlossene Übung geöffnet.
+- Der angeheftete Pausentimer erhält einen dezenten warmen Farbakzent und sitzt als kompakte Leiste am unteren Bildschirmrand.
+- Die Timerleiste bleibt mit Abstand direkt oberhalb von **Training beenden** und **Reset**; zusätzlicher Scrollraum verhindert, dass die letzten Inhalte verdeckt werden.
+
+### Datenkompatibilität
+
+Das bestehende Trainings-, Satz- und Entwurfsformat bleibt unverändert. Die Anpassungen betreffen ausschließlich Bedienlogik, Navigation und Darstellung.
+
+### Zu testen
+
+- eine abgeschlossene Übung öffnen und **Übung bearbeiten** wählen
+- Werte verändern und den Button **Änderungen speichern** prüfen
+- nach dem Speichern: korrigierte Übung zugeklappt und wieder gesperrt
+- automatischer Rücksprung zur zuvor aktiven Übung
+- Pausentimer im laufenden Training unten oberhalb der Abschlussbuttons prüfen
+
 ## v1.3 Beta – Testpaket 9
 
 ### Was wurde verändert?
