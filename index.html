@@ -52,7 +52,7 @@
   .beta-badge{display:inline-flex;margin-top:10px;padding:5px 9px;border-radius:20px;
     border:1px solid rgba(255,204,102,.45);background:rgba(255,204,102,.1);color:var(--warm);
     font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
-  .tabs{display:flex;gap:5px;padding:14px 8px 0;position:sticky;top:0;z-index:20;
+  .tabs{display:flex;gap:5px;padding:14px 8px 0;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
     background:rgba(5,11,19,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
   .tab{flex:1;min-width:0;text-align:center;padding:11px 2px;border-radius:12px;
     font-weight:800;font-size:11px;letter-spacing:.1px;font-style:italic;text-transform:uppercase;
@@ -236,6 +236,17 @@
     color:var(--good);font-size:13px;font-weight:900;font-style:italic;cursor:pointer;
     font-family:inherit;letter-spacing:.3px;min-height:44px}
   .ex.done .ex-done-btn{background:var(--good);color:#04140a;border-color:var(--good)}
+  .ex-edit-btn{display:none;width:calc(100% - 24px);margin:8px 12px 4px;padding:12px;
+    border-radius:11px;border:1px solid var(--blue);background:var(--blue-soft);
+    color:var(--blue-bright);font-size:13px;font-weight:900;cursor:pointer;
+    font-family:inherit;letter-spacing:.3px;min-height:44px}
+  .ex.done:not(.editing-completed) .ex-edit-btn{display:block}
+  .ex.done:not(.editing-completed) .ex-done-btn{display:none}
+  .ex.done:not(.editing-completed) .set-controls{display:none}
+  .ex.done:not(.editing-completed) .last-copy{display:none}
+  .ex.done:not(.editing-completed) .set-row input:disabled{opacity:1;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+  .ex.done.editing-completed{opacity:1;border-color:var(--blue)}
+  .ex.done.editing-completed .ex-done-btn{background:rgba(40,199,111,.1);color:var(--good)}
 
   .pause-hint{display:none;align-items:center;justify-content:space-between;gap:8px;
     margin:4px 12px 8px;padding:9px 12px;border-radius:10px;
@@ -295,7 +306,7 @@
   .btn-ghost{flex:0 0 auto;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
   /* ---------- Pausentimer ---------- */
-  .timer-panel{position:sticky;top:8px;z-index:20;display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 14px;
+  .timer-panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:20;display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 14px;
     border:1px solid var(--blue-deep);border-radius:var(--radius);background:linear-gradient(135deg,#0e2036,#0a1626)}
   .timer-copy{flex:1;min-width:0}
   .timer-copy strong{display:block;font-size:13px;color:var(--blue-bright)}
@@ -680,7 +691,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 908;
+const APP_VERSION = 909;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -1153,7 +1164,8 @@ function renderExercises(){
             <button class="set-control add" data-add-set="${i}" type="button">+ Satz hinzufügen</button>
             <button class="set-control remove" data-remove-set="${i}" type="button" hidden>− Letzten Satz entfernen</button>
           </div>
-          <button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abgeschlossen</button>
+          <button class="ex-edit-btn" data-edit-completed="${i}" type="button">✎ Übung bearbeiten</button>
+          <button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abschließen</button>
           <div class="pause-hint" data-hint="${i}">
             <span class="ph-txt">⏱ Pause läuft · 2:00</span>
             <button class="ph-cancel" type="button">Abbrechen</button>
@@ -1193,7 +1205,7 @@ function renderExercises(){
         });
       }
     }
-    if(done){ document.querySelector(`.ex[data-i="${i}"]`).classList.add("done"); setDoneLabel(i,true); }
+    if(done){ document.querySelector(`.ex[data-i="${i}"]`).classList.add("done"); setCompletedEditState(i,false); }
     updateVolume(i);
     updateExerciseSummary(i);
   });
@@ -1258,7 +1270,7 @@ function ensureSetCount(i,count){
   for(let n=setCountForExercise(i)+1;n<=target;n++) slot.insertAdjacentHTML("beforeend",setRow(i,String(n),`Satz ${n}`,'data-optional-set="1"'));
   const ex = document.querySelector(`.ex[data-i="${i}"]`);
   if(ex) ex.classList.remove("awaiting-finish");
-  setDoneLabel(i,!!(ex&&ex.classList.contains("done")));
+  setDoneLabel(i,!!(ex&&ex.classList.contains("done")),false,!!(ex&&ex.classList.contains("editing-completed")));
   bindRowEvents(slot);
   updateSetControls(i);
 }
@@ -1342,10 +1354,21 @@ function bindExerciseEvents(){
     b.addEventListener("click",()=>{
       const i  = b.dataset.done;
       const ex = document.querySelector(`.ex[data-i="${i}"]`);
-      const nowDone = !ex.classList.contains("done");
-      ex.classList.toggle("done", nowDone);
+      if(ex.classList.contains("done")){
+        if(!ex.classList.contains("editing-completed")) return;
+        setCompletedEditState(i,false);
+        openExIndices.delete(+i);
+        ex.classList.remove("focus"); ex.classList.add("compact");
+        document.querySelectorAll("#ex-container .set-row").forEach(r=>r.classList.remove("active-set"));
+        if(activeExIdx===+i) activeExIdx=-1;
+        saveDraftNow(); updateProgress(); updateExerciseSummary(i); renderTodayCard();
+        toast("Änderungen gespeichert ✓");
+        return;
+      }
+      const nowDone = true;
+      ex.classList.add("done");
       ex.classList.remove("awaiting-finish");
-      setDoneLabel(i, nowDone);
+      setCompletedEditState(i,false);
       if(nowDone) openExIndices.delete(+i); else openExIndices.add(+i);
       if(nowDone) startPauseFor(i);
       else if(timerExIdx===String(i)) tStop();
@@ -1358,6 +1381,17 @@ function bindExerciseEvents(){
       saveDraftNow();
       updateProgress();
       updateExerciseSummary(i); renderTodayCard();
+    });
+  });
+  document.querySelectorAll("[data-edit-completed]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const i=+b.dataset.editCompleted;
+      const ex=document.querySelector(`.ex[data-i="${i}"]`);
+      if(!ex||!ex.classList.contains("done")) return;
+      setCompletedEditState(i,true);
+      openExIndices.add(i); activeExIdx=i;
+      ex.classList.add("focus"); ex.classList.remove("compact");
+      saveDraftNow(); toast("Bearbeitung aktiviert");
     });
   });
   document.querySelectorAll(".pause-hint .ph-cancel").forEach(b=>{
@@ -1381,9 +1415,18 @@ function bindExerciseEvents(){
     });
   });
   document.querySelectorAll("[data-add-set]").forEach(b=>{
-    b.addEventListener("click",()=>{
+    b.addEventListener("click",e=>{
+      e.preventDefault();
+      if(document.activeElement instanceof HTMLElement) document.activeElement.blur();
       const i=+b.dataset.addSet, next=setCountForExercise(i)+1;
-      ensureSetCount(i,next); setActiveExercise(i,false); setActiveSet(i,String(next),true); saveDraftNow();
+      const previousWeight=(document.querySelector(`input[data-ex="${i}"][data-f="kg${next-1}"]`)||{}).value||"";
+      ensureSetCount(i,next);
+      if(previousWeight){
+        setVal(i,`kg${next}`,previousWeight);
+        const weightInput=document.querySelector(`input[data-ex="${i}"][data-f="kg${next}"]`);
+        if(weightInput) weightInput.dataset.touched="1";
+      }
+      setActiveExercise(i,false); setActiveSet(i,String(next),false); updateVolume(i); updateExerciseSummary(i); saveDraftNow();
       toast(`Satz ${next} hinzugefügt ✓`);
     });
   });
@@ -1399,7 +1442,7 @@ function bindExerciseEvents(){
       }
       if(row) row.remove();
       const ex=document.querySelector(`.ex[data-i="${i}"]`); if(ex) ex.classList.remove("awaiting-finish");
-      updateSetControls(i); setDoneLabel(i,!!(ex&&ex.classList.contains("done")));
+      updateSetControls(i); setDoneLabel(i,!!(ex&&ex.classList.contains("done")),false,!!(ex&&ex.classList.contains("editing-completed")));
       if(activeExIdx===i && String(activeSetKey)===String(count)) setActiveSet(i,String(count-1),false);
       updateVolume(i); updateExerciseSummary(i); saveDraftNow(); toast(`Satz ${count} entfernt ✓`);
     });
@@ -1575,7 +1618,7 @@ function setActiveExercise(i,scroll=true){
   if(i!==activeExIdx){ clearTimeout(autoAdvanceT); activeSetKey = firstPendingSet(i); }
   if(activeExIdx>=0){
     const previous=document.querySelector(`.ex[data-i="${activeExIdx}"]`);
-    if(previous&&previous.classList.contains("done")) openExIndices.delete(activeExIdx);
+    if(previous&&previous.classList.contains("done")&&!previous.classList.contains("editing-completed")) openExIndices.delete(activeExIdx);
     else openExIndices.add(activeExIdx);
   }
   openExIndices.add(i);
@@ -1902,9 +1945,18 @@ let tIdx = 0, tRemain = 0, tInterval = null, tState = "idle", timerExIdx = null,
 const tMain = $("#timer-main"), tX = $("#timer-x"), tSub = $("#timer-sub");
 const fmtT = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 
-function setDoneLabel(i, done, awaiting=false){
+function setCompletedEditState(i, editable=false){
+  const ex=document.querySelector(`.ex[data-i="${i}"]`);
+  if(!ex) return;
+  const isDone=ex.classList.contains("done");
+  ex.classList.toggle("editing-completed",isDone&&editable);
+  const locked=isDone&&!editable;
+  ex.querySelectorAll(".set-row input,.set-row button,.set-control,.last-copy").forEach(control=>control.disabled=locked);
+  setDoneLabel(i,isDone,false,isDone&&editable);
+}
+function setDoneLabel(i, done, awaiting=false, editingDone=false){
   const b = document.querySelector(`.ex-done-btn[data-done="${i}"]`);
-  if(b) b.textContent = done ? "✓ Abgeschlossen" : awaiting ? "Sätze fertig – Übung abschließen" : "✓ Übung abgeschlossen";
+  if(b) b.textContent = editingDone ? "✓ Übung erneut abschließen" : done ? "✓ Übung abgeschlossen" : awaiting ? "Sätze fertig – Übung abschließen" : "✓ Übung abschließen";
 }
 function renderHints(){
   document.querySelectorAll(".pause-hint").forEach(h=>{

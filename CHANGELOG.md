@@ -1,5 +1,35 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 9
+
+### Was wurde verändert?
+
+- **Satz hinzufügen** öffnet kein Zahlenfeld und keine iPhone-Tastatur mehr.
+- Der neue Arbeitssatz wird weiterhin markiert, ohne ein Eingabefeld zu fokussieren.
+- Das Gewicht des unmittelbar vorherigen Arbeitssatzes wird automatisch in den neuen Satz übernommen.
+- Die Wiederholungen bleiben bewusst leer und müssen für den tatsächlich absolvierten Satz erfasst werden.
+- Der offene Aktionsbutton heißt jetzt **Übung abschließen**. Erst nach dem Klick zeigt er den Status **Übung abgeschlossen** an.
+- Beim Wiederöffnen einer abgeschlossenen Übung sind Gewichte, Wiederholungen und Satzsteuerung zunächst gesperrt.
+- **Übung bearbeiten** entsperrt die Werte bewusst; **Übung erneut abschließen** speichert den bearbeiteten Zustand und sperrt ihn wieder.
+- Der Abschlussstatus und der Trainingsfortschritt bleiben während der Korrektur erhalten.
+- Der angeheftete Pausentimer berücksichtigt die obere iPhone-Sicherheitszone und bleibt mit Abstand unter Statusleiste und Navigation.
+
+### Datenkompatibilität
+
+Das bestehende Satz- und Trainingsdatenformat bleibt unverändert. Ein automatisch übernommenes Gewicht wird wie eine normale Eingabe im laufenden Entwurf gespeichert.
+
+### Zu testen
+
+- Satz 3 und Satz 4 über **Satz hinzufügen** anlegen
+- keine automatisch geöffnete Tastatur
+- Markierung des neu angelegten Satzes
+- korrekt übernommenes Gewicht aus dem jeweils vorherigen Satz
+- leeres Wiederholungsfeld
+- Wechsel von **Übung abschließen** zu **Übung abgeschlossen** und gesetzter Abschlussstatus
+- abgeschlossene Übung zunächst schreibgeschützt öffnen
+- Bearbeitungsmodus aktivieren, Werte ändern und erneut abschließen
+- angehefteten Pausentimer unterhalb von iPhone-Statusleiste und Navigation prüfen
+
 ## v1.3 Beta – Testpaket 8
 
 ### Was wurde verändert?
