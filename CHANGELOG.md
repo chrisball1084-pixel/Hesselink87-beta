@@ -1,5 +1,33 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 14
+
+### Was wurde verändert?
+
+- Im Setup steht die Auswahl des Trainingssplits jetzt vor der anschließenden Plananpassung.
+- Eine noch offene Übung kann während des laufenden Trainings direkt über ihren Namen ausschließlich für die aktuelle Einheit ersetzt werden.
+- Vor dem Austausch erscheint eine Sicherheitsabfrage; vorhandene Eingaben der betroffenen Übung werden ausdrücklich angekündigt und erst nach Bestätigung verworfen.
+- Bereits abgeschlossene Übungen, deren Sätze und alle anderen offenen Übungen bleiben beim Austausch unverändert.
+- Die Ersatzübung erhält einen sichtbaren Hinweis **Nur für dieses Training ersetzt**.
+- Temporäre Ersetzungen werden im laufenden Entwurf gespeichert und überstehen damit Neuladen oder zwischenzeitliches Verlassen der App.
+- Beim gespeicherten Workout erscheint die tatsächlich ausgeführte Ersatzübung in der Historie; der zukünftige Trainingsplan bleibt unverändert.
+- Reset oder Abschluss des Workouts entfernt die temporäre Ersetzung automatisch.
+
+### Datenkompatibilität
+
+Temporäre Übungen werden ausschließlich im lokalen Entwurf der aktuellen Einheit gespeichert. Das Planformat und vorhandene historische Workouts werden nicht verändert.
+
+### Zu testen
+
+- in Einheit 1 zwei Übungen vollständig abschließen
+- den Namen der dritten, noch offenen Übung antippen und den Austausch bestätigen
+- beispielsweise Latzug nur für heute durch Rudern Maschine ersetzen
+- prüfen, dass die ersten beiden Übungen abgeschlossen und unverändert bleiben
+- App neu laden und kontrollieren, dass die temporäre Ersatzübung erhalten bleibt
+- Workout speichern und Ersatzübung in der Historie prüfen
+- neues Workout öffnen und kontrollieren, dass wieder die ursprüngliche Planübung erscheint
+- bei bereits eingetragenen Werten die zusätzliche Verlustwarnung prüfen
+
 ## v1.3 Beta – Testpaket 13
 
 ### Was wurde verändert?
