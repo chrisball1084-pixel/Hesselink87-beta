@@ -96,6 +96,30 @@
   .split-apply{width:100%;min-height:44px;border-radius:11px;border:1px solid var(--blue);background:var(--blue-soft);
     color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
   .split-card.active .split-apply{border-color:var(--good);color:var(--good);background:rgba(55,214,172,.08)}
+  .setup-plan-days{display:flex;gap:7px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+  .setup-plan-days::-webkit-scrollbar{display:none}
+  .setup-plan-day{flex:0 0 auto;min-height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--muted);padding:8px 12px;font:800 12px inherit;cursor:pointer;white-space:nowrap}
+  .setup-plan-day.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
+  .setup-plan-list{display:grid;gap:8px}
+  .setup-plan-ex{display:grid;grid-template-columns:24px minmax(0,1fr) 68px 44px;align-items:center;gap:7px;
+    border:1px solid var(--line);border-radius:14px;background:var(--panel-2);padding:9px}
+  .setup-plan-num{color:var(--blue-bright);font-size:12px;font-weight:900;text-align:center}
+  .setup-ex-select{min-width:0;min-height:44px;border:none;background:transparent;color:var(--ink);font:800 14px inherit;
+    text-align:left;padding:7px 4px;cursor:pointer;overflow-wrap:anywhere}
+  .setup-ex-name,.setup-ex-goal{width:100%;min-width:0;min-height:44px;border:1px solid var(--line-strong);border-radius:10px;
+    background:var(--field);color:var(--ink);font:800 16px inherit;padding:8px}
+  .setup-ex-goal{text-align:center;color:var(--blue-bright)}
+  .setup-ex-remove{width:44px;height:44px;border:1px solid rgba(255,92,122,.35);border-radius:11px;background:rgba(255,92,122,.06);
+    color:var(--danger);font-size:18px;cursor:pointer}
+  .setup-plan-add{width:100%;min-height:46px;margin-top:10px;border:1px dashed var(--blue);border-radius:12px;
+    background:transparent;color:var(--blue-bright);font:850 13px inherit;cursor:pointer}
+  .setup-plan-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
+  .setup-plan-save,.setup-plan-discard{min-height:48px;border-radius:12px;font:900 13px inherit;cursor:pointer}
+  .setup-plan-save{border:none;background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff}
+  .setup-plan-save:disabled{opacity:.45;cursor:default;box-shadow:none}
+  .setup-plan-discard{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);padding:0 14px}
+  .setup-plan-status{min-height:18px;margin-top:9px;color:var(--muted);font-size:11px}
 
   .picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
   .picker.days-3{flex-wrap:nowrap;gap:6px}
@@ -176,7 +200,8 @@
   .ex-name-inp{flex:1;min-width:0;min-height:28px;height:28px;overflow:hidden;resize:none;background:transparent;border:none;font-weight:800;font-size:15px;
     line-height:20px;color:var(--ink);font-family:inherit;padding:4px 2px;border-bottom:1px dashed transparent}
   .ex-name-inp[readonly]{cursor:default}
-  .ex-name-inp:focus{outline:none;border-bottom-color:var(--blue)}
+  .ex:not(.name-selectable) .ex-name-inp{pointer-events:none}
+  .ex-name-inp:not([readonly]):focus{outline:none;border-bottom-color:var(--blue)}
   .ex-goal-inp{flex:0 0 54px;width:54px;min-width:0;background:var(--blue-bright);border:none;border-radius:20px;
     font-size:12px;font-weight:800;color:#04101f;text-align:center;padding:5px 6px;font-family:inherit}
   .ex-goal-inp[readonly]{pointer-events:none}
@@ -276,15 +301,6 @@
   .today-stat{background:rgba(7,17,29,.72);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px}
   .today-stat span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.7px;font-weight:800}
   .today-stat strong{display:block;color:var(--ink);font-size:13px;margin-top:3px}
-  .plan-tools{display:flex;justify-content:flex-end;margin:-4px 0 12px}
-  .plan-edit-btn{min-height:44px;padding:9px 13px;border-radius:12px;border:1px solid var(--line-strong);
-    background:var(--panel);color:var(--muted);font:800 12px inherit;cursor:pointer}
-  .plan-edit-btn.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
-  .plan-note{display:none;color:var(--warm);font-size:11px;margin-right:auto;align-self:center}
-  .plan-tools.editing .plan-note{display:block}
-  .swap-ex{display:block;width:calc(100% - 24px);margin:8px 12px;padding:11px;border-radius:11px;
-    border:1px solid var(--blue);background:var(--blue-soft);color:var(--blue-bright);
-    font:850 12px inherit;cursor:pointer;min-height:44px}
 
   .note-area{width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;
     color:var(--ink);padding:12px;font-size:14px;font-family:inherit;resize:vertical;min-height:52px}
@@ -352,17 +368,19 @@
   .beta-data-tools .exp-btn{border-color:rgba(255,204,102,.42);color:var(--warm)}
 
   .library-modal{max-width:420px;max-height:82vh;display:flex;flex-direction:column}
-  .library-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .library-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex:0 0 auto}
   .library-head .m-title{margin-bottom:2px}
   .library-close{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);
     color:var(--muted);font-size:18px;cursor:pointer;touch-action:manipulation}
   .library-search{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--line-strong);
-    background:var(--field);color:var(--ink);padding:11px 12px;font-family:inherit;font-size:16px;line-height:22px}
-  .library-filters{display:flex;gap:6px;overflow-x:auto;padding:9px 0 10px;scrollbar-width:none}
+    background:var(--field);color:var(--ink);padding:11px 12px;font-family:inherit;font-size:16px;line-height:22px;flex:0 0 auto}
+  .library-filters{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:9px 0 10px;min-height:57px;
+    flex:0 0 57px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .library-filters::-webkit-scrollbar{display:none}
   .library-filter{white-space:nowrap;min-height:38px;border-radius:20px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--muted);padding:7px 11px;font:800 11px inherit;cursor:pointer}
   .library-filter.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
-  .library-list{overflow-y:auto;display:grid;gap:7px;padding-right:2px}
+  .library-list{overflow-y:auto;display:grid;gap:7px;padding-right:2px;min-height:0;flex:1 1 auto}
   .library-group{display:grid;gap:7px}
   .library-group+.library-group{margin-top:7px}
   .library-group-title{position:sticky;top:0;z-index:1;padding:8px 5px 5px;background:var(--panel);
@@ -374,7 +392,7 @@
   .library-item small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
   .library-goal{color:var(--blue-bright);font-size:11px;font-weight:850;white-space:nowrap}
   .library-custom{margin-top:9px;width:100%;min-height:44px;border-radius:12px;border:1px dashed var(--blue);
-    background:transparent;color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
+    background:transparent;color:var(--blue-bright);font:850 12px inherit;cursor:pointer;flex:0 0 auto}
 
   @media(max-width:390px){
     .set-row{grid-template-columns:54px minmax(0,1fr) minmax(0,1fr);gap:5px;padding-left:9px;padding-right:9px}
@@ -530,11 +548,6 @@
     </div>
   </div>
 
-  <div class="plan-tools" id="plan-tools">
-    <span class="plan-note">Planbearbeitung aktiv</span>
-    <button class="plan-edit-btn" id="btn-plan-edit" type="button">Plan bearbeiten</button>
-  </div>
-
   <div class="card session-card" id="session-card">
     <button class="session-toggle" id="session-toggle" type="button" aria-expanded="false" aria-controls="session-fields">
       <span class="bar"></span>
@@ -621,9 +634,21 @@
 <!-- ============ SETUP VIEW ============ -->
 <div class="view" id="view-setup">
   <div class="setup-current" id="setup-current"></div>
+  <div class="card" id="setup-plan-card">
+    <div class="card-head"><span class="bar"></span><h2>Trainingsplan anpassen</h2></div>
+    <p class="dash-sub" style="margin:0 0 13px">Tippe auf eine Übung, um sie auszutauschen. Änderungen gelten nur für zukünftige Trainings.</p>
+    <div class="setup-plan-days" id="setup-plan-days"></div>
+    <div class="setup-plan-list" id="setup-plan-list"></div>
+    <button class="setup-plan-add" id="setup-plan-add" type="button">+ Übung hinzufügen</button>
+    <div class="setup-plan-actions">
+      <button class="setup-plan-save" id="setup-plan-save" type="button">Plan speichern</button>
+      <button class="setup-plan-discard" id="setup-plan-discard" type="button">Verwerfen</button>
+    </div>
+    <div class="setup-plan-status" id="setup-plan-status"></div>
+  </div>
   <div class="card">
     <div class="card-head"><span class="bar"></span><h2>Trainingssplit wählen</h2></div>
-    <p class="dash-sub" style="margin:0 0 13px">Wähle eine Vorlage und passe die Übungen anschließend im Training über <strong>Plan bearbeiten</strong> an.</p>
+    <p class="dash-sub" style="margin:0 0 13px">Wähle eine Vorlage und passe die Übungen anschließend direkt oben an.</p>
     <div class="split-grid" id="split-grid"></div>
   </div>
   <div class="rule">
@@ -655,7 +680,7 @@
   <div class="modal library-modal">
     <div class="library-head">
       <div>
-        <div class="m-title">Übung austauschen</div>
+        <div class="m-title" id="library-title">Übung austauschen</div>
         <div class="m-txt" style="margin:0">Wähle eine Übung oder trage eine eigene ein.</div>
       </div>
       <button class="library-close" id="library-close" type="button" aria-label="Übungsbibliothek schließen">✕</button>
@@ -694,7 +719,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 911;
+const APP_VERSION = 913;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -871,7 +896,6 @@ if(templateIdsChanged) saveJSON(TPL_KEY,templates);
 let currentDay = planConfig.dayOrder[0];
 let editing    = null;
 let chartFilter = "all";
-let planEditMode = false;
 let sessionExpanded = false;
 let activeExIdx = 0;
 let activeSetKey = "warm";
@@ -880,7 +904,12 @@ let completedEditReturnIdx = null;
 let autoAdvanceT = null;
 let libraryTargetIdx = null;
 let libraryMuscle = "Alle";
+let libraryMode = "workout";
+let libraryTargetDay = null;
 let editingReturnDay = null;
+let setupPlanDraft = null;
+let setupPlanDay = null;
+let setupPlanDirty = false;
 
 /* ---- Migration alter v1-Einträge ---- */
 (function migrate(){
@@ -1041,16 +1070,38 @@ function renderLibraryList(){
   document.querySelectorAll("[data-library-id]").forEach(b=>b.addEventListener("click",()=>selectLibraryExercise(b.dataset.libraryId)));
 }
 function openLibrary(i){
+  libraryMode="workout"; libraryTargetDay=null;
+  $("#library-title").textContent="Übung austauschen";
   libraryTargetIdx=i; libraryMuscle="Alle"; $("#library-search").value="";
   renderLibraryFilters(); renderLibraryList(); $("#library-bg").classList.add("show");
   setTimeout(()=>$("#library-search").focus(),50);
 }
-function closeLibrary(){ $("#library-bg").classList.remove("show"); }
+function openSetupLibrary(day,i=null){
+  libraryMode="setup"; libraryTargetDay=day; libraryTargetIdx=i; libraryMuscle="Alle"; $("#library-search").value="";
+  $("#library-title").textContent=i===null?"Übung hinzufügen":"Übung austauschen";
+  renderLibraryFilters(); renderLibraryList(); $("#library-bg").classList.add("show");
+  setTimeout(()=>$("#library-search").focus(),50);
+}
+function closeLibrary(){
+  $("#library-bg").classList.remove("show");
+  libraryMode="workout"; libraryTargetDay=null; libraryTargetIdx=null;
+}
 async function selectLibraryExercise(id){
   const choice=EXERCISE_LIBRARY.find(x=>x.id===id);
+  if(!choice) return;
+  if(libraryMode==="setup"){
+    const day=libraryTargetDay, selectedIdx=libraryTargetIdx;
+    if(!setupPlanDraft||!Array.isArray(setupPlanDraft[day])) return;
+    const next={id:choice.id,n:choice.n,goal:choice.goal};
+    if(selectedIdx===null) setupPlanDraft[day].push(next);
+    else if(setupPlanDraft[day][selectedIdx]) setupPlanDraft[day][selectedIdx]=next;
+    else return;
+    setupPlanDirty=true; closeLibrary(); renderSetupPlan(); toast("Übung ausgewählt ✓");
+    return;
+  }
   const selectedIdx=libraryTargetIdx;
   const source=exerciseSource();
-  if(!choice || selectedIdx===null || !source[selectedIdx]) return;
+  if(selectedIdx===null || !source[selectedIdx]) return;
   if(editing){
     editing.sets[selectedIdx].name=choice.n;
     editing.sets[selectedIdx].goal=choice.goal;
@@ -1059,24 +1110,22 @@ async function selectLibraryExercise(id){
     toast("Übung ausgewählt ✓");
     return;
   }
-  const drafts=loadDrafts(), dayDraft=drafts[currentDay], setDraft=dayDraft&&dayDraft.sets&&dayDraft.sets[libraryTargetIdx];
-  const hasValues=hasSetValues(setDraft);
-  if(hasValues){
-    closeLibrary();
-    const ok=await askConfirm("Übung trotz Eingaben austauschen?","Die bereits erfassten Werte dieser Übung im laufenden Beta-Training werden verworfen. Andere Übungen bleiben erhalten.","Austauschen");
-    if(!ok){ openLibrary(libraryTargetIdx); return; }
-    dayDraft.sets[libraryTargetIdx]={wkg:"",wwdh:"",workSets:[{kg:"",reps:""},{kg:"",reps:""}],setCount:2,done:false,touched:false};
-    saveJSON(DRAFT_KEY,drafts);
-  }
-  templates[currentDay][selectedIdx]={id:choice.id,n:choice.n,goal:choice.goal};
-  markPlanCustomized(); saveJSON(TPL_KEY,templates); closeLibrary(); renderExercises(); saveDraftNow();
-  requestAnimationFrame(()=>document.querySelector(`.ex[data-i="${selectedIdx}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}));
-  toast("Übung ausgetauscht ✓");
 }
 $("#library-search").addEventListener("input",renderLibraryList);
 $("#library-close").addEventListener("click",closeLibrary);
 $("#library-bg").addEventListener("click",e=>{ if(e.target.id==="library-bg") closeLibrary(); });
 $("#library-custom").addEventListener("click",()=>{
+  if(libraryMode==="setup"){
+    const day=libraryTargetDay, selectedIdx=libraryTargetIdx;
+    if(!setupPlanDraft||!Array.isArray(setupPlanDraft[day])) return;
+    const custom={id:`custom-${Date.now()}`,n:selectedIdx===null?"":(setupPlanDraft[day][selectedIdx]?.n||""),goal:selectedIdx===null?"8–12":(setupPlanDraft[day][selectedIdx]?.goal||"8–12"),manual:true,focus:true};
+    if(selectedIdx===null) setupPlanDraft[day].push(custom);
+    else setupPlanDraft[day][selectedIdx]=custom;
+    setupPlanDirty=true; closeLibrary(); renderSetupPlan();
+    requestAnimationFrame(()=>document.querySelector('.setup-ex-name[data-focus="1"]')?.focus());
+    return;
+  }
+  if(!editing) return;
   const i=libraryTargetIdx; closeLibrary();
   const inp=document.querySelector(`.ex-name-inp[data-i="${i}"]`);
   if(inp){
@@ -1131,7 +1180,7 @@ function renderExercises(){
   const prev  = editing ? null : lastEntryForDay(currentDay);
   const prevBadge = editing ? null : prev;
 
-  if(!planEditMode && draft && Number.isInteger(draft.activeExIdx)){
+  if(!editing && draft && Number.isInteger(draft.activeExIdx)){
     activeExIdx=draft.activeExIdx;
     activeSetKey=draft.activeSetKey||"warm";
     openExIndices=new Set(Array.isArray(draft.openExIndices)?draft.openExIndices:[activeExIdx]);
@@ -1148,15 +1197,15 @@ function renderExercises(){
       if(previous && hitTop(previous, goal)) badge = `<div class="prog-badge">↑ ${targetText(previous,goal)}</div>`;
     }
     const nameLockAttr = 'readonly aria-readonly="true"';
-    const goalLockAttr = (!editing && !planEditMode) ? 'readonly aria-readonly="true"' : "";
-    const delStyle = (editing||planEditMode) ? "" : 'style="display:none"';
-    const exClass = planEditMode ? "" : (editing ? (i===activeExIdx ? "focus" : "") : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact")));
+    const goalLockAttr = !editing ? 'readonly aria-readonly="true"' : "";
+    const delStyle = editing ? "" : 'style="display:none"';
+    const exClass = editing ? (i===activeExIdx ? "focus" : "") : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact"));
     const lastBox = (!editing && previous) ? `<div class="last-box">
       <div><div class="last-k">Letztes Training</div><div class="last-v">${previousText(previous)}</div></div>
       <button class="last-copy" type="button" data-copy-last="${i}">Gewichte übernehmen</button>
     </div>` : "";
     c.insertAdjacentHTML("beforeend", `
-      <div class="ex ${exClass}" data-i="${i}">
+      <div class="ex ${exClass} ${editing ? "name-selectable" : ""}" data-i="${i}">
         <div class="ex-top">
           <span class="ex-num">${i+1}.</span>
           <textarea class="ex-name-inp" data-i="${i}" rows="1" placeholder="Übung" ${nameLockAttr} aria-label="Übungsname">${escAttr(name)}</textarea>
@@ -1166,7 +1215,6 @@ function renderExercises(){
         </div>
         <div class="ex-summary" data-summary="${i}">Ziel ${escAttr(goal)}</div>
         <div class="ex-body">
-          ${(!editing && planEditMode) ? `<button class="swap-ex" data-swap="${i}" type="button">↔ Übung austauschen</button>` : ""}
           ${badge}
           ${lastBox}
           ${setRow(i,"warm","Warm-Up")}
@@ -1225,7 +1273,7 @@ function renderExercises(){
   setActiveSet(activeExIdx,activeSetKey,false);
   updateProgress();
   renderTodayCard();
-  $("#btn-add-ex").style.display = (editing||planEditMode) ? "block" : "none";
+  $("#btn-add-ex").style.display = editing ? "block" : "none";
 
   /* Meta aus Entwurf */
   if(!editing){
@@ -1327,7 +1375,7 @@ function bindRowEvents(scope){
 function bindExerciseEvents(){
   document.querySelectorAll(".ex-top").forEach(top=>{
     top.addEventListener("click",e=>{
-      if(planEditMode||e.target.closest("button")) return;
+      if(e.target.closest("button")) return;
       const ex=top.closest(".ex");
       const targetIdx=+ex.dataset.i;
       if(ex.classList.contains("done")&&!ex.classList.contains("editing-completed")&&activeExIdx>=0&&activeExIdx!==targetIdx){
@@ -1338,7 +1386,7 @@ function bindExerciseEvents(){
   });
   document.querySelectorAll(".ex-name-inp").forEach(inp=>{
     inp.addEventListener("click",e=>{
-      if((planEditMode||editing) && inp.dataset.manual!=="1"){
+      if(editing && inp.dataset.manual!=="1"){
         e.stopPropagation(); openLibrary(+inp.dataset.i);
       }
     });
@@ -1346,15 +1394,9 @@ function bindExerciseEvents(){
       resizeExerciseName(inp);
       const i = +inp.dataset.i;
       if(editing){ editing.sets[i].name = inp.value; }
-      else {
-        templates[currentDay][i].n = inp.value;
-        const lib = libraryByName(inp.value);
-        templates[currentDay][i].id = lib ? lib.id : `custom-${String(inp.value||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
-        markPlanCustomized(); saveJSON(TPL_KEY,templates); saveDraftNow();
-      }
     });
     inp.addEventListener("blur",()=>{
-      if((planEditMode||editing) && inp.dataset.manual==="1"){
+      if(editing && inp.dataset.manual==="1"){
         delete inp.dataset.manual;
         inp.setAttribute("readonly",""); inp.setAttribute("aria-readonly","true");
       }
@@ -1364,7 +1406,6 @@ function bindExerciseEvents(){
     inp.addEventListener("input",()=>{
       const i = +inp.dataset.i;
       if(editing){ editing.sets[i].goal = inp.value; }
-      else { templates[currentDay][i].goal = inp.value; markPlanCustomized(); saveJSON(TPL_KEY,templates); saveDraftNow(); }
     });
   });
   document.querySelectorAll(".ex-done-btn").forEach(b=>{
@@ -1438,9 +1479,7 @@ function bindExerciseEvents(){
       const ok = await askConfirm("Übung entfernen?", txt);
       if(!ok) return;
       src.splice(i,1);
-      if(!editing){ markPlanCustomized(); saveJSON(TPL_KEY,templates); }
       renderExercises();
-      if(!editing) saveDraftNow();
       toast("Übung entfernt ✓");
     });
   });
@@ -1476,9 +1515,6 @@ function bindExerciseEvents(){
       if(activeExIdx===i && String(activeSetKey)===String(count)) setActiveSet(i,String(count-1),false);
       updateVolume(i); updateExerciseSummary(i); saveDraftNow(); toast(`Satz ${count} entfernt ✓`);
     });
-  });
-  document.querySelectorAll("[data-swap]").forEach(b=>{
-    b.addEventListener("click",()=>openLibrary(+b.dataset.swap));
   });
   document.querySelectorAll("[data-copy-last]").forEach(b=>{
     b.addEventListener("click",e=>{
@@ -1569,32 +1605,63 @@ function renderDashboard(){
 }
 function openTrainingDay(day){ selectDay(day); setView("log"); }
 
+function resetSetupPlanDraft(){
+  setupPlanDraft=JSON.parse(JSON.stringify(templates));
+  setupPlanDay=planConfig.dayOrder.includes(setupPlanDay)?setupPlanDay:planConfig.dayOrder[0];
+  setupPlanDirty=false;
+}
+function renderSetupPlan(){
+  if(!setupPlanDraft) resetSetupPlanDraft();
+  if(!planConfig.dayOrder.includes(setupPlanDay)) setupPlanDay=planConfig.dayOrder[0];
+  const day=setupPlanDay, list=setupPlanDraft[day]||[];
+  $("#setup-plan-days").innerHTML=planConfig.dayOrder.map((d,idx)=>`<button class="setup-plan-day ${d===day?"active":""}" data-setup-day="${escAttr(d)}" type="button">${idx+1}. ${escAttr(PLANNAME(d))}</button>`).join("");
+  $("#setup-plan-list").innerHTML=list.map((ex,i)=>`<div class="setup-plan-ex" data-setup-ex="${i}">
+    <span class="setup-plan-num">${i+1}.</span>
+    ${ex.manual?`<input class="setup-ex-name" data-setup-name="${i}" data-focus="${ex.focus?"1":"0"}" value="${escAttr(ex.n)}" placeholder="Eigene Übung" aria-label="Eigener Übungsname">`:`<button class="setup-ex-select" data-setup-select="${i}" type="button">${escAttr(ex.n||"Übung wählen")}</button>`}
+    <input class="setup-ex-goal" data-setup-goal="${i}" value="${escAttr(ex.goal||"")}" placeholder="Ziel" aria-label="Wiederholungsziel für ${escAttr(ex.n||`Übung ${i+1}`)}">
+    <button class="setup-ex-remove" data-setup-remove="${i}" type="button" aria-label="${escAttr(ex.n||`Übung ${i+1}`)} entfernen">×</button>
+  </div>`).join("");
+  $("#setup-plan-save").disabled=!setupPlanDirty;
+  $("#setup-plan-status").textContent=setupPlanDirty?"Nicht gespeicherte Änderungen":"Plan ist gespeichert";
+  document.querySelectorAll("[data-setup-day]").forEach(b=>b.addEventListener("click",()=>{ setupPlanDay=b.dataset.setupDay; renderSetupPlan(); }));
+  document.querySelectorAll("[data-setup-select]").forEach(b=>b.addEventListener("click",()=>openSetupLibrary(day,+b.dataset.setupSelect)));
+  document.querySelectorAll("[data-setup-name]").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const ex=setupPlanDraft[day][+inp.dataset.setupName]; ex.n=inp.value; ex.id=`custom-${String(inp.value||"uebung").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
+      delete ex.focus; setupPlanDirty=true; $("#setup-plan-save").disabled=false; $("#setup-plan-status").textContent="Nicht gespeicherte Änderungen";
+    });
+  });
+  document.querySelectorAll("[data-setup-goal]").forEach(inp=>inp.addEventListener("input",()=>{
+    setupPlanDraft[day][+inp.dataset.setupGoal].goal=inp.value; setupPlanDirty=true; $("#setup-plan-save").disabled=false; $("#setup-plan-status").textContent="Nicht gespeicherte Änderungen";
+  }));
+  document.querySelectorAll("[data-setup-remove]").forEach(b=>b.addEventListener("click",()=>{
+    if(setupPlanDraft[day].length<=1){ toast("Mindestens eine Übung behalten"); return; }
+    setupPlanDraft[day].splice(+b.dataset.setupRemove,1); setupPlanDirty=true; renderSetupPlan();
+  }));
+}
+
 function renderSetup(){
   $("#setup-current").innerHTML=`<small>Aktueller Trainingsplan</small><strong>${escAttr(planConfig.name)}</strong>
     <span>${planConfig.dayOrder.length} Einheiten: ${planConfig.dayOrder.map(PLANNAME).join(" · ")}</span>`;
+  renderSetupPlan();
   $("#split-grid").innerHTML=Object.entries(SPLIT_PRESETS).map(([id,p])=>`<div class="split-card ${planConfig.id===id?"active":""}">
     <h3>${escAttr(p.name)}</h3><p>${escAttr(p.description)}</p><div class="split-days">${p.dayOrder.map(day=>p.dayNames[day]).join(" · ")}</div>
     <button class="split-apply" data-split="${id}" type="button">${planConfig.id===id?"Vorlage erneut laden":"Diesen Split verwenden"}</button></div>`).join("");
   $("#split-grid").querySelectorAll("[data-split]").forEach(b=>b.addEventListener("click",()=>applySplitPreset(b.dataset.split)));
 }
-function markPlanCustomized(){
-  if(planConfig.id==="custom") return;
-  planConfig.id="custom"; planConfig.name=`${planConfig.name} · angepasst`;
-  saveJSON(PLAN_KEY,planConfig);
-}
 async function applySplitPreset(id){
   const preset=SPLIT_PRESETS[id]; if(!preset) return;
   const draftCount=planConfig.dayOrder.filter(meaningfulDraft).length;
   const draftWarning=draftCount===1?" Ein laufender Trainingsentwurf wird verworfen.":draftCount>1?` ${draftCount} laufende Trainingsentwürfe werden verworfen.`:"";
-  const msg=`Der aktuelle zukünftige Plan wird durch „${preset.name}“ ersetzt.${draftWarning} Deine gespeicherte Trainingshistorie bleibt unverändert.`;
+  const setupWarning=setupPlanDirty?" Nicht gespeicherte Plananpassungen werden verworfen.":"";
+  const msg=`Der aktuelle zukünftige Plan wird durch „${preset.name}“ ersetzt.${draftWarning}${setupWarning} Deine gespeicherte Trainingshistorie bleibt unverändert.`;
   const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(preset.templates));
   planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
-  planEditMode=false; chartFilter="all"; clearFormMeta();
-  $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
+  chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
   toast("Trainingssplit übernommen ✓");
 }
@@ -1642,7 +1709,6 @@ function firstPendingSet(i){
   return keys.find(key=>!setIsComplete(i,key)) || keys[keys.length-1] || "2";
 }
 function setActiveExercise(i,scroll=true){
-  if(planEditMode) return;
   const src = exerciseSource();
   if(i<0 || i>=src.length) return;
   if(i!==activeExIdx){ clearTimeout(autoAdvanceT); activeSetKey = firstPendingSet(i); }
@@ -1664,7 +1730,6 @@ function setActiveExercise(i,scroll=true){
   if(scroll&&ex) ex.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function setActiveSet(i,key,focusInput=true){
-  if(planEditMode) return;
   activeExIdx = +i; activeSetKey = String(key);
   document.querySelectorAll("#ex-container .set-row").forEach(r=>r.classList.remove("active-set"));
   const row = document.querySelector(`.set-row[data-row-ex="${i}"][data-set="${key}"]`);
@@ -1686,7 +1751,7 @@ function setIsComplete(i,key){
 }
 function queueSetAdvance(i,key){
   clearTimeout(autoAdvanceT);
-  if(planEditMode || editing || !setIsComplete(i,key)) return;
+  if(editing || !setIsComplete(i,key)) return;
   autoAdvanceT = setTimeout(()=>{
     if(setIsComplete(i,key)) advanceFromSet(+i,String(key));
   },5000);
@@ -1746,14 +1811,31 @@ $("#session-toggle").addEventListener("click",()=>setSessionExpanded(!sessionExp
 });
 
 /* ================= Day / Tabs ================= */
-$("#btn-plan-edit").addEventListener("click",()=>{
-  if(editing) return;
-  planEditMode = !planEditMode;
-  $("#btn-plan-edit").classList.toggle("active",planEditMode);
-  $("#btn-plan-edit").textContent = planEditMode ? "Planbearbeitung beenden" : "Plan bearbeiten";
-  $("#plan-tools").classList.toggle("editing",planEditMode);
-  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
-  renderExercises();
+$("#setup-plan-add").addEventListener("click",()=>openSetupLibrary(setupPlanDay,null));
+$("#setup-plan-discard").addEventListener("click",async()=>{
+  if(!setupPlanDirty) return;
+  const ok=await askConfirm("Planänderungen verwerfen?","Alle noch nicht gespeicherten Anpassungen werden zurückgesetzt.","Verwerfen");
+  if(!ok) return;
+  resetSetupPlanDraft(); renderSetupPlan(); toast("Änderungen verworfen");
+});
+$("#setup-plan-save").addEventListener("click",async()=>{
+  if(!setupPlanDirty||!setupPlanDraft) return;
+  const invalidDay=planConfig.dayOrder.find(day=>!setupPlanDraft[day]?.length||setupPlanDraft[day].some(ex=>!(ex.n||"").trim()));
+  if(invalidDay){ setupPlanDay=invalidDay; renderSetupPlan(); toast("Bitte alle Übungen benennen"); return; }
+  const draftCount=planConfig.dayOrder.filter(meaningfulDraft).length;
+  if(draftCount){
+    const ok=await askConfirm("Plan speichern?",`${draftCount===1?"Ein laufender Trainingsentwurf wird":"Laufende Trainingsentwürfe werden"} verworfen, damit keine alten Eingaben mit dem neuen Plan vermischt werden. Deine Historie bleibt unverändert.`,"Plan speichern");
+    if(!ok) return;
+  }
+  templates=JSON.parse(JSON.stringify(setupPlanDraft));
+  Object.values(templates).forEach(day=>day.forEach(ex=>{ delete ex.manual; delete ex.focus; }));
+  if(planConfig.id!=="custom") planConfig.name=`${planConfig.name} · angepasst`;
+  planConfig.id="custom"; planConfig.versionId=`custom-${Date.now()}`;
+  saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
+  currentDay=planConfig.dayOrder.includes(currentDay)?currentDay:planConfig.dayOrder[0];
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); completedEditReturnIdx=null;
+  resetSetupPlanDraft(); renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
+  toast("Trainingsplan gespeichert ✓");
 });
 document.querySelectorAll(".tab").forEach(t=>{
   t.addEventListener("click",()=>{
@@ -1764,17 +1846,11 @@ document.querySelectorAll(".tab").forEach(t=>{
 
 /* ================= Add exercise ================= */
 $("#btn-add-ex").addEventListener("click",()=>{
-  const previousScroll=window.scrollY;
-  if(editing){ editing.sets.push({name:"", goal:"8–12", wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:""}); }
-  else { templates[currentDay].push({id:`custom-${Date.now()}`,n:"", goal:"8–12"}); markPlanCustomized(); saveJSON(TPL_KEY,templates); }
+  if(!editing) return;
+  editing.sets.push({name:"", goal:"8–12", wkg:"",wwdh:"",kg1:"",wdh1:"",kg2:"",wdh2:"",kg3:"",wdh3:""});
   renderExercises();
-  if(!editing) saveDraftNow();
   const inps = document.querySelectorAll(".ex-name-inp");
-  if(editing) inps[inps.length-1].focus();
-  else {
-    requestAnimationFrame(()=>window.scrollTo({top:previousScroll,behavior:"auto"}));
-    openLibrary(inps.length-1);
-  }
+  inps[inps.length-1].focus();
 });
 
 /* ================= Bearbeiten ================= */
@@ -1798,7 +1874,6 @@ function startEdit(id){
   });
   $("#edit-banner").classList.add("show");
   $("#today-card").style.display = "none";
-  $("#plan-tools").style.display = "none";
   $("#edit-banner-txt").textContent = `✏️ ${editing.dayName} vom ${fmtDate(editing.date)} bearbeiten`;
   $("#btn-save").textContent = "Änderungen speichern";
   $("#btn-clear").textContent = "Abbrechen";
@@ -1816,7 +1891,6 @@ function stopEdit(){
   editingReturnDay = null;
   $("#edit-banner").classList.remove("show");
   $("#today-card").style.display = "block";
-  $("#plan-tools").style.display = "flex";
   $("#btn-save").textContent = "Training beenden";
   $("#btn-clear").textContent = "Reset";
   $("#timer-fab-wrap").style.display = "flex";
@@ -2228,8 +2302,8 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   templates=JSON.parse(JSON.stringify(DEFAULT_TPL)); saveJSON(TPL_KEY,templates); saveLog([]); saveJSON(DRAFT_KEY,{});
   planConfig=defaultPlanConfig(); saveJSON(PLAN_KEY,planConfig);
   tStop();
-  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; planEditMode=false; chartFilter="all"; clearFormMeta();
-  $("#btn-plan-edit").classList.remove("active"); $("#btn-plan-edit").textContent="Plan bearbeiten"; $("#plan-tools").classList.remove("editing");
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; chartFilter="all"; clearFormMeta();
+  setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
   renderDayPicker(); renderChartFilters(); renderExercises(); renderHistory(); renderDashboard(); renderSetup(); updateBrand(); toast("Beta-Daten zurückgesetzt ✓");
 });
 
@@ -2291,6 +2365,7 @@ $("#import-file").addEventListener("change",ev=>{
           dayOrder:Object.keys(templates),dayNames:Object.fromEntries(Object.keys(templates).map((day,idx)=>[day,`Day ${idx+1}`]))};
         if(!planConfig.versionId) planConfig.versionId="imported-"+Date.now();
         saveJSON(PLAN_KEY,planConfig); currentDay=planConfig.dayOrder[0]; chartFilter="all";
+        setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
         renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
       }
       renderHistory();

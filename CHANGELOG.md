@@ -1,5 +1,55 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 13
+
+### Was wurde verändert?
+
+- Der technische **Plan bearbeiten**-Modus wurde vollständig aus dem laufenden Training entfernt.
+- Die Plananpassung befindet sich jetzt gebündelt unter **Setup → Trainingsplan anpassen**.
+- Pro Trainingstag sind alle geplanten Übungen in einer kompakten Liste sichtbar.
+- Ein Tipp auf den Übungsnamen öffnet direkt die kategorisierte Übungsbibliothek.
+- Übungen können hinzugefügt, entfernt oder als eigene Übung eingetragen werden; Wiederholungsziele sind direkt anpassbar.
+- Planänderungen werden zunächst nur als Entwurf gehalten und erst zentral über **Plan speichern** übernommen.
+- Bei laufenden Trainingsentwürfen warnt die App vor dem Speichern und verhindert eine Vermischung alter Eingaben mit dem neuen Plan.
+- **Verwerfen** setzt ungespeicherte Planänderungen zurück.
+- Historische Workouts bleiben mit ihren damaligen Übungen und der damaligen Planversion unverändert.
+
+### Datenkompatibilität
+
+Das vorhandene Plan- und Workoutformat bleibt erhalten. Beim Speichern einer Plananpassung erhält der zukünftige Plan eine neue Versions-ID; gespeicherte Trainingseinheiten werden nicht umgeschrieben.
+
+### Zu testen
+
+- prüfen, dass im Training kein Button oder Modus **Plan bearbeiten** mehr erscheint
+- unter Setup zwischen allen Trainingstagen wechseln
+- vorhandene Übung über den Namen austauschen
+- Übung hinzufügen, entfernen und eine eigene Übung anlegen
+- Wiederholungsziel ändern, Änderungen verwerfen und erneut prüfen
+- Plan speichern und anschließend Training mit dem neuen Plan öffnen
+- Warnung und Schutz bei einem bereits laufenden Trainingsentwurf prüfen
+- bestehende Historie nach Planänderung kontrollieren
+
+## v1.3 Beta – Testpaket 12
+
+### Was wurde verändert?
+
+- Außerhalb der Plan- und Historienbearbeitung ist der Übungsname kein fokussierbares Texteingabefeld mehr.
+- Ein Tipp auf den Übungsnamen aktiviert weiterhin die zugehörige Übungskarte, löst auf dem iPhone aber weder Tastatur/Zoom noch eine gestrichelte Fokuslinie aus.
+- Die Übungsauswahl in der Plan- und Historienbearbeitung bleibt unverändert verfügbar.
+- Die Kategorien im Übungsauswahlfenster behalten auf kleinen iPhone-Displays ihre volle Höhe und lassen sich horizontal scrollen, ohne von der Übungsliste abgeschnitten zu werden.
+
+### Datenkompatibilität
+
+Es werden ausschließlich Fokus- und Touch-Verhalten der Oberfläche angepasst. Trainingspläne, Entwürfe und Historieneinträge bleiben unverändert.
+
+### Zu testen
+
+- Im normalen Training mehrfach auf unterschiedliche Übungsnamen tippen
+- prüfen, dass die jeweilige Karte geöffnet wird, ohne Zoom, Tastatur oder Fokuslinie
+- anschließend Planbearbeitung und Übungsauswahl öffnen
+- Historienbearbeitung und Übungsauswahl ebenfalls kontrollieren
+- Kategorien im Auswahlfenster auf schmaler und niedriger iPhone-Ansicht horizontal durchscrollen
+
 ## v1.3 Beta – Testpaket 11
 
 ### Was wurde verändert?
