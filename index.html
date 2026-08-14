@@ -694,7 +694,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 910;
+const APP_VERSION = 911;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -1048,7 +1048,17 @@ function openLibrary(i){
 function closeLibrary(){ $("#library-bg").classList.remove("show"); }
 async function selectLibraryExercise(id){
   const choice=EXERCISE_LIBRARY.find(x=>x.id===id);
-  if(!choice || libraryTargetIdx===null || !templates[currentDay][libraryTargetIdx]) return;
+  const selectedIdx=libraryTargetIdx;
+  const source=exerciseSource();
+  if(!choice || selectedIdx===null || !source[selectedIdx]) return;
+  if(editing){
+    editing.sets[selectedIdx].name=choice.n;
+    editing.sets[selectedIdx].goal=choice.goal;
+    activeExIdx=selectedIdx; openExIndices.add(selectedIdx); closeLibrary(); renderExercises();
+    requestAnimationFrame(()=>document.querySelector(`.ex[data-i="${selectedIdx}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}));
+    toast("Übung ausgewählt ✓");
+    return;
+  }
   const drafts=loadDrafts(), dayDraft=drafts[currentDay], setDraft=dayDraft&&dayDraft.sets&&dayDraft.sets[libraryTargetIdx];
   const hasValues=hasSetValues(setDraft);
   if(hasValues){
@@ -1058,7 +1068,6 @@ async function selectLibraryExercise(id){
     dayDraft.sets[libraryTargetIdx]={wkg:"",wwdh:"",workSets:[{kg:"",reps:""},{kg:"",reps:""}],setCount:2,done:false,touched:false};
     saveJSON(DRAFT_KEY,drafts);
   }
-  const selectedIdx=libraryTargetIdx;
   templates[currentDay][selectedIdx]={id:choice.id,n:choice.n,goal:choice.goal};
   markPlanCustomized(); saveJSON(TPL_KEY,templates); closeLibrary(); renderExercises(); saveDraftNow();
   requestAnimationFrame(()=>document.querySelector(`.ex[data-i="${selectedIdx}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}));
@@ -1138,10 +1147,10 @@ function renderExercises(){
     if(prevBadge){
       if(previous && hitTop(previous, goal)) badge = `<div class="prog-badge">↑ ${targetText(previous,goal)}</div>`;
     }
-    const nameLockAttr = !editing ? 'readonly aria-readonly="true"' : "";
+    const nameLockAttr = 'readonly aria-readonly="true"';
     const goalLockAttr = (!editing && !planEditMode) ? 'readonly aria-readonly="true"' : "";
     const delStyle = (editing||planEditMode) ? "" : 'style="display:none"';
-    const exClass = planEditMode ? "" : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact"));
+    const exClass = planEditMode ? "" : (editing ? (i===activeExIdx ? "focus" : "") : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact")));
     const lastBox = (!editing && previous) ? `<div class="last-box">
       <div><div class="last-k">Letztes Training</div><div class="last-v">${previousText(previous)}</div></div>
       <button class="last-copy" type="button" data-copy-last="${i}">Gewichte übernehmen</button>
@@ -1169,7 +1178,7 @@ function renderExercises(){
             <button class="set-control remove" data-remove-set="${i}" type="button" hidden>− Letzten Satz entfernen</button>
           </div>
           <button class="ex-edit-btn" data-edit-completed="${i}" type="button">✎ Übung bearbeiten</button>
-          <button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abschließen</button>
+          ${editing ? "" : `<button class="ex-done-btn" data-done="${i}" type="button">✓ Übung abschließen</button>`}
           <div class="pause-hint" data-hint="${i}">
             <span class="ph-txt">⏱ Pause läuft · 2:00</span>
             <button class="ph-cancel" type="button">Abbrechen</button>
@@ -1318,7 +1327,7 @@ function bindRowEvents(scope){
 function bindExerciseEvents(){
   document.querySelectorAll(".ex-top").forEach(top=>{
     top.addEventListener("click",e=>{
-      if(planEditMode||editing||e.target.closest("button")) return;
+      if(planEditMode||e.target.closest("button")) return;
       const ex=top.closest(".ex");
       const targetIdx=+ex.dataset.i;
       if(ex.classList.contains("done")&&!ex.classList.contains("editing-completed")&&activeExIdx>=0&&activeExIdx!==targetIdx){
@@ -1329,7 +1338,7 @@ function bindExerciseEvents(){
   });
   document.querySelectorAll(".ex-name-inp").forEach(inp=>{
     inp.addEventListener("click",e=>{
-      if(planEditMode && !editing && inp.dataset.manual!=="1"){
+      if((planEditMode||editing) && inp.dataset.manual!=="1"){
         e.stopPropagation(); openLibrary(+inp.dataset.i);
       }
     });
@@ -1345,7 +1354,7 @@ function bindExerciseEvents(){
       }
     });
     inp.addEventListener("blur",()=>{
-      if(planEditMode && !editing && inp.dataset.manual==="1"){
+      if((planEditMode||editing) && inp.dataset.manual==="1"){
         delete inp.dataset.manual;
         inp.setAttribute("readonly",""); inp.setAttribute("aria-readonly","true");
       }
@@ -1633,7 +1642,7 @@ function firstPendingSet(i){
   return keys.find(key=>!setIsComplete(i,key)) || keys[keys.length-1] || "2";
 }
 function setActiveExercise(i,scroll=true){
-  if(planEditMode || editing) return;
+  if(planEditMode) return;
   const src = exerciseSource();
   if(i<0 || i>=src.length) return;
   if(i!==activeExIdx){ clearTimeout(autoAdvanceT); activeSetKey = firstPendingSet(i); }
@@ -1655,7 +1664,7 @@ function setActiveExercise(i,scroll=true){
   if(scroll&&ex) ex.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function setActiveSet(i,key,focusInput=true){
-  if(planEditMode || editing) return;
+  if(planEditMode) return;
   activeExIdx = +i; activeSetKey = String(key);
   document.querySelectorAll("#ex-container .set-row").forEach(r=>r.classList.remove("active-set"));
   const row = document.querySelector(`.set-row[data-row-ex="${i}"][data-set="${key}"]`);
@@ -1776,12 +1785,13 @@ function startEdit(id){
   editing = JSON.parse(JSON.stringify(entry));
   editing.sets.forEach(s=>{ s.workSets=workSetsOf(s); s.setCount=s.workSets.length; });
   currentDay = editing.day;
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(editing.sets.map((_,i)=>i));
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
   document.querySelector('.tab[data-view="log"]').classList.add("active");
   $("#view-log").classList.add("active");
   $("#save-bar").style.display = "flex";
-  $("#timer-fab-wrap").style.display = "flex";
+  $("#timer-fab-wrap").style.display = "none";
   document.querySelectorAll(".day-btn").forEach(x=>{
     x.classList.toggle("active", x.dataset.day===currentDay);
     x.style.opacity = ".45";
@@ -1791,6 +1801,7 @@ function startEdit(id){
   $("#plan-tools").style.display = "none";
   $("#edit-banner-txt").textContent = `✏️ ${editing.dayName} vom ${fmtDate(editing.date)} bearbeiten`;
   $("#btn-save").textContent = "Änderungen speichern";
+  $("#btn-clear").textContent = "Abbrechen";
   $("#f-date").value = editing.date || todayISO();
   $("#f-weight").value = editing.weight || "";
   $("#f-energy").value = editing.energy || "";
@@ -1807,9 +1818,13 @@ function stopEdit(){
   $("#today-card").style.display = "block";
   $("#plan-tools").style.display = "flex";
   $("#btn-save").textContent = "Training beenden";
+  $("#btn-clear").textContent = "Reset";
+  $("#timer-fab-wrap").style.display = "flex";
   setSessionExpanded(false);
   renderDayPicker();
   renderExercises(); // lädt Entwurf oder Vorbefüllung des aktuellen Tages
+  setView("history");
+  window.scrollTo({top:0,behavior:"auto"});
 }
 $("#edit-cancel").addEventListener("click",stopEdit);
 

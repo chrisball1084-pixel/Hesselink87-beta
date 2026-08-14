@@ -1,5 +1,33 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 11
+
+### Was wurde verändert?
+
+- Beim Bearbeiten einer gespeicherten Einheit in der **Historie** sind alle Übungskarten gleichzeitig geöffnet und direkt korrigierbar.
+- Die Trainingsaktion **Übung abschließen** wird im Historien-Editor nicht angezeigt; gespeichert wird die komplette Korrektur ausschließlich über **Änderungen speichern**.
+- Ein Tipp auf den Übungsnamen öffnet auch im Historien-Editor die kategorisierte Übungsbibliothek.
+- Gewichte, Wiederholungen und Satzanzahl der gespeicherten Übung bleiben beim Austausch über die Bibliothek erhalten.
+- Eine freie Tastatureingabe des Übungsnamens ist weiterhin über **Eigene Übung manuell eintragen** möglich.
+- Der Pausentimer wird während einer Historienkorrektur ausgeblendet und verdeckt dadurch keine Eingaben.
+- Der zweite Aktionsbutton heißt während der Historienkorrektur **Abbrechen** statt **Reset**.
+- Nach dem Speichern oder Abbrechen schließt sich der Korrekturmodus und die App kehrt direkt zur Historie zurück.
+
+### Datenkompatibilität
+
+Das Format gespeicherter Workouts bleibt unverändert. Ein über die Bibliothek korrigierter Übungsname und sein Wiederholungsziel werden erst über **Änderungen speichern** in die betreffende historische Einheit geschrieben.
+
+### Zu testen
+
+- Historie öffnen und prüfen, dass beim Bearbeiten alle Übungskarten geöffnet sind
+- Gewichte und Wiederholungen in unterschiedlichen Übungen direkt korrigieren
+- prüfen, dass im Korrekturmodus keine Schaltfläche **Übung abschließen** erscheint
+- auf einen Übungsnamen tippen und eine Übung aus der Bibliothek auswählen
+- vorhandene Gewichte, Wiederholungen und zusätzliche Sätze nach dem Austausch prüfen
+- manuelle Eingabe ausschließlich über **Eigene Übung manuell eintragen** prüfen
+- Historienkorrektur speichern und anschließend erneut öffnen
+- prüfen, dass die App nach dem Speichern wieder die Historie anzeigt
+
 ## v1.3 Beta – Testpaket 10
 
 ### Was wurde verändert?
