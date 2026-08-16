@@ -88,6 +88,15 @@ async function importBackup(page,payload,fileName){
     assert.equal(await page.locator("#today-card").isVisible(),false,"Der doppelte Heute-Block muss ausgeblendet bleiben");
     assert.equal(await page.locator("#timer-fab-wrap").isVisible(),false,"Der globale Pausentimer darf die Trainingsansicht nicht überlagern");
     assert.equal(await page.locator('.card-timer.show[data-card-timer="2"]').count(),1,"Der Timer muss in der aktiven Übungskarte sitzen");
+    const closedExerciseName=page.locator('.ex[data-i="3"] .ex-name-inp');
+    assert.equal(await page.locator('.ex[data-i="3"]').getAttribute("class").then(value=>value.includes("compact")),true,"Eine spätere Übung muss zunächst geschlossen sein");
+    await closedExerciseName.click();
+    assert.equal(await page.locator('.ex[data-i="3"]').getAttribute("class").then(value=>value.includes("compact")),false,"Der erste Tipp auf den Namen muss die geschlossene Karte öffnen");
+    assert.equal(await page.locator("#modal-bg").isVisible(),false,"Der erste Tipp darf noch keinen Übungstausch auslösen");
+    await closedExerciseName.click();
+    assert.equal(await page.locator("#modal-bg.show").isVisible(),true,"Erst der zweite Tipp auf den Namen einer offenen Karte darf den Übungstausch anbieten");
+    await page.locator("#m-cancel").click();
+    await page.locator('.ex[data-i="2"] .ex-num').click();
     if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-training-919.png"),fullPage:true});
 
     await page.locator('.tab[data-view="setup"]').click();
@@ -125,9 +134,11 @@ async function importBackup(page,payload,fileName){
     await page.setViewportSize({width:390,height:844});
 
     await page.locator('.tab[data-view="dashboard"]').click();
+    assert.equal((await page.locator('.tab[data-view="dashboard"]').textContent()).trim(),"Dashboard","Der Hauptbereich muss Dashboard heißen");
     assert.equal(await page.locator("#view-dashboard #chart-holder").count(),1,"Volumentrend muss im Dashboard liegen");
     assert.equal(await page.locator("#view-history #chart-holder").count(),0,"Historie darf den Volumentrend nicht mehr enthalten");
     assert.ok(await page.locator("#dash-records .record-row").count()>=1,"Dashboard muss persönliche Übungsrekorde anzeigen");
+    assert.equal(await page.evaluate(()=>!!(document.querySelector("#dash-plan").closest(".card").compareDocumentPosition(document.querySelector("#dash-records").closest(".card"))&Node.DOCUMENT_POSITION_FOLLOWING)),true,"Persönliche Rekorde müssen unter dem Trainingsplan stehen");
     await page.locator('[data-dash-toggle="2"]').click();
     assert.equal(await page.locator("#view-dashboard").getAttribute("class"),"view active","Planvorschau darf nicht direkt ins Training springen");
     assert.ok(await page.locator('.dash-day-card.expanded .dash-ex-preview').count()>=1,"Aufgeklappter Plan muss seine Übungen zeigen");
@@ -198,6 +209,23 @@ async function importBackup(page,payload,fileName){
     assert.match(legacyWarning,/ältere Backup enthält keine laufenden Workouts/);
     const afterLegacy=await page.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_draft_v1")));
     assert.deepEqual(afterLegacy,beforeLegacy,"Ältere Backups dürfen lokale Entwürfe nicht löschen");
+
+    const freshTrainingContext=await browser.newContext({viewport:{width:390,height:844}});
+    await freshTrainingContext.addInitScript(()=>localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1})));
+    const freshTrainingPage=await freshTrainingContext.newPage();
+    const freshTrainingErrors=[];
+    freshTrainingPage.on("pageerror",error=>freshTrainingErrors.push(error.message));
+    await freshTrainingPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await freshTrainingPage.locator('.tab[data-view="log"]').click();
+    const freshExerciseCount=await freshTrainingPage.locator("#ex-container .ex").count();
+    assert.equal(await freshTrainingPage.locator("#ex-container .ex.compact").count(),freshExerciseCount,"Ein frisches Training muss mit vollständig eingeklappten Übungen starten");
+    if(process.env.VISUAL_CHECK) await freshTrainingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-training-collapsed-921.png"),fullPage:true});
+    await freshTrainingPage.locator('.ex[data-i="0"] .ex-num').click();
+    assert.equal(await freshTrainingPage.locator("#ex-container .ex:not(.compact)").count(),1,"Der erste Tipp muss genau eine Übung öffnen");
+    await freshTrainingPage.locator('.ex[data-i="1"] .ex-num').click();
+    assert.equal(await freshTrainingPage.locator("#ex-container .ex:not(.compact)").count(),2,"Eine zweite Übung muss parallel geöffnet werden können");
+    assert.deepEqual(freshTrainingErrors,[],`Frisches Training – Browserfehler: ${freshTrainingErrors.join(" | ")}`);
+    await freshTrainingContext.close();
 
     const onboardingContext=await browser.newContext({viewport:{width:320,height:700}});
     const onboardingPage=await onboardingContext.newPage();

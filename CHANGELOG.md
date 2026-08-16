@@ -1,5 +1,26 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 20 (veröffentlicht am 16.08.2026)
+
+### Was wurde verändert?
+
+- In der Trainingsansicht öffnet der erste Tipp auf eine geschlossene Übung immer nur deren Karte – auch wenn direkt der Übungsname getroffen wird.
+- Erst ein weiterer bewusster Tipp auf den Übungsnamen einer bereits geöffneten Karte startet den Ablauf **Übung nur heute ersetzen**.
+- Dadurch lassen sich zwei oder mehr Übungen parallel öffnen, ohne versehentlich in der Übungsauswahl zu landen.
+- Ein neu gestartetes Training zeigt zunächst alle Übungen eingeklappt. Bei einem laufenden Entwurf bleibt der zuletzt gespeicherte Öffnungszustand erhalten.
+- Der Hauptbereich **Übersicht** heißt jetzt verständlicher **Dashboard**.
+- Die persönlichen Rekorde stehen im Dashboard direkt unter dem Trainingsplan.
+- Die bestehende Bearbeitung abgeschlossener Übungen und der Historieneditor bleiben unverändert.
+
+### Automatisiert getestet
+
+- geschlossene spätere Übung über den Namen öffnen
+- beim ersten Tipp weder Bestätigungsdialog noch Übungsauswahl anzeigen
+- beim zweiten Tipp auf den Namen der geöffneten Karte den Austauschdialog anzeigen
+- frisches Training mit vollständig eingeklappten Übungen und paralleles Öffnen mehrerer Karten
+- Dashboard-Beschriftung und Reihenfolge Trainingsplan → persönliche Rekorde
+- bestehende Trainings-, Backup-, Dashboard-, Historien-, Theme- und Onboarding-Flows weiterhin grün
+
 ## v1.3 Beta – Testpaket 19 (veröffentlicht am 16.08.2026)
 
 ### Was wurde verändert?

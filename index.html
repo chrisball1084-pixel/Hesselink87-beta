@@ -617,7 +617,7 @@
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-view="dashboard">Übersicht</div>
+  <div class="tab active" data-view="dashboard">Dashboard</div>
   <div class="tab" data-view="log">Training</div>
   <div class="tab" data-view="history">Historie</div>
   <div class="tab" data-view="setup">Setup</div>
@@ -645,13 +645,13 @@
     <div id="chart-holder"></div>
   </div>
   <div class="card">
+    <div class="card-head"><span class="bar"></span><h2>Dein Trainingsplan</h2></div>
+    <div class="dash-plan" id="dash-plan"></div>
+  </div>
+  <div class="card">
     <div class="card-head"><span class="bar"></span><h2>Persönliche Rekorde</h2></div>
     <div class="record-list" id="dash-records"></div>
     <button class="record-more" id="record-more" type="button" hidden>Alle Rekorde anzeigen</button>
-  </div>
-  <div class="card">
-    <div class="card-head"><span class="bar"></span><h2>Dein Trainingsplan</h2></div>
-    <div class="dash-plan" id="dash-plan"></div>
   </div>
   <div class="card">
     <div class="card-head"><span class="bar"></span><h2>Letztes Training</h2></div>
@@ -889,7 +889,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 920;
+const APP_VERSION = 921;
 (function ensureLatestVersion(){
   const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
   if(seen !== APP_VERSION){
@@ -1139,7 +1139,7 @@ let chartFilter = "all";
 let sessionExpanded = false;
 let activeExIdx = 0;
 let activeSetKey = "warm";
-let openExIndices = new Set([0]);
+let openExIndices = new Set();
 let completedEditReturnIdx = null;
 let autoAdvanceT = null;
 let libraryTargetIdx = null;
@@ -1510,7 +1510,7 @@ function renderExercises(){
     const nameLockAttr = 'readonly aria-readonly="true"';
     const goalLockAttr = !editing ? 'readonly aria-readonly="true"' : "";
     const delStyle = editing ? "" : 'style="display:none"';
-    const exClass = editing ? (i===activeExIdx ? "focus" : "") : (i===activeExIdx ? "focus" : (openExIndices.has(i) ? "" : "compact"));
+    const exClass = editing ? (i===activeExIdx ? "focus" : "") : `${i===activeExIdx ? "focus" : ""} ${openExIndices.has(i) ? "" : "compact"}`;
     const lastBox = (!editing && previous) ? `<div class="last-box">
       <div><div class="last-k">Letztes Training</div><div class="last-v">${previousText(previous)}</div></div>
       <button class="last-copy" type="button" data-copy-last="${i}">Gewichte übernehmen</button>
@@ -1711,6 +1711,11 @@ function bindExerciseEvents(){
       if(editing) return;
       const i=+inp.dataset.i, card=inp.closest(".ex");
       if(!card||card.classList.contains("done")) return;
+      if(card.classList.contains("compact")){
+        e.preventDefault(); e.stopPropagation(); inp.blur();
+        setActiveExercise(i,true);
+        return;
+      }
       e.preventDefault(); e.stopPropagation(); inp.blur();
       const values=readSets(i), hasValues=hasSetValues(values);
       const name=sourceName(exerciseSource()[i])||`Übung ${i+1}`;
@@ -1902,7 +1907,7 @@ function nextPlannedDay(){
 function selectDay(day,render=true){
   if(!planConfig.dayOrder.includes(day)||editing) return;
   if(templates[currentDay]) saveDraftNow();
-  currentDay=day; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); completedEditReturnIdx=null;
+  currentDay=day; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); completedEditReturnIdx=null;
   renderDayPicker();
   if(render) renderExercises();
 }
@@ -2088,7 +2093,7 @@ async function applySplitPreset(id){
   templates=JSON.parse(JSON.stringify(preset.templates));
   planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
-  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   setupSplitExpanded=false; setupPlanExpanded=true;
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
@@ -2239,7 +2244,7 @@ async function applyOnboardingPlan(){
   const customized=onboardingPresetId==="custom"||JSON.stringify(templates)!==JSON.stringify(preset.templates);
   planConfig={id:customized?"custom":onboardingPresetId,name:onboardingPresetId==="custom"?"Individueller Plan":customized?`${preset.name} · angepasst`:preset.name,versionId:`onboarding-${onboardingPresetId}-${Date.now()}`,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{}); saveJSON(ONBOARDING_KEY,{completed:true,version:1});
-  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand(); closeOnboarding(); setView("dashboard");
   toast("Dein Einstieg ist eingerichtet ✓");
 }
@@ -2306,7 +2311,7 @@ function setActiveExercise(i,scroll=true){
   if(activeExIdx>=0){
     const previous=document.querySelector(`.ex[data-i="${activeExIdx}"]`);
     if(previous&&previous.classList.contains("done")&&!previous.classList.contains("editing-completed")) openExIndices.delete(activeExIdx);
-    else openExIndices.add(activeExIdx);
+    else if(previous&&!previous.classList.contains("compact")) openExIndices.add(activeExIdx);
   }
   openExIndices.add(i);
   activeExIdx = i;
@@ -2429,7 +2434,7 @@ async function saveSetupPlanChanges(surface="setup"){
   planConfig.id="custom"; planConfig.versionId=`custom-${Date.now()}`;
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder.includes(currentDay)?currentDay:planConfig.dayOrder[0];
-  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); completedEditReturnIdx=null;
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); completedEditReturnIdx=null;
   dashboardPlanEditing=false;
   resetSetupPlanDraft(); renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand();
   toast("Trainingsplan gespeichert ✓");
@@ -2558,7 +2563,7 @@ $("#btn-save").addEventListener("click", async ()=>{
   clearDraft(currentDay);
   clearFormMeta();
   tStop();
-  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   showDone(entry, prev, prevMaxByEx);
   renderExercises();
 });
@@ -2569,7 +2574,7 @@ $("#btn-clear").addEventListener("click", async ()=>{
   if(!ok) return;
   clearDraft(currentDay);
   clearFormMeta();
-  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]);
+  activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   renderExercises();
 });
 function clearFormMeta(){
@@ -2910,7 +2915,7 @@ $("#btn-beta-reset").addEventListener("click",async()=>{
   planConfig=defaultPlanConfig(); saveJSON(PLAN_KEY,planConfig);
   localStorage.removeItem(ONBOARDING_KEY);
   tStop();
-  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set([0]); editing=null; chartFilter="all"; clearFormMeta();
+  currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); editing=null; chartFilter="all"; clearFormMeta();
   setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
   renderDayPicker(); renderChartFilters(); renderExercises(); renderHistory(); renderDashboard(); renderSetup(); updateBrand(); toast("Beta-Daten zurückgesetzt ✓");
   setTimeout(()=>showOnboarding(0),350);
