@@ -1,5 +1,120 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 19 (veröffentlicht am 16.08.2026)
+
+### Was wurde verändert?
+
+- Die Historie zeigt gespeicherte Einheiten zunächst als kompakte Karten mit Datum, Übungszahl, Session-Volumen und Tagesform. Es kann immer nur eine Einheit geöffnet sein.
+- In einer geöffneten Historieneinheit stehen Warm-up, jeder Arbeitssatz und das Übungsvolumen in eigenen Zeilen. Dadurch bleiben auch längere Übungsnamen bei 320 Pixel Breite lesbar.
+- **Bearbeiten** und **Löschen** erscheinen erst innerhalb der geöffneten Einheit. Der bestehende Historieneditor und seine Datenlogik bleiben unverändert.
+- Export, Backup, Import und Beta-Testdaten sind in einem separaten Akkordeon **Daten & Backup** gebündelt.
+- Ein Klick auf einen Trainingsplan im Dashboard öffnet jetzt nur dessen Übungsvorschau. Das Training startet ausschließlich über den eigenen Button **Training starten/fortsetzen**.
+- Der Plan kann direkt aus der geöffneten Dashboard-Karte bearbeitet werden. Dafür werden dieselbe Übungsbibliothek, Validierung und Speicherlogik wie im Setup verwendet.
+- Im Setup gibt es unter **Darstellung** die Auswahl **Automatisch**, **Hell** und **Dunkel**. Die Einstellung wird lokal gespeichert; Automatisch folgt der Systemeinstellung des Geräts.
+- Das helle Design verwendet einen ruhigen Off-White-Hintergrund, weiße Karten, dunkle Schrift und Cyan-Akzente. Das dunkle Design wurde auf Schwarz- und Anthrazittöne mit den bestehenden Akzentfarben beruhigt.
+
+### Datenkompatibilität
+
+Historien-, Plan-, Entwurfs- und Backupformate wurden nicht verändert. Historienkarten und Themes speichern nur Darstellungszustände; Planänderungen aus dem Dashboard durchlaufen weiterhin dieselbe bestätigte Speicherlogik wie im Setup. Bereits gespeicherte Workouts bleiben mit ihrem damaligen Inhalt erhalten.
+
+### Automatisiert und visuell getestet
+
+- kompakte Historie und genau eine offene Einheit
+- vertikale Warm-up- und Satzdarstellung ohne Überlagerung bei 320 Pixeln
+- Demo-Historie mit Day 2 und Beinpresse
+- Dashboard-Plankarten öffnen, ohne das Training zu starten
+- Wechsel zwischen zwei offenen Plankarten
+- Planänderung im Dashboard über die gemeinsame Bibliothek und sicheres Verwerfen
+- direkte und persistente Hell-/Dunkel-Umschaltung
+- bestehende Backup-v5-/Live-v3-, Onboarding-, Timer-, Trainings- und Historieneditor-Tests weiterhin grün
+
+### Auf dem iPhone zu testen
+
+- Historie öffnen, mehrere Einheiten nacheinander auf- und zuklappen und lange Übungsnamen prüfen
+- eine Historieneinheit bearbeiten, speichern und kontrollieren, dass die Historie wieder erscheint
+- im Dashboard einen Plan aufklappen, Übungen prüfen und erst anschließend bewusst starten
+- eine Übung über **Plan bearbeiten** austauschen und speichern
+- im Setup zwischen Automatisch, Hell und Dunkel wechseln und die Lesbarkeit in allen vier Hauptbereichen prüfen
+
+## v1.3 Beta – Testpaket 18 (veröffentlicht am 16.08.2026)
+
+### Was wurde verändert?
+
+- Alle Eingabe-, Such-, Auswahl- und Textfelder verwenden global mindestens 16 Pixel Schriftgröße. Dadurch darf iOS beim Fokussieren nicht mehr automatisch in die Seite hineinzoomen.
+- Die Ersteinrichtung bietet zusätzlich einen **individuellen Plan** für 1 bis 4 unterschiedliche Workouts.
+- Bei einem individuellen Plan lassen sich alle Workouts selbst benennen und die Übungen direkt aus der bestehenden Bibliothek auswählen, ergänzen oder entfernen.
+- Split-Vorlagen und Trainingsplanbearbeitung sind im Setup jetzt zwei getrennte Akkordeons. Beide langen Bereiche bleiben zunächst eingeklappt.
+- Nach der Übernahme einer Split-Vorlage schließt sich die Vorlagenauswahl und die Plananpassung öffnet sich gezielt.
+- Der **Volumentrend** wurde aus der Historie ins Dashboard verschoben. Die bestehenden Filter und Berechnungen bleiben erhalten.
+- Das Dashboard zeigt neu die höchsten gespeicherten Arbeitsgewichte pro Übung inklusive Wiederholungen und Datum.
+- Rekorde aus dem zuletzt gespeicherten Training werden dezent als **Neu** markiert; Warm-up-Gewichte zählen ausdrücklich nicht.
+
+### Datenkompatibilität
+
+Es wurden keine bestehenden Historien-, Plan-, Entwurfs- oder Backupformate verändert. Individuelle Onboarding-Pläne bleiben bis zum finalen Abschluss reine Entwürfe. Persönliche Rekorde werden bei jeder Dashboard-Anzeige ausschließlich aus der vorhandenen Historie berechnet und nicht separat gespeichert.
+
+### Automatisiert und visuell getestet
+
+- globale Mindestschriftgröße in Setup- und Onboarding-Feldern
+- Setup-Akkordeons öffnen und schließen
+- bestehende Setup-Planänderung und Verwerfen
+- individueller 3-Workout-Plan mit eigenen Namen und drei Übungen aus der Bibliothek
+- kein horizontaler Überlauf bei 320 Pixeln
+- Volumentrend ausschließlich im Dashboard
+- persönliche Rekorde aus Arbeitssätzen
+- bestehende Backup-v5-/Live-v3-, Historien-, Timer- und Rotationstests weiterhin grün
+
+### Auf dem iPhone zu testen
+
+- im Setup den Zielbereich einer Übung antippen und kontrollieren, dass kein Seitenzoom entsteht
+- zusätzlich Suchfeld, Workout-Name, Körpergewicht und Kurznotiz fokussieren
+- beide Setup-Bereiche mehrmals öffnen und schließen
+- individuellen Plan mit eigenen Workout-Namen vollständig einrichten
+- Dashboard mit echten Trainingsdaten auf Volumentrend und persönliche Rekorde prüfen
+
+## v1.3 Beta – Testpaket 17 (veröffentlicht am 16.08.2026)
+
+### Live-Backup-Kompatibilität
+
+- Ältere, gültige Backups der Live-App mit `app: "hesselink"` werden zusätzlich zum Beta-Format akzeptiert.
+- Die bisherige Prüfung hatte diese Dateien trotz intakter Trainingsdaten pauschal abgewiesen.
+- Unbekannte App-Kennzeichen, ungültiges JSON und Dateien ohne Historienliste bleiben weiterhin gesperrt.
+- Für das konkrete Live-Backup vom 16.08.2026 wurde zusätzlich eine kompatible Importkopie erstellt; das Original blieb unverändert.
+
+### Was wurde verändert?
+
+- Bei zwei unterschiedlichen Workouts bietet die Ersteinrichtung jetzt drei verständliche Varianten an: **Ganzkörper A/B**, **Oberkörper/Unterkörper** und **Push/Pull**.
+- Die bisherige Empfehlung bleibt abhängig von Wochenziel und Anzahl der Workouts sichtbar markiert; bei drei Trainingstagen und zwei Workouts bleibt Ganzkörper A/B die Empfehlung.
+- Jede Plankarte lässt sich direkt aufklappen und zeigt alle Einheiten, Übungen und Wiederholungsziele.
+- Nach der Auswahl folgt eine eigene Prüfseite. Der Plan kann dort unverändert übernommen oder vor Abschluss der Einrichtung angepasst werden.
+- Die direkte Anpassung verwendet dieselbe Übungsbibliothek wie das Setup, arbeitet aber in einem separaten Onboarding-Entwurf. Erst **Einrichtung abschließen** ersetzt den zukünftigen Plan.
+- Für Push/Pull mit zwei Workouts wurden Beine anfängerfreundlich integriert: Beinpresse am Push-Tag und rumänisches Kreuzheben am Pull-Tag.
+- Das normale Setup und seine bisherige Planbearbeitung bleiben in ihrem Ablauf unverändert.
+
+### Datenkompatibilität
+
+Historie, laufende Trainings und der aktive Plan werden während Auswahl, Vorschau und Anpassung nicht verändert. Erst die abschließende Übernahme speichert den neuen Plan; vorhandene laufende Workouts werden weiterhin nur nach ausdrücklicher Bestätigung verworfen. Das bestehende Daten- und Backup-Format bleibt unverändert.
+
+### Automatisiert und visuell getestet
+
+- kompletter Vier-Schritt-Ablauf bei 320 × 700 Pixeln
+- drei auswählbare 2er-Splits und korrekte Empfehlungsmarkierung
+- aufklappbare Vorschau für Oberkörper/Unterkörper
+- Prüfseite mit beiden Ganzkörpereinheiten
+- direkter Übungstausch über die gemeinsame Bibliothek
+- normales Setup inklusive Ändern und Verwerfen weiterhin funktionsfähig
+- kein horizontaler Überlauf im Onboarding-Editor
+- bestehende Backup-v5-/v4-, Historien-, Timer- und Rotationstests weiterhin grün
+
+### Auf dem iPhone zu testen
+
+- **Setup → Einrichtung erneut starten** öffnen und 3 Trainingstage / 2 Workouts wählen
+- alle drei Plankarten aufklappen und Lesbarkeit sowie Scrollverhalten prüfen
+- einen Plan zunächst unverändert prüfen
+- anschließend **Übungen jetzt anpassen** wählen, mehrere Tage öffnen und eine Übung austauschen
+- Einrichtung abschließen und kontrollieren, dass Dashboard und Trainingsansicht den gewählten Plan zeigen
+- zusätzlich prüfen, dass ein Abbruch vor dem Abschluss den bisherigen Plan unverändert lässt
+
 ## v1.3 Beta – Testpaket 16
 
 ### Was wurde verändert?

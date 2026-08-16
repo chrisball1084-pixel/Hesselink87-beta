@@ -88,17 +88,72 @@ async function importBackup(page,payload,fileName){
     assert.equal(await page.locator("#today-card").isVisible(),false,"Der doppelte Heute-Block muss ausgeblendet bleiben");
     assert.equal(await page.locator("#timer-fab-wrap").isVisible(),false,"Der globale Pausentimer darf die Trainingsansicht nicht überlagern");
     assert.equal(await page.locator('.card-timer.show[data-card-timer="2"]').count(),1,"Der Timer muss in der aktiven Übungskarte sitzen");
-    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-training-916.png"),fullPage:true});
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-training-919.png"),fullPage:true});
 
     await page.locator('.tab[data-view="setup"]').click();
-    const setupHeadings=await page.locator('#view-setup .card-head h2').allTextContents();
-    assert.deepEqual(setupHeadings,["Trainingssplit wählen","Trainingsplan anpassen"]);
+    const setupHeadings=await page.locator('#view-setup .setup-section-copy strong').allTextContents();
+    assert.deepEqual(setupHeadings,["Trainingssplit wählen","Trainingsplan anpassen","Darstellung"]);
+    assert.equal(await page.locator("#setup-split-body").isHidden(),true,"Split-Vorlagen müssen zunächst eingeklappt sein");
+    assert.equal(await page.locator("#setup-plan-body").isHidden(),true,"Planbearbeitung muss zunächst eingeklappt sein");
+    assert.equal(await page.locator("#setup-theme-body").isHidden(),true,"Darstellung muss zunächst eingeklappt sein");
+    await page.locator("#setup-split-toggle").click();
+    assert.equal(await page.locator("#split-grid .split-card").first().isVisible(),true,"Split-Auswahl muss gezielt aufklappbar sein");
+    await page.locator("#setup-split-toggle").click();
+    await page.locator("#setup-plan-toggle").click();
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-setup-accordion-919.png"),fullPage:false});
+    const originalSetupExercise=await page.locator('[data-setup-select="0"]').textContent();
+    await page.locator('[data-setup-select="0"]').click();
+    await page.locator('[data-library-id="hack-squat"]').click();
+    assert.match(await page.locator('[data-setup-select="0"]').textContent(),/Hackenschmidt/,"Normale Setup-Bearbeitung muss weiterhin funktionieren");
+    await page.locator("#setup-plan-discard").click();
+    await page.locator("#m-ok").click();
+    assert.equal(await page.locator('[data-setup-select="0"]').textContent(),originalSetupExercise,"Verwerfen im Setup muss den aktiven Plan unverändert lassen");
+    assert.equal(await page.locator('[data-setup-goal="0"]').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16),true,"Setup-Felder müssen iPhone-sichere 16 px verwenden");
+    await page.locator("#setup-theme-toggle").click();
+    await page.locator('[data-theme-choice="light"]').click();
+    assert.equal(await page.locator("html").getAttribute("data-theme"),"light","Helles Design muss direkt angewendet werden");
+    assert.equal(await page.evaluate(()=>localStorage.getItem("hesselink_beta_theme_v1")),"light","Designauswahl muss gespeichert werden");
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-setup-light-920.png"),fullPage:false});
+    if(process.env.VISUAL_CHECK){ await page.locator('.tab[data-view="dashboard"]').click(); await page.screenshot({path:path.join(os.tmpdir(),"hesselink-dashboard-light-920.png"),fullPage:true}); await page.locator('.tab[data-view="setup"]').click(); }
+    await page.locator('[data-theme-choice="dark"]').click();
+    assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Dunkles Design muss direkt angewendet werden");
+    await page.reload({waitUntil:"load"});
+    assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Designauswahl muss einen Neustart überstehen");
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,"Kein horizontaler Überlauf bei 390 px");
     await page.setViewportSize({width:320,height:700});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,"Kein horizontaler Überlauf bei 320 px");
     await page.setViewportSize({width:390,height:844});
 
+    await page.locator('.tab[data-view="dashboard"]').click();
+    assert.equal(await page.locator("#view-dashboard #chart-holder").count(),1,"Volumentrend muss im Dashboard liegen");
+    assert.equal(await page.locator("#view-history #chart-holder").count(),0,"Historie darf den Volumentrend nicht mehr enthalten");
+    assert.ok(await page.locator("#dash-records .record-row").count()>=1,"Dashboard muss persönliche Übungsrekorde anzeigen");
+    await page.locator('[data-dash-toggle="2"]').click();
+    assert.equal(await page.locator("#view-dashboard").getAttribute("class"),"view active","Planvorschau darf nicht direkt ins Training springen");
+    assert.ok(await page.locator('.dash-day-card.expanded .dash-ex-preview').count()>=1,"Aufgeklappter Plan muss seine Übungen zeigen");
+    await page.locator('[data-dash-toggle="1"]').click();
+    assert.equal(await page.locator('.dash-day-card.expanded').count(),1,"Nur eine Plankarte darf gleichzeitig offen sein");
+    assert.equal(await page.locator('[data-dash-toggle="2"]').getAttribute("aria-expanded"),"false","Die zuvor offene Plankarte muss zuklappen");
+    await page.locator('[data-dash-edit-day="1"]').click();
+    const dashboardOriginal=await page.locator('.dash-plan-editor [data-dash-plan-select="0"]').textContent();
+    await page.locator('.dash-plan-editor [data-dash-plan-select="0"]').click();
+    await page.locator('[data-library-id="hack-squat"]').click();
+    assert.match(await page.locator('.dash-plan-editor [data-dash-plan-select="0"]').textContent(),/Hackenschmidt/,"Planbearbeitung muss direkt im Dashboard funktionieren");
+    await page.locator("#dash-plan-cancel").click();
+    await page.locator("#m-ok").click();
+    await page.locator('[data-dash-edit-day="1"]').click();
+    assert.equal(await page.locator('.dash-plan-editor [data-dash-plan-select="0"]').textContent(),dashboardOriginal,"Verwerfen darf den aktiven Plan nicht verändern");
+    await page.locator("#dash-plan-cancel").click();
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-dashboard-plan-920.png"),fullPage:true});
+    await page.locator("#dash-start").click();
+
     await page.locator('.tab[data-view="history"]').click();
+    assert.equal(await page.locator('.hist-item.open').count(),0,"Historie muss zunächst kompakt sein");
+    await page.locator('[data-history-toggle="1"]').click();
+    assert.equal(await page.locator('.hist-item.open').count(),1,"Eine Historienkarte muss gezielt aufklappbar sein");
+    assert.ok(await page.locator('.hist-item.open .hist-set').count()>=2,"Arbeitssätze müssen vertikal lesbar sein");
+    if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-history-accordion-920.png"),fullPage:true});
+    await page.locator("#history-data-toggle").click();
     const downloadPromise=page.waitForEvent("download");
     await page.locator("#btn-backup").click();
     const download=await downloadPromise;
@@ -130,6 +185,7 @@ async function importBackup(page,payload,fileName){
     assert.equal(await page.evaluate(()=>restorableBackupTimer({endAt:Date.now()-1,tIdx:0,timerExIdx:"2"})),null,"Abgelaufene Timer dürfen nicht wiederhergestellt werden");
 
     await page.locator('.tab[data-view="history"]').click();
+    await page.locator('[data-history-toggle="1"]').click();
     await page.locator('[data-edit="1"]').click();
     assert.equal(await page.locator("#ex-container .ex.compact").count(),0,"Historieneditor muss alle Übungen öffnen");
     assert.equal(await page.getByText("Übung abschließen",{exact:true}).count(),0,"Historieneditor darf keinen Übungsabschluss verlangen");
@@ -149,12 +205,30 @@ async function importBackup(page,payload,fileName){
     onboardingPage.on("pageerror",error=>onboardingErrors.push(error.message));
     await onboardingPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
     await onboardingPage.locator("#onboarding-bg.show").waitFor();
-    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-916.png"),fullPage:false});
+    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-919.png"),fullPage:false});
     await onboardingPage.locator('[data-onboarding-days="3"]').click();
     await onboardingPage.locator("#onboarding-next").click();
     await onboardingPage.locator('[data-onboarding-workouts="2"]').click();
     await onboardingPage.locator("#onboarding-next").click();
-    assert.match(await onboardingPage.locator("#onboarding-preview").textContent(),/fortlaufend/);
+    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-plans-919.png"),fullPage:false});
+    assert.equal(await onboardingPage.locator("[data-onboarding-preset]").count(),4,"Bei zwei Workouts müssen drei Vorlagen und ein individueller Plan angeboten werden");
+    assert.equal(await onboardingPage.locator('[data-onboarding-preset="fullbody2"] .onboarding-plan-badge').textContent(),"Empfohlen");
+    await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').click();
+    assert.match(await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').textContent(),/Oberkörper/);
+    assert.match(await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').textContent(),/Beinpresse/);
+    await onboardingPage.locator('[data-onboarding-preset="fullbody2"]').click();
+    await onboardingPage.locator("#onboarding-next").click();
+    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-review-919.png"),fullPage:false});
+    assert.equal(await onboardingPage.locator("#onboarding-bg").isVisible(),true,"Vor der Übernahme muss die Planprüfung sichtbar bleiben");
+    assert.match(await onboardingPage.locator("#onboarding-preview").textContent(),/Ganzkörper A/);
+    assert.match(await onboardingPage.locator("#onboarding-preview").textContent(),/Ganzkörper B/);
+    assert.equal(await onboardingPage.locator("#onboarding-adjust").isVisible(),true,"Direkte Übungsanpassung muss angeboten werden");
+    await onboardingPage.locator("#onboarding-adjust").click();
+    if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-editor-919.png"),fullPage:false});
+    await onboardingPage.locator('[data-onboarding-select="0"]').click();
+    await onboardingPage.locator('[data-library-id="hack-squat"]').click();
+    assert.match(await onboardingPage.locator('[data-onboarding-select="0"]').textContent(),/Hackenschmidt/);
+    assert.equal(await onboardingPage.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,"Onboarding-Editor darf bei 320 px nicht horizontal überlaufen");
     await onboardingPage.locator("#onboarding-next").click();
     await onboardingPage.locator("#onboarding-bg").waitFor({state:"hidden"});
     const onboardingPlan=await onboardingPage.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1")));
@@ -172,8 +246,93 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(onboardingErrors,[],`Onboarding-Browserfehler: ${onboardingErrors.join(" | ")}`);
     await onboardingContext.close();
 
+    const customContext=await browser.newContext({viewport:{width:320,height:700}});
+    const customPage=await customContext.newPage();
+    const customErrors=[];
+    customPage.on("pageerror",error=>customErrors.push(error.message));
+    await customPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await customPage.locator('[data-onboarding-days="3"]').click();
+    await customPage.locator("#onboarding-next").click();
+    await customPage.locator('[data-onboarding-workouts="3"]').click();
+    await customPage.locator("#onboarding-next").click();
+    await customPage.locator('[data-onboarding-preset="custom"]').click();
+    await customPage.locator("#onboarding-next").click();
+    assert.equal(await customPage.locator("[data-onboarding-plan-day]").count(),3,"Individueller Plan muss die gewählte Workout-Anzahl anlegen");
+    assert.equal(await customPage.locator("#onboarding-workout-name").evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16),true,"Workout-Name darf auf dem iPhone keinen Zoom auslösen");
+    await customPage.locator("#onboarding-workout-name").fill("Push individuell");
+    await customPage.locator('[data-onboarding-select="0"]').click();
+    await customPage.locator('[data-library-id="bench-machine"]').click();
+    await customPage.locator('[data-onboarding-plan-day="2"]').click();
+    await customPage.waitForTimeout(30);
+    await customPage.locator("#onboarding-workout-name").fill("Pull individuell");
+    await customPage.locator('[data-onboarding-select="0"]').click();
+    await customPage.locator('[data-library-id="lat-wide"]').click();
+    await customPage.locator('[data-onboarding-plan-day="3"]').click();
+    await customPage.waitForTimeout(30);
+    await customPage.locator("#onboarding-workout-name").fill("Beine individuell");
+    await customPage.locator('[data-onboarding-select="0"]').click();
+    await customPage.locator('[data-library-id="leg-press"]').click();
+    assert.equal(await customPage.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth),true,"Individueller Editor darf bei 320 px nicht horizontal überlaufen");
+    if(process.env.VISUAL_CHECK) await customPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-custom-919.png"),fullPage:false});
+    await customPage.locator("#onboarding-next").click();
+    await customPage.locator("#onboarding-bg").waitFor({state:"hidden"});
+    const customPlan=await customPage.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1")));
+    assert.equal(customPlan.id,"custom");
+    assert.deepEqual(customPlan.dayOrder,["1","2","3"]);
+    assert.deepEqual(customPlan.dayNames,{"1":"Push individuell","2":"Pull individuell","3":"Beine individuell"});
+    assert.deepEqual(customErrors,[],`Individuelles Onboarding – Browserfehler: ${customErrors.join(" | ")}`);
+    await customContext.close();
+
+    const historyContext=await browser.newContext({viewport:{width:320,height:700}});
+    await historyContext.addInitScript(()=>localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1})));
+    const historyPage=await historyContext.newPage();
+    const historyErrors=[];
+    historyPage.on("pageerror",error=>historyErrors.push(error.message));
+    await historyPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await historyPage.locator('.tab[data-view="history"]').click();
+    await historyPage.locator("#history-data-toggle").click();
+    await historyPage.locator("#btn-demo-load").click();
+    await historyPage.locator("#m-ok").click();
+    await historyPage.locator('.hist-toggle',{hasText:"Day 2"}).first().click();
+    assert.equal(await historyPage.locator('.hist-item.open').count(),1,"Auch Demo-Historie darf nur eine offene Einheit zeigen");
+    assert.ok(await historyPage.locator('.hist-item.open .hist-warm').count()>=1,"Warm-up muss eine eigene Zeile erhalten");
+    const historyLayout=await historyPage.locator('.hist-item.open .hist-ex').first().evaluate(el=>({scroll:el.scrollWidth,client:el.clientWidth,headBottom:el.querySelector('.hist-ex-head').getBoundingClientRect().bottom,warmTop:el.querySelector('.hist-warm').getBoundingClientRect().top}));
+    assert.ok(historyLayout.scroll<=historyLayout.client,"Historienübungen dürfen bei 320 px nicht horizontal überlaufen");
+    assert.ok(historyLayout.warmTop>=historyLayout.headBottom,"Warm-up darf den Übungsnamen nicht überlagern");
+    if(process.env.VISUAL_CHECK) await historyPage.screenshot({path:path.join(os.tmpdir(),"hesselink-history-demo-320-920.png"),fullPage:true});
+    assert.deepEqual(historyErrors,[],`Historien-Browserfehler: ${historyErrors.join(" | ")}`);
+    await historyContext.close();
+
+    const liveImportContext=await browser.newContext({viewport:{width:390,height:844}});
+    const liveImportPage=await liveImportContext.newPage();
+    const liveImportErrors=[];
+    liveImportPage.on("pageerror",error=>liveImportErrors.push(error.message));
+    await liveImportPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await liveImportPage.locator("#onboarding-back").click();
+    await liveImportPage.locator('.tab[data-view="history"]').click();
+    const syntheticLivePayload={app:"hesselink",version:3,exported:"2026-08-16T19:08:27.875Z",
+      templates:{
+        "1":[{n:"Beinpresse",goal:"10–15"},{n:"Bankdrücken (Maschine)",goal:"8–12"}],
+        "2":[{n:"Beinpresse",goal:"10–15"},{n:"Butterfly",goal:"8–12"}],
+      },
+      log:[sampleLog(1786683066909,"Live-v3-Import")],
+    };
+    const livePayload=process.env.LIVE_BACKUP_PATH
+      ? JSON.parse(fs.readFileSync(process.env.LIVE_BACKUP_PATH,"utf8"))
+      : syntheticLivePayload;
+    const liveWarning=await importBackup(liveImportPage,livePayload,"hesselink-live-v3-regression.json");
+    assert.match(liveWarning,/ältere Backup enthält keine laufenden Workouts/);
+    const liveImported=await liveImportPage.evaluate(()=>(
+      {log:JSON.parse(localStorage.getItem("hesselink_beta_log_v2")),plan:JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1"))}
+    ));
+    assert.equal(liveImported.log.length,livePayload.log.length,"Live-v3-Historie muss vollständig importiert werden");
+    if(!process.env.LIVE_BACKUP_PATH) assert.equal(liveImported.log[0].note,"Live-v3-Import");
+    assert.deepEqual(liveImported.plan.dayOrder,["1","2"],"Live-v3-Vorlagen müssen als 2-Tage-Plan übernommen werden");
+    assert.deepEqual(liveImportErrors,[],`Live-Import-Browserfehler: ${liveImportErrors.join(" | ")}`);
+    await liveImportContext.close();
+
     assert.deepEqual(errors,[],`Browserfehler: ${errors.join(" | ")}`);
-    console.log("PASS: Backup v5, Beginner-Onboarding, Rotation, Timer und kritische Mobile-Flows");
+    console.log("PASS: Backup v5/Live-v3, Onboarding, Dashboard-Plan, Historien-Akkordeon, Themes und Mobile-Flows");
   } finally {
     await browser.close();
     await new Promise(resolve=>server.close(resolve));
