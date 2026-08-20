@@ -1090,6 +1090,29 @@ function dropText(s, goal){
 }
 
 /* Notiz, die aus der letzten Einheit dieser Übung mitwandert. */
+/* Erkennt eine Historie, die durch den Fehler aus Testpaket 24 von ihrem
+   Plan abgetrennt wurde: Die gespeicherten Einheiten gehören alle zu einer
+   Linie, die es im aktuellen Plan nicht mehr gibt.
+
+   Bewusst eng gefasst – lieber nichts tun als falsch zusammenführen:
+   nur wenn es überhaupt keine passenden Einheiten gibt, nur wenn alle
+   verwaisten Einheiten aus derselben Linie stammen, und nur wenn ihre
+   Trainingstage im aktuellen Plan noch existieren. Gibt es davon
+   abweichende Fälle, wird nichts angefasst.
+
+   Gibt die zu übernehmende Linie zurück oder null. */
+function verwaisteLinie(log, aktuelleLinie, tage){
+  const eintraege=Array.isArray(log)?log.filter(e=>e&&typeof e==="object"):[];
+  if(!eintraege.length) return null;
+  const linien=new Set(eintraege.map(planLineageOf));
+  if(linien.has(aktuelleLinie)) return null;   // es gibt passende Einheiten
+  if(linien.size!==1) return null;             // mehrdeutig
+  const bekannteTage=new Set((Array.isArray(tage)?tage:[]).map(String));
+  if(!bekannteTage.size) return null;
+  if(!eintraege.every(e=>bekannteTage.has(String(e.day)))) return null;
+  return [...linien][0];
+}
+
 /* Sätze, in denen ein Gewicht steht, aber keine Wiederholungen.
    Ohne Wiederholungen kann weder Volumen noch Progression gerechnet werden.
    Umgekehrt ist "Wiederholungen ohne Gewicht" völlig normal (Körpergewicht),
@@ -1230,7 +1253,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 932;
+const APP_VERSION = 933;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -3504,15 +3527,31 @@ $("#import-file").addEventListener("change",ev=>{
 
 /* ================= Toast & Init ================= */
 let toastT;
-function toast(msg){
+function toast(msg,dauer=2000){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2000);
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),dauer);
+}
+
+/* Einmalige Reparatur für Geräte, deren Historie durch den Fehler aus
+   Testpaket 24 vom Plan abgetrennt wurde. Die Regel dafür steht in der
+   Trainingslogik und ist bewusst eng gefasst. Nichts geschieht dabei
+   unbemerkt: Die App sagt ausdrücklich, was sie getan hat. */
+function repariereVerwaisteHistorie(){
+  const log=loadLog();
+  const aktuell=planConfig.lineageId||planConfig.versionId||"legacy";
+  const linie=verwaisteLinie(log,aktuell,planConfig.dayOrder);
+  if(!linie) return false;
+  planConfig.lineageId=linie;
+  saveJSON(PLAN_KEY,planConfig);
+  setTimeout(()=>toast(`${log.length} ${log.length===1?"frühere Einheit wurde":"frühere Einheiten wurden"} wieder deinem Plan zugeordnet ✓`,6000),600);
+  return true;
 }
 $("#f-date").value = todayISO();
 applyTheme(themeChoice,false);
 setHistoryDataExpanded(false);
 updateSessionSummary();
 setSessionExpanded(false);
+repariereVerwaisteHistorie();   // vor dem ersten Zeichnen, damit gleich der richtige Stand erscheint
 renderDayPicker();
 renderChartFilters();
 updateBrand();

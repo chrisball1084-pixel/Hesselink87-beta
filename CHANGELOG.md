@@ -1,5 +1,36 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 31 · Abgetrennte Historie reparieren (App-Version 933, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+Testpaket 30 hat die **Ursache** behoben – neue Einrichtungen trennen die Historie nicht mehr ohne Grund. Geräte, auf denen der Bruch bereits eingetreten war, blieben davon aber unberührt. Das holt dieses Paket nach.
+
+- Beim Start prüft die App einmalig, ob die gesamte gespeicherte Historie zu einer Plan-Linie gehört, die es im aktuellen Plan nicht mehr gibt. Ist das so, wird sie wieder zugeordnet.
+- **Nichts geschieht dabei unbemerkt:** Die App meldet ausdrücklich, wie viele Einheiten sie wieder zugeordnet hat.
+- Die Regel ist bewusst eng gefasst – lieber nichts tun als falsch zusammenführen. Repariert wird nur, wenn es **überhaupt keine** passenden Einheiten gibt, **alle** verwaisten Einheiten aus **derselben** Linie stammen und ihre Trainingstage im aktuellen Plan noch existieren. Jeder abweichende Fall bleibt unangetastet.
+- Es werden keine gespeicherten Einheiten verändert, nur die Zuordnung des Plans.
+
+### Welches Nutzerproblem löst das?
+
+Wer die Ersteinrichtung erneut durchlaufen hatte, sah bei allen Übungen „Noch keine Werte“ – obwohl die Historie vollständig vorhanden war. Nach einem einmaligen Öffnen der App ist der Bezug wiederhergestellt.
+
+### Datenkompatibilität
+
+Gespeicherte Einheiten bleiben unverändert. Angepasst wird ausschließlich .
+
+### Automatisiert getestet
+
+- eine vollständig abgetrennte Historie wird erkannt und wieder zugeordnet
+- passt die Linie bereits, wird nichts verändert
+- gibt es auch passende Einheiten, wird nichts verändert
+- bei mehreren fremden Linien wird bewusst nichts zusammengeführt
+- passen die Trainingstage nicht zum Plan, wird nichts angefasst
+- die Meldung erscheint sichtbar und sprachlich korrekt (Einzahl/Mehrzahl)
+- die Zuordnung wird dauerhaft gespeichert, die Vorwerte stehen danach wieder da
+- Gegenprobe: Ohne die Reparatur schlagen beide Testläufe fehl
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 30 · Plan-Linie und fehlende Wiederholungen (App-Version 932, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

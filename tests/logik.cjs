@@ -126,6 +126,23 @@ assert.equal(L.draftHasMeaningfulData({}), false, "Ein leerer Entwurf ist bedeut
 assert.equal(L.draftHasMeaningfulData(null), false, "Kein Entwurf ist kein Entwurf");
 assert.throws(() => L.validateBackupPayload({app:"fremd"}), /Format/, "Fremde Dateien müssen abgelehnt werden");
 
+/* ---- Reparatur einer abgetrennten Historie ---- */
+const eintrag = (linie, tag="1") => (linie ? {id:1, day:tag, planLineageId:linie} : {id:1, day:tag});
+assert.equal(L.verwaisteLinie([eintrag("legacy")], "onboarding-x", ["1","2"]), "legacy",
+  "Eine vollständig abgetrennte Historie muss erkannt werden");
+assert.equal(L.verwaisteLinie([eintrag("legacy")], "legacy", ["1","2"]), null,
+  "Passt die Linie bereits, darf nichts verändert werden");
+assert.equal(L.verwaisteLinie([eintrag("legacy"), {id:2, day:"1", planLineageId:"onboarding-x"}], "onboarding-x", ["1","2"]), null,
+  "Gibt es auch passende Einheiten, ist nichts kaputt");
+assert.equal(L.verwaisteLinie([eintrag("a"), {id:2, day:"1", planLineageId:"b"}], "c", ["1","2"]), null,
+  "Bei mehreren fremden Linien wird bewusst nichts zusammengeführt");
+assert.equal(L.verwaisteLinie([eintrag("legacy","3")], "onboarding-x", ["1","2"]), null,
+  "Passen die Trainingstage nicht zum Plan, wird nichts angefasst");
+assert.equal(L.verwaisteLinie([], "onboarding-x", ["1","2"]), null, "Ohne Historie gibt es nichts zu reparieren");
+assert.equal(L.verwaisteLinie([eintrag("legacy")], "onboarding-x", []), null, "Ohne Plantage wird nichts entschieden");
+assert.equal(L.verwaisteLinie([eintrag(null)], "onboarding-x", ["1","2"]), "legacy",
+  "Uraltdaten ohne Kennung zählen als legacy und werden erkannt");
+
 /* ---- Sanfte Nachfrage bei fehlenden Wiederholungen ---- */
 assert.deepEqual([...L.saetzeOhneWiederholungen(satz(20, "", ""))], [1, 2],
   "Gewicht ohne Wiederholungen muss in beiden Sätzen auffallen");

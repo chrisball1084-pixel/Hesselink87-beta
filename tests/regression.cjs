@@ -663,6 +663,54 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(coachErrors,[],`Notiz-/Empfehlungs-Browserfehler: ${coachErrors.join(" | ")}`);
     await coachContext.close();
 
+    /* Geräte, deren Historie durch den Fehler aus Testpaket 24 abgetrennt wurde,
+       werden beim Start einmalig repariert – sichtbar, nicht stillschweigend. */
+    const repairContext=await browser.newContext({viewport:{width:390,height:844}});
+    /* Nur einmalig einrichten: addInitScript läuft bei jedem Seitenaufruf und
+       würde den beschädigten Zustand sonst nach jedem Neuladen wiederherstellen. */
+    await repairContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+      if(localStorage.getItem("hesselink_beta_plan_config_v1")) return;
+      localStorage.setItem("hesselink_beta_plan_config_v1",JSON.stringify({
+        id:"fullbody2", name:"Ganzkörper · 2 Tage",
+        versionId:"onboarding-fullbody2-1700000000000", lineageId:"onboarding-fullbody2-1700000000000",
+        weeklyTarget:3, dayOrder:["1","2"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}}));
+      const s=(name,kg)=>({name,goal:"8–12",wkg:"40",wwdh:"10",
+        workSets:[{kg:String(kg),reps:"10"},{kg:String(kg),reps:"9"}],setCount:2,done:true,touched:true});
+      localStorage.setItem("hesselink_beta_log_v2",JSON.stringify([
+        {id:1,date:"2026-08-05",day:"1",dayName:"Day 1",sets:[s("Beinpresse",80)]},
+        {id:2,date:"2026-08-12",day:"1",dayName:"Day 1",sets:[s("Beinpresse",82.5)]},
+      ]));
+    });
+    const repairPage=await repairContext.newPage();
+    const repairErrors=[];
+    repairPage.on("pageerror",error=>repairErrors.push(error.message));
+    await repairPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+
+    assert.equal(await repairPage.evaluate(()=>loadLog().filter(belongsToCurrentPlan).length),2,
+      "Eine abgetrennte Historie muss beim Start wieder zugeordnet werden");
+    await repairPage.waitForFunction(
+      ()=>/wieder deinem Plan zugeordnet/.test(document.querySelector("#toast").textContent),
+      null,{timeout:5000}).catch(()=>{});
+    assert.match(await repairPage.locator("#toast").textContent(),/2 frühere Einheiten wurden wieder deinem Plan zugeordnet/,
+      "Die Reparatur darf nicht stillschweigend geschehen und muss sprachlich stimmen");
+    assert.equal(await repairPage.locator("#toast.show").count(),1,
+      "Die Meldung muss auch tatsächlich sichtbar sein");
+    assert.equal(await repairPage.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_plan_config_v1")).lineageId),"legacy",
+      "Die Zuordnung muss dauerhaft gespeichert werden");
+    await repairPage.locator('.tab[data-view="log"]').click();
+    await openExercise(repairPage,0);
+    assert.match(await repairPage.locator('.ex[data-i="0"] .last-v').textContent(),/82,5 kg|82\.5 kg/,
+      "Nach der Reparatur müssen die Vorwerte wieder dastehen");
+
+    /* Beim zweiten Start gibt es nichts mehr zu tun – und keine Meldung. */
+    await repairPage.reload({waitUntil:"load"});
+    await repairPage.waitForTimeout(900);
+    assert.equal(await repairPage.locator("#toast.show").count(),0,
+      "Die Meldung darf sich nicht bei jedem Start wiederholen");
+    assert.deepEqual(repairErrors,[],`Reparatur-Browserfehler: ${repairErrors.join(" | ")}`);
+    await repairContext.close();
+
     /* Sanfte Nachfrage, wenn ein Gewicht ohne Wiederholungen abgeschlossen wird.
        Im echten Backup von Hesselink kam das am 17.08. tatsächlich vor. */
     const wdhContext=await browser.newContext({viewport:{width:390,height:844}});
