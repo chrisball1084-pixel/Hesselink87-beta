@@ -1172,6 +1172,21 @@ function carriedNote(info){
   return {text:String(info.set.exNote).trim(), date:info.set.exNoteDate || info.entry.date};
 }
 
+/* Wann ist ein neuer Plan wirklich ein anderer Plan?
+   Nur wenn sich die Tagesstruktur ändert – also Anzahl oder Anordnung der
+   Workouts. Ein anderes Wochenziel, andere Tagesnamen oder ausgetauschte
+   Übungen ändern nichts daran, dass Tag 1 weiterhin Tag 1 ist. Danach
+   richtet sich, ob die bisherige Historie weiter zum Plan gezählt wird. */
+function gleicheTagesstruktur(alt, neu){
+  const a=Array.isArray(alt)?alt.map(String):[], b=Array.isArray(neu)?neu.map(String):[];
+  return a.length>0 && a.length===b.length && a.every((tag,i)=>tag===b[i]);
+}
+/* Die Linie für einen neuen Plan: beibehalten, wenn die Tage dieselben
+   bleiben – sonst eine frische, damit Tag 1 nicht die Vorwerte eines
+   ganz anderen Splits erbt. */
+function naechsteLinie(bisherige, alteTage, neueTage, neueId){
+  return gleicheTagesstruktur(alteTage, neueTage) ? (bisherige || "legacy") : neueId;
+}
 function planLineageOf(entry){
   return entry.planLineageId || entry.planVersionId || "legacy";
 }
@@ -1197,7 +1212,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 930;
+const APP_VERSION = 931;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2463,8 +2478,11 @@ async function applySplitPreset(id){
   const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(preset.templates));
-  /* Echter Splitwechsel: neue Plan-Linie, damit Tag 1 nicht die Vorwerte eines anderen Splits erbt. */
-  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,lineageId:`${id}-${Date.now()}`,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  /* Nur bei geänderter Tagesstruktur eine neue Plan-Linie – sonst bleiben
+     die Vorwerte der bisherigen Einheiten sichtbar. */
+  const neueId=`${id}-${Date.now()}`;
+  const linie=naechsteLinie(planConfig.lineageId||planConfig.versionId, planConfig.dayOrder, preset.dayOrder, neueId);
+  planConfig={id,name:preset.name,versionId:neueId,lineageId:linie,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
@@ -2638,7 +2656,11 @@ async function applyOnboardingPlan(){
   templates=JSON.parse(JSON.stringify(onboardingDraft));
   Object.values(templates).forEach(day=>day.forEach(ex=>{ delete ex.manual; delete ex.focus; }));
   const customized=onboardingPresetId==="custom"||JSON.stringify(templates)!==JSON.stringify(preset.templates);
-  planConfig={id:customized?"custom":onboardingPresetId,name:onboardingPresetId==="custom"?"Individueller Plan":customized?`${preset.name} · angepasst`:preset.name,versionId:`onboarding-${onboardingPresetId}-${Date.now()}`,lineageId:`onboarding-${onboardingPresetId}-${Date.now()}`,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  /* Auch die Ersteinrichtung darf die Historie nur dann abtrennen, wenn sich
+     die Tagesstruktur wirklich ändert. Ein anderes Wochenziel genügt nicht. */
+  const neueId=`onboarding-${onboardingPresetId}-${Date.now()}`;
+  const linie=naechsteLinie(planConfig.lineageId||planConfig.versionId, planConfig.dayOrder, preset.dayOrder, neueId);
+  planConfig={id:customized?"custom":onboardingPresetId,name:onboardingPresetId==="custom"?"Individueller Plan":customized?`${preset.name} · angepasst`:preset.name,versionId:neueId,lineageId:linie,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{}); saveJSON(ONBOARDING_KEY,{completed:true,version:1});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand(); closeOnboarding(); setView("dashboard");

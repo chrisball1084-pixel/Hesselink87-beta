@@ -103,6 +103,23 @@ assert.equal(L.planLineageOf({planLineageId:"a", planVersionId:"b"}), "a", "Die 
 assert.equal(L.planLineageOf({planVersionId:"b"}), "b", "Ältere Einträge fallen auf die Planversion zurück");
 assert.equal(L.planLineageOf({}), "legacy", "Uraltdaten gelten als eigene Linie");
 
+/* ---- Wann ist ein neuer Plan wirklich ein anderer Plan? ---- */
+assert.equal(L.gleicheTagesstruktur(["1","2"], ["1","2"]), true, "Gleiche Tage sind dieselbe Struktur");
+assert.equal(L.gleicheTagesstruktur(["1","2"], ["1","2","3"]), false, "Ein Tag mehr ist eine andere Struktur");
+assert.equal(L.gleicheTagesstruktur(["1","2"], ["2","1"]), false, "Andere Reihenfolge ist eine andere Struktur");
+assert.equal(L.gleicheTagesstruktur([], ["1","2"]), false, "Ohne bisherige Tage gibt es nichts zu bewahren");
+
+/* Der gemeldete Fehler: Ersteinrichtung mit gleichen Workouts, aber anderem
+   Wochenziel, hatte die gesamte Historie unsichtbar gemacht. */
+assert.equal(L.naechsteLinie("legacy", ["1","2"], ["1","2"], "neu-123"), "legacy",
+  "Bei unveränderter Tagesstruktur muss die bisherige Plan-Linie erhalten bleiben");
+assert.equal(L.naechsteLinie("legacy", ["1","2"], ["1","2","3"], "neu-123"), "neu-123",
+  "Bei echtem Splitwechsel muss eine neue Plan-Linie beginnen");
+assert.equal(L.naechsteLinie(null, ["1","2"], ["1","2"], "neu-123"), "legacy",
+  "Ohne bisherige Linie gilt weiterhin legacy");
+assert.equal(L.naechsteLinie("onboarding-x", ["1","2","3"], ["1","2"], "neu-123"), "neu-123",
+  "Auch weniger Workouts sind ein Splitwechsel");
+
 /* ---- Backup-Prüfungen ---- */
 assert.equal(L.draftHasMeaningfulData({weight:"82"}), true, "Ein Körpergewicht macht den Entwurf bedeutsam");
 assert.equal(L.draftHasMeaningfulData({}), false, "Ein leerer Entwurf ist bedeutungslos");

@@ -536,6 +536,29 @@ async function importBackup(page,payload,fileName){
     assert.match(await planEditPage.locator('.ex[data-i="0"] .last-v').textContent(),/80 kg/,
       "Nach einem Übungstausch muss weiterhin die richtige letzte Leistung stehen");
 
+    /* Gemeldeter Fehler: Die Ersteinrichtung mit gleicher Workout-Anzahl, aber
+       anderem Wochenziel, hatte die gesamte Historie unsichtbar gemacht. */
+    const nachEinrichtung=await planEditPage.evaluate(async()=>{
+      const vorher=planConfig.lineageId;
+      onboardingDays=3; onboardingWorkouts=2; onboardingPresetId="fullbody2";
+      resetOnboardingDraft("fullbody2");
+      const pending=applyOnboardingPlan();
+      await new Promise(r=>setTimeout(r,80));
+      if(document.querySelector("#modal-bg.show")) document.querySelector("#m-ok").click();
+      await pending;
+      return {vorher, nachher:planConfig.lineageId, wochenziel:planConfig.weeklyTarget,
+        sichtbar:loadLog().filter(belongsToCurrentPlan).length};
+    });
+    assert.equal(nachEinrichtung.nachher,nachEinrichtung.vorher,
+      "Eine Einrichtung mit gleicher Tagesstruktur darf die Plan-Linie nicht wechseln");
+    assert.equal(nachEinrichtung.wochenziel,3,"Das neue Wochenziel muss trotzdem übernommen werden");
+    assert.ok(nachEinrichtung.sichtbar>0,
+      "Nach der Einrichtung muss die bisherige Historie weiterhin zum Plan zählen");
+    await planEditPage.locator('.tab[data-view="log"]').click();
+    await planEditPage.locator('.ex[data-i="0"] .ex-top').click();
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .last-box').count(),1,
+      "Nach der Einrichtung müssen die Vorwerte weiterhin sichtbar sein");
+
     /* Ein echter Splitwechsel soll dagegen weiterhin trennen. */
     const splitLineage=await planEditPage.evaluate(async()=>{
       const before=planConfig.lineageId;
