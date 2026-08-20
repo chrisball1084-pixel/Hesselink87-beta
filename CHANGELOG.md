@@ -1,5 +1,27 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 32 · Updates kommen sofort an (App-Version 934, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- **Gefunden bei der Live-Prüfung von Testpaket 31:** Die App lief dort noch mit Version 930, obwohl 933 längst ausgeliefert war.
+- Ursache: GitHub Pages liefert die Seite mit **Cache-Control: max-age=600** aus, also zehn Minuten Browser-Cache. Der Service Worker holt zwar „Netz zuerst“, diese Netzanfrage bediente sich aber am HTTP-Cache und bekam die alte Fassung – und legte sie zusätzlich in seinen eigenen Speicher.
+- Der Versionsabgleich der App kann das nicht bemerken: Die alte Datei meldet in sich stimmig ihre alte Nummer.
+- Neu holt der Service Worker die Seite ausdrücklich am HTTP-Cache vorbei. Mit Empfang gewinnt damit immer die aktuelle Fassung; ohne Empfang bleibt es beim gespeicherten Stand.
+
+### Einordnung
+
+Die Verzögerung gab es **auch schon vor dem Service Worker** – der Browser cachte die Seite genauso. Neu war nur, dass der Service Worker die veraltete Fassung zusätzlich einlagerte und sie dadurch länger hielt. Der Zwischenspeicher heilt sich beim nächsten Start mit Empfang von selbst.
+
+### Datenkompatibilität
+
+Keine. Es wurde ausschließlich die Art geändert, wie die Programmdatei geladen wird.
+
+### Automatisiert getestet
+
+- Offline-Test unverändert grün: App startet ohne Empfang, Entwurf bleibt erhalten, Eingaben speicherbar, kein Neulade-Karussell
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 31 · Abgetrennte Historie reparieren (App-Version 933, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

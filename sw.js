@@ -23,7 +23,7 @@ const cacheKeyFor = request => new URL(request.url).origin + new URL(request.url
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then(cache => cache.add(new Request("./", {cache:"reload"}))).catch(()=>{})
+    caches.open(CACHE).then(cache => cache.add(new Request("./", {cache:"no-store"}))).catch(()=>{})
   );
 });
 
@@ -35,11 +35,22 @@ self.addEventListener("activate", event => {
   })());
 });
 
+/* Die Seite selbst bewusst am HTTP-Cache vorbei holen.
+   GitHub Pages liefert sie mit "Cache-Control: max-age=600" aus. Ohne diesen
+   Umweg bekäme auch eine Online-Anfrage bis zu zehn Minuten lang die alte
+   Fassung – und der Service Worker würde sie zusätzlich einlagern. Mit
+   Empfang soll aber immer die aktuelle Fassung gewinnen. */
+function netzAnfrage(request){
+  return request.mode === "navigate"
+    ? fetch(request.url, {cache:"no-store"})
+    : fetch(request);
+}
+
 function fetchWithTimeout(request){
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("timeout")), NETWORK_TIMEOUT_MS);
-    fetch(request).then(response => { clearTimeout(timer); resolve(response); },
-                        error    => { clearTimeout(timer); reject(error); });
+    netzAnfrage(request).then(response => { clearTimeout(timer); resolve(response); },
+                             error    => { clearTimeout(timer); reject(error); });
   });
 }
 
