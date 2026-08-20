@@ -72,8 +72,21 @@ assert.equal(L.hitTop(satz(80, 12, 11), "8–12"), false, "Ein Satz darunter rei
 assert.equal(L.hitTop(satz(80, 12, 12), "frei"), false, "Ohne Zielbereich gibt es keine automatische Steigerung");
 assert.match(L.targetText(satz(80, 12, 12), "8–12"), /82,5 kg/,
   "Der Vorschlag muss das nächste Gewicht in deutscher Schreibweise nennen");
-assert.match(L.targetText(satz(80, 10, 9), "8–12"), /8–12/,
-  "Ohne erreichte Obergrenze bleibt der Zielbereich stehen");
+/* Der Normalfall: gleiches Gewicht, eine Wiederholung mehr pro Satz. */
+assert.equal(L.naechsteWiederholungen(satz(80, 10, 9), "8–12"), "80 kg × 11 · 80 kg × 10",
+  "Jeder Satz bekommt eine Wiederholung mehr, das Gewicht bleibt");
+assert.equal(L.naechsteWiederholungen(satz(80, 12, 10), "8–12"), "80 kg × 12 · 80 kg × 11",
+  "Am oberen Ende des Zielbereichs wird nicht darüber hinaus vorgeschlagen");
+assert.equal(L.naechsteWiederholungen(satz(45.5, 15, 13), "frei"), "45,5 kg × 16 · 45,5 kg × 14",
+  "Ohne Zielbereich gibt es keine Deckelung, Gewicht in deutscher Schreibweise");
+assert.equal(L.naechsteWiederholungen(satz(0, 0, 0), "8–12"), "",
+  "Ohne Werte gibt es nichts vorzuschlagen");
+assert.match(L.targetText(satz(80, 10, 9), "8–12"), /Ziel heute: 80 kg × 11 · 80 kg × 10/,
+  "Ohne erreichte Obergrenze wird konkret eine Wiederholung mehr vorgeschlagen");
+assert.match(L.targetText(satz(80, 12, 12), "8–12"), /82,5 kg versuchen/,
+  "Ist die Obergrenze erreicht, bleibt es beim Gewichtsvorschlag");
+assert.match(L.targetText({workSets:[]}, "8–12"), /8–12/,
+  "Ganz ohne Vorwerte bleibt der Zielbereich stehen");
 
 /* ---- Progression nach unten ---- */
 assert.equal(L.needsWeightDrop(verlauf(satz(80, 6, 5)), "8–12"), false,

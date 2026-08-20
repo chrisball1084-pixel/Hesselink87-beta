@@ -307,6 +307,10 @@ async function importBackup(page,payload,fileName){
     await parallelPage.locator('.ex[data-i="0"] .ex-top').click();
     assert.equal(await parallelPage.locator('.ex[data-i="0"] .last-box').isVisible(),true,"Die erste offene Übung muss ihre letzte Leistung sofort zeigen");
     assert.match(await parallelPage.locator('.ex[data-i="0"] .last-v').textContent(),/80 kg/,"Die jüngste passende Leistung muss verwendet werden");
+    /* Der Normalfall: gleiches Gewicht, eine Wiederholung mehr pro Satz. */
+    assert.match(await parallelPage.locator('.ex[data-i="0"] .prog-badge.steady').textContent(),
+      /Ziel heute: 80 kg × 13 · 80 kg × 12/,
+      "Ohne erreichte Obergrenze muss konkret eine Wiederholung mehr vorgeschlagen werden");
     await parallelPage.locator('.ex[data-i="1"] .ex-top').click();
     assert.equal(await parallelPage.locator('.ex[data-i="1"] .last-box').isVisible(),true,"Eine parallel geöffnete zweite Übung muss ihre letzte Leistung sofort zeigen");
     assert.match(await parallelPage.locator('.ex[data-i="1"] .last-v').textContent(),/35 kg/,"Bei einem unvollständigen jüngsten Workout muss der letzte passende Übungseintrag verwendet werden");
@@ -315,7 +319,11 @@ async function importBackup(page,payload,fileName){
     assert.equal(await parallelPage.locator('.ex[data-i="1"]').evaluate(el=>el.classList.contains("compact")),true,"Ein weiterer Tipp auf den Kartenkopf muss die Übung einklappen");
     await parallelPage.locator('.ex[data-i="1"] .ex-top').click();
     await parallelPage.locator('.ex[data-i="1"] [data-swap-exercise="1"]').click();
-    assert.equal(await parallelPage.locator("#modal-bg.show").count(),1,"Nur der Tauschen-Button darf den Sicherheitsdialog öffnen");
+    assert.equal(await parallelPage.locator("#modal-bg.show").count(),1,"Nur der Ändern-Button darf den Sicherheitsdialog öffnen");
+    assert.match(await parallelPage.locator('.ex[data-i="1"] .ex-swap-btn').textContent(),/Übung ändern/,
+      "Der Knopf muss verständlich benennen, was er tut");
+    assert.equal(await parallelPage.locator(".now-pill").count(),0,
+      "Die erklärungsbedürftige Jetzt-Markierung ist entfallen");
     await parallelPage.locator("#m-cancel").click();
     const navigationColors=await parallelPage.evaluate(()=>({tabs:getComputedStyle(document.querySelector(".tabs")).backgroundColor,safe:getComputedStyle(document.querySelector(".tabs"),"::before").backgroundColor}));
     assert.doesNotMatch(navigationColors.tabs,/rgba\([^)]*,\s*0?\.[0-9]+\)/,"Die Navigation muss vollständig deckend sein");

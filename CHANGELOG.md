@@ -1,5 +1,40 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 33 · Wiederholungsziel und ruhigerer Kartenkopf (App-Version 935, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+**Ziel heute nennt jetzt auch die Wiederholungen.**
+
+- Bisher stand dort nur dann etwas, wenn der Zielbereich ausgereizt war und ein höheres Gewicht anstand. Im Normalfall blieb die Karte stumm.
+- Neu steht bei jeder Übung mit Vorgeschichte ein konkreter Vorschlag: **→ Ziel heute: 80 kg × 12 · 80 kg × 11** – gleiches Gewicht, **eine Wiederholung mehr pro Satz** als beim letzten Mal.
+- Gedeckelt durch das obere Ende des Zielbereichs: Ist es erreicht, ist ohnehin das Gewicht dran und nicht noch eine Wiederholung. Dann erscheint weiterhin der Gewichtsvorschlag.
+- Ruhig gehalten, weil dieser Hinweis auf fast jeder Karte steht. Er sitzt direkt über **Letztes Training** – Ziel oben, Referenz darunter.
+
+**Der Kartenkopf ist aufgeräumt.**
+
+- **↔ Tauschen** heißt jetzt **↔ Übung ändern** und steht klein, links und zurückhaltend direkt unter dem Übungsnamen. Die Übung zu wechseln ist ein Sonderfall, kein Hauptweg.
+- Die **Jetzt**-Markierung im Kopf ist entfallen. Sie war erklärungsbedürftig, und die aktive Übung erkennt man ohnehin am Rahmen der Karte.
+
+### Welches Nutzerproblem löst das?
+
+Beides aus dem Feedback-Eingang. Der Wiederholungs-Vorschlag nimmt genau die Rechenarbeit ab, um die es im Kern geht: Der Nutzer soll im Gym sofort sehen, was heute dran ist, statt es sich aus der letzten Einheit herzuleiten.
+
+### Datenkompatibilität
+
+Keine Änderung. Es wurde nur anders angezeigt und beschriftet.
+
+### Automatisiert getestet
+
+- jeder Satz bekommt eine Wiederholung mehr, das Gewicht bleibt
+- am oberen Ende des Zielbereichs wird nicht darüber hinaus vorgeschlagen
+- ohne Zielbereich gibt es keine Deckelung, Gewicht in deutscher Schreibweise
+- ohne Werte gibt es keinen Vorschlag
+- ist die Obergrenze erreicht, bleibt es beim Gewichtsvorschlag
+- der Knopf heißt **Übung ändern**, die **Jetzt**-Markierung ist nicht mehr vorhanden
+- Sichtprüfung in Hell und Dunkel, Karte 24 Pixel kürzer als zuvor
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 32 · Updates kommen sofort an (App-Version 934, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

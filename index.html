@@ -290,9 +290,8 @@
   .ex-summary:empty{display:none!important}
   .ex.compact .ex-summary,.ex.done:not(.focus) .ex-summary{display:block}
   .ex.focus .ex-summary{display:none}
-  .now-pill{display:none;flex:0 0 auto;padding:4px 8px;border-radius:20px;background:var(--blue-soft);
-    color:var(--blue-bright);font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}
-  .ex.focus .now-pill{display:inline-flex}
+  /* Die aktive Übung erkennt man am Rahmen der Karte – eine zusätzliche
+     "Jetzt"-Markierung im Kopf war erklärungsbedürftig und ist entfallen. */
 
   .last-box{margin:0 12px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);
     background:rgba(7,17,29,.72);display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -304,9 +303,11 @@
   html[data-theme="light"] .last-box .last-k{color:#526c77}
   html[data-theme="light"] .last-box .last-v{color:#10242d}
   html[data-theme="light"] .last-copy{background:#fff;color:#007f9b;border-color:#9fbac4}
-  .exercise-actions{display:flex;justify-content:flex-end;margin:0 12px 8px}
-  .ex-swap-btn{min-height:44px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:11px;
-    background:var(--panel-2);color:var(--blue-bright);font:800 11px inherit;cursor:pointer}
+  /* Bewusst zurückhaltend und links unter dem Übungsnamen: Die Übung zu
+     ändern ist ein seltener Sonderfall, kein Hauptweg. */
+  .exercise-actions{display:flex;justify-content:flex-start;margin:0 12px 8px}
+  .ex-swap-btn{min-height:36px;padding:6px 10px;border:1px dashed var(--line-strong);border-radius:11px;
+    background:transparent;color:var(--muted);font:800 11px inherit;cursor:pointer}
   .ex.done:not(.editing-completed) .exercise-actions{display:none}
   .temporary-ex-note{margin:0 12px 8px;padding:8px 10px;border:1px solid rgba(255,204,102,.32);border-radius:10px;
     background:rgba(255,204,102,.07);color:var(--warm);font-size:10px;font-weight:850}
@@ -316,6 +317,10 @@
     font-size:12px;font-weight:800;color:var(--pr)}
   /* Abwärts-Empfehlung: bewusst warm statt alarmierend – es ist ein Hinweis, kein Fehler. */
   .prog-badge.down{background:linear-gradient(90deg,#2a200e,#1c1408);border-top-color:#5a4414;color:var(--warm)}
+  /* Der Normalfall: gleiches Gewicht, eine Wiederholung mehr. Ruhig gehalten,
+     weil er auf fast jeder Karte steht. */
+  .prog-badge.steady{background:linear-gradient(90deg,#0d1f28,#0a161c);border-top-color:#1d3f4e;color:var(--blue-bright)}
+  html[data-theme="light"] .prog-badge.steady{background:#e8f4f8;border-top-color:#b6d4de;color:#0b5f74}
   html[data-theme="light"] .prog-badge.down{background:#fff6e3;border-top-color:#e8c98a;color:#7a5410}
 
   /* Standardmäßig nur ein unaufdringlicher Knopf – das Feld erscheint erst bei Bedarf
@@ -1238,12 +1243,27 @@ function previousText(s){
   return parts.join(" · ") || "Noch keine Werte";
 }
 
+/* Eine Wiederholung mehr pro Satz bei gleichem Gewicht – so muss niemand
+   selbst rechnen. Gedeckelt durch das obere Ende des Zielbereichs: Ist der
+   erreicht, ist ohnehin das Gewicht dran, nicht noch eine Wiederholung. */
+function naechsteWiederholungen(s, goal){
+  const grenze = goalUpper(goal);
+  const saetze = workSetsOf(s).filter(x=>num(x.kg)>0 && num(x.reps)>0);
+  if(!saetze.length) return "";
+  return saetze.map(x=>{
+    const ziel = grenze ? Math.min(num(x.reps)+1, grenze) : num(x.reps)+1;
+    return `${fmtKg(num(x.kg))} kg × ${ziel}`;
+  }).join(" · ");
+}
+
 function targetText(s, goal){
   if(!s) return `Zielbereich ${goal||"–"}`;
   if(hitTop(s,goal)){
     const next = maxKg(s)>0 ? `${fmtKg(maxKg(s)+KG_STEP)} kg versuchen` : "Schwierigkeit leicht erhöhen";
     return `Ziel heute: ${next}`;
   }
+  const wdh = naechsteWiederholungen(s, goal);
+  if(wdh) return `Ziel heute: ${wdh}`;
   return `Ziel heute: ${goal||"saubere Wiederholungen"}`;
 }
 </script>
@@ -1253,7 +1273,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 934;
+const APP_VERSION = 935;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -1858,6 +1878,8 @@ function renderExercises(){
     let badge = "";
     if(previous && hitTop(previous, goal)) badge = `<div class="prog-badge">↑ ${targetText(previous,goal)}</div>`;
     else if(previous && needsWeightDrop(history, goal)) badge = `<div class="prog-badge down">↓ ${dropText(previous,goal)}</div>`;
+    /* Sonst: gleiches Gewicht, eine Wiederholung mehr pro Satz. */
+    else if(previous && naechsteWiederholungen(previous, goal)) badge = `<div class="prog-badge steady">→ ${targetText(previous,goal)}</div>`;
     /* Notiz aus der letzten Einheit: bleibt stehen, bis sie geändert oder geleert wird. */
     const note = editing ? null : carriedNote(previousInfo);
     const noteRow = editing ? "" : `<div class="ex-note-row ${note?"open":""}" data-note-row="${i}">
@@ -1879,13 +1901,12 @@ function renderExercises(){
         <div class="ex-top">
           <span class="ex-num">${i+1}.</span>
           <textarea class="ex-name-inp" data-i="${i}" rows="1" placeholder="Übung" ${nameLockAttr} aria-label="Übungsname">${escAttr(name)}</textarea>
-          <span class="now-pill">Jetzt</span>
           ${editing?`<input class="ex-goal-inp" value="${escAttr(goal)}" data-i="${i}" placeholder="Ziel" aria-label="Wiederholungsziel">`:`<span class="ex-goal-badge" aria-label="Wiederholungsziel ${escAttr(goal)}">${escAttr(goal)}</span>`}
           <button class="ex-del" data-i="${i}" title="Übung entfernen" type="button" ${delStyle}>✕</button>
         </div>
         <div class="ex-summary" data-summary="${i}"></div>
         <div class="ex-body">
-          ${editing?"":`<div class="exercise-actions"><button class="ex-swap-btn" data-swap-exercise="${i}" type="button">↔ Tauschen</button></div>`}
+          ${editing?"":`<div class="exercise-actions"><button class="ex-swap-btn" data-swap-exercise="${i}" type="button">↔ Übung ändern</button></div>`}
           ${temporaryOverride?`<div class="temporary-ex-note">${sessionAddition?"＋ Zusätzlich nur für heute":"↔ Nur für dieses Training ersetzt"}</div>`:""}
           ${badge}
           ${lastBox}
