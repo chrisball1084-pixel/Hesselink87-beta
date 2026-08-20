@@ -1,5 +1,32 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 27 · Einstieg verständlicher (App-Version 928, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- **Der Ersteinstieg beginnt jetzt mit Hell oder Dunkel.** Drei Kacheln, **Automatisch** ist vorausgewählt und folgt der Systemeinstellung des iPhones. Änderbar bleibt es wie bisher jederzeit im Setup.
+- **Die Frage nach der Anzahl der Workouts zeigt jetzt ihre Konsequenz.** Statt nur „1 / 2 / 3 / 4" steht unter jeder Option, wie sich die Workouts über die zuvor gewählten Trainingstage abwechseln würden – zum Beispiel bei drei Trainingstagen: *2 verschiedene Workouts · Woche 1: A · B · A → Woche 2: B · A · B*.
+- Bleibt die Reihenfolge über die Wochen gleich, steht dort nur *Jede Woche: A · B · C* statt zweier identischer Zeilen. Bei einem einzigen Workout: *Jedes Mal dasselbe Workout · 3× pro Woche*.
+- Die Einrichtung hat dadurch **fünf statt vier Schritte**.
+
+### Welches Nutzerproblem löst das?
+
+Aus dem Feedback vom 20.08.: Bei „dreimal pro Woche" wurde Push/Pull/Legs angezeigt, obwohl Ganzkörper A/B im Wechsel gewünscht war. Diese Option gab es technisch bereits – Schritt 1 fragt die Trainingstage, Schritt 3 die Anzahl verschiedener Workouts. Nur tippt man bei „3× pro Woche" reflexartig auch in Schritt 3 auf „3" und landet damit bei drei verschiedenen Einheiten. Die Vorschau macht den Unterschied jetzt sofort sichtbar; die zugrundeliegende Logik wurde nicht verändert.
+
+### Datenkompatibilität
+
+Keine. Es wurden ausschließlich Beschriftung und Ablauf der Ersteinrichtung geändert. Bestehende Nutzer sehen das Onboarding nicht erneut; Plan, Historie und Entwürfe sind nicht betroffen.
+
+### Automatisiert getestet
+
+- Einrichtung meldet fünf Schritte, Schritt 1 ist die Hell-/Dunkel-Wahl
+- **Automatisch** ist ohne eigene Wahl vorausgewählt
+- eine Wahl im Onboarding wirkt sofort auf die Darstellung
+- Rotationsvorschau stimmt für 1, 2 und 3 Workouts bei drei Trainingstagen
+- bei gleichbleibender Reihenfolge wird keine zweite Woche angezeigt
+- Sichtprüfung bei 320 × 700 und 390 × 844 Pixeln: kein Textüberlauf, Dialog passt vollständig ins Bild
+- vollständige bestehende Regressionssuite grün
+
 ## v1.3 Beta – Testpaket 26 · Übungsnotiz & Abwärts-Empfehlung (App-Version 927, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

@@ -340,8 +340,29 @@ async function importBackup(page,payload,fileName){
     await onboardingPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
     await onboardingPage.locator("#onboarding-bg.show").waitFor();
     if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-919.png"),fullPage:false});
+    /* Schritt 1: Hell/Dunkel, "Automatisch" ist vorausgewählt. */
+    assert.match(await onboardingPage.locator("#onboarding-step").textContent(),/Schritt 1 von 5/,
+      "Die Einrichtung muss fünf Schritte haben");
+    assert.equal(await onboardingPage.locator('[data-onboarding-theme="auto"].active').count(),1,
+      "Ohne eigene Wahl muss der automatische Modus vorausgewählt sein");
+    await onboardingPage.locator('[data-onboarding-theme="light"]').click();
+    assert.equal(await onboardingPage.evaluate(()=>document.documentElement.dataset.theme),"light",
+      "Die Wahl im Onboarding muss sofort wirken");
+    await onboardingPage.locator("#onboarding-next").click();
+
     await onboardingPage.locator('[data-onboarding-days="3"]').click();
     await onboardingPage.locator("#onboarding-next").click();
+
+    /* Schritt 3 muss zeigen, was die Anzahl konkret bedeutet. */
+    assert.match(await onboardingPage.locator('[data-onboarding-workouts="2"]').textContent(),
+      /Woche 1: A · B · A → Woche 2: B · A · B/,
+      "Die Workout-Anzahl muss ihre Rotation über die gewählten Trainingstage zeigen");
+    assert.match(await onboardingPage.locator('[data-onboarding-workouts="1"]').textContent(),
+      /Jedes Mal dasselbe Workout · 3× pro Woche/,
+      "Ein einzelnes Workout muss verständlich beschrieben sein");
+    assert.match(await onboardingPage.locator('[data-onboarding-workouts="3"]').textContent(),
+      /Jede Woche: A · B · C/,
+      "Bei gleichbleibender Reihenfolge darf keine zweite Woche angezeigt werden");
     await onboardingPage.locator('[data-onboarding-workouts="2"]').click();
     await onboardingPage.locator("#onboarding-next").click();
     if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-plans-919.png"),fullPage:false});
@@ -385,6 +406,7 @@ async function importBackup(page,payload,fileName){
     const customErrors=[];
     customPage.on("pageerror",error=>customErrors.push(error.message));
     await customPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await customPage.locator("#onboarding-next").click();   // Theme-Schritt mit "Automatisch" übernehmen
     await customPage.locator('[data-onboarding-days="3"]').click();
     await customPage.locator("#onboarding-next").click();
     await customPage.locator('[data-onboarding-workouts="3"]').click();

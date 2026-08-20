@@ -434,6 +434,10 @@
   .card-timer-x.show{display:block}
 
   .onboarding-modal{max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
+  .onboarding-option.rotation{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:11px 12px}
+  .onboarding-option.rotation strong{font-size:13px;font-weight:900}
+  .onboarding-option.rotation small{font-size:11px;font-weight:700;color:var(--muted);line-height:1.35}
+  .onboarding-option.rotation.active small{color:var(--blue-bright)}
   .onboarding-step{font-size:10px;color:var(--blue-bright);font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
   .onboarding-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
   .onboarding-option{min-height:58px;border-radius:13px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:900 15px inherit;cursor:pointer}
@@ -929,7 +933,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 927;
+const APP_VERSION = 928;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2291,6 +2295,19 @@ function onboardingRecommendation(days=onboardingDays,workouts=onboardingWorkout
   if(workouts===3) return {id:"ppl3",reason:`Push, Pull und Legs laufen fortlaufend weiter – auch über den Wochenwechsel.`};
   return {id:"upperlower4",reason:`Vier unterschiedliche Einheiten rotieren fortlaufend in ihrer festen Reihenfolge.`};
 }
+/* Zeigt, wie sich die Workouts über die gewählten Trainingstage abwechseln,
+   also z. B. "Woche 1: A · B · A". Ohne diese Vorschau tippt man bei
+   "3× pro Woche" reflexartig auch auf 3 Workouts und landet bei Push/Pull/Legs. */
+function rotationPreview(workouts, days){
+  const letters="ABCD";
+  const week1=Array.from({length:days},(_,i)=>letters[i%workouts]);
+  if(workouts===1) return `Jedes Mal dasselbe Workout · ${days}× pro Woche`;
+  const week2=Array.from({length:days},(_,i)=>letters[(i+days)%workouts]);
+  const gleich=week1.join()===week2.join();
+  return gleich
+    ? `Jede Woche: ${week1.join(" · ")}`
+    : `Woche 1: ${week1.join(" · ")} → Woche 2: ${week2.join(" · ")}`;
+}
 function onboardingCandidateIds(){
   if(onboardingWorkouts===1) return ["fullbody1","custom"];
   if(onboardingWorkouts===2) return ["fullbody2","upperlower2","pushpull2","custom"];
@@ -2361,21 +2378,30 @@ function showOnboarding(startAt=0){
 function closeOnboarding(){ $("#onboarding-bg").classList.remove("show"); }
 function renderOnboarding(){
   const options=$("#onboarding-options"), preview=$("#onboarding-preview"), next=$("#onboarding-next"), back=$("#onboarding-back"), adjust=$("#onboarding-adjust"), actions=next.parentElement;
-  $("#onboarding-step").textContent=`Schritt ${onboardingStep+1} von 4`;
+  $("#onboarding-step").textContent=`Schritt ${onboardingStep+1} von 5`;
   preview.hidden=true; options.style.display="grid"; adjust.hidden=true; actions.classList.remove("has-adjust"); back.textContent=onboardingStep===0?"Später":"Zurück";
   if(onboardingStep===0){
+    $("#onboarding-title").textContent="Hell oder dunkel?";
+    $("#onboarding-text").textContent="Automatisch folgt der Einstellung deines iPhones. Du kannst das später im Setup jederzeit ändern.";
+    options.style.gridTemplateColumns="repeat(3,1fr)";
+    options.innerHTML=[["auto","Automatisch"],["light","Hell"],["dark","Dunkel"]].map(([id,label])=>
+      `<button class="onboarding-option ${id===themeChoice?"active":""}" data-onboarding-theme="${id}" type="button">${label}</button>`).join("");
+    next.textContent="Weiter";
+  }else if(onboardingStep===1){
     $("#onboarding-title").textContent="Wie oft möchtest du trainieren?";
     $("#onboarding-text").textContent="Wähle ein realistisches Wochenziel. Das ist unabhängig davon, wie viele verschiedene Workouts du hast.";
     options.style.gridTemplateColumns="repeat(3,1fr)";
     options.innerHTML=[2,3,4].map(n=>`<button class="onboarding-option ${n===onboardingDays?"active":""}" data-onboarding-days="${n}" type="button">${n}×<br><small>pro Woche</small></button>`).join("");
     next.textContent="Weiter";
-  }else if(onboardingStep===1){
-    $("#onboarding-title").textContent="Wie viele verschiedene Workouts?";
-    $("#onboarding-text").textContent="Ein Workout kann mehrfach pro Woche vorkommen. A und B können sich zum Beispiel an drei Tagen abwechseln.";
-    options.style.gridTemplateColumns="repeat(2,1fr)";
-    options.innerHTML=[1,2,3,4].map(n=>`<button class="onboarding-option ${n===onboardingWorkouts?"active":""}" data-onboarding-workouts="${n}" type="button">${n}<br><small>${n===1?"Workout":"Workouts"}</small></button>`).join("");
-    next.textContent="Pläne ansehen";
   }else if(onboardingStep===2){
+    $("#onboarding-title").textContent="Wie viele verschiedene Workouts?";
+    $("#onboarding-text").textContent=`Das ist etwas anderes als deine Trainingstage. Darunter siehst du, wie sich deine ${onboardingDays} Trainingstage abwechseln würden.`;
+    options.style.gridTemplateColumns="repeat(1,1fr)";
+    options.innerHTML=[1,2,3,4].map(n=>`<button class="onboarding-option rotation ${n===onboardingWorkouts?"active":""}" data-onboarding-workouts="${n}" type="button">
+      <strong>${n} ${n===1?"Workout":"verschiedene Workouts"}</strong>
+      <small>${rotationPreview(n,onboardingDays)}</small></button>`).join("");
+    next.textContent="Pläne ansehen";
+  }else if(onboardingStep===3){
     const rec=onboardingRecommendation(), candidates=onboardingCandidateIds();
     if(!candidates.includes(onboardingPresetId)){ onboardingPresetId=rec.id; onboardingExpandedPresetId=rec.id; resetOnboardingDraft(rec.id); }
     $("#onboarding-title").textContent="Welcher Plan passt zu dir?";
@@ -2400,6 +2426,7 @@ function renderOnboarding(){
     if(!onboardingEditing){ adjust.hidden=false; actions.classList.add("has-adjust"); }
     next.textContent=onboardingEditing?"Einrichtung abschließen":"Plan so übernehmen";
   }
+  options.querySelectorAll("[data-onboarding-theme]").forEach(b=>b.addEventListener("click",()=>{ applyTheme(b.dataset.onboardingTheme); renderOnboarding(); }));
   options.querySelectorAll("[data-onboarding-days]").forEach(b=>b.addEventListener("click",()=>{ onboardingDays=+b.dataset.onboardingDays; renderOnboarding(); }));
   options.querySelectorAll("[data-onboarding-workouts]").forEach(b=>b.addEventListener("click",()=>{ onboardingWorkouts=+b.dataset.onboardingWorkouts; const rec=onboardingRecommendation(); onboardingPresetId=rec.id; onboardingExpandedPresetId=rec.id; resetOnboardingDraft(rec.id); renderOnboarding(); }));
   options.querySelectorAll("[data-onboarding-preset]").forEach(b=>b.addEventListener("click",()=>{
@@ -2429,9 +2456,9 @@ async function applyOnboardingPlan(){
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand(); closeOnboarding(); setView("dashboard");
   toast("Dein Einstieg ist eingerichtet ✓");
 }
-$("#onboarding-next").addEventListener("click",()=>{ if(onboardingStep<3){ onboardingStep++; if(onboardingStep===3&&!onboardingDraft) resetOnboardingDraft(); renderOnboarding(); } else applyOnboardingPlan(); });
+$("#onboarding-next").addEventListener("click",()=>{ if(onboardingStep<4){ onboardingStep++; if(onboardingStep===4&&!onboardingDraft) resetOnboardingDraft(); renderOnboarding(); } else applyOnboardingPlan(); });
 $("#onboarding-adjust").addEventListener("click",()=>{ onboardingEditing=true; renderOnboarding(); });
-$("#onboarding-back").addEventListener("click",()=>{ if(onboardingStep===0) closeOnboarding(); else if(onboardingStep===3&&onboardingEditing){ onboardingEditing=false; renderOnboarding(); } else { onboardingStep--; renderOnboarding(); } });
+$("#onboarding-back").addEventListener("click",()=>{ if(onboardingStep===0) closeOnboarding(); else if(onboardingStep===4&&onboardingEditing){ onboardingEditing=false; renderOnboarding(); } else { onboardingStep--; renderOnboarding(); } });
 $("#setup-onboarding").addEventListener("click",()=>showOnboarding(0));
 
 function updateBrand(){ $("#brand-sub").textContent=`Trainingstagebuch · ${planConfig.dayOrder.length} Workouts · ${planConfig.weeklyTarget} Trainingstage / Woche`; }
