@@ -445,6 +445,69 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(liveImportErrors,[],`Live-Import-Browserfehler: ${liveImportErrors.join(" | ")}`);
     await liveImportContext.close();
 
+    /* Planbearbeitung darf die Vorwerte nicht verstecken.
+       Vor der Plan-Linie bekam jede Bearbeitung eine neue versionId – danach stand
+       bei allen Übungen "Noch keine Werte", obwohl die Historie vorhanden war. */
+    const planEditContext=await browser.newContext({viewport:{width:390,height:844}});
+    await planEditContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+    });
+    const planEditPage=await planEditContext.newPage();
+    const planEditErrors=[];
+    planEditPage.on("pageerror",error=>planEditErrors.push(error.message));
+    await planEditPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await planEditPage.locator('.tab[data-view="log"]').click();
+    await planEditPage.evaluate(()=>{
+      const day=planConfig.dayOrder[0], exercises=templates[day];
+      saveLog([{id:200,date:"2026-08-12",day,dayName:planConfig.dayNames[day],
+        planVersionId:planConfig.versionId,planLineageId:planConfig.lineageId,
+        sets:[{name:exercises[0].n,goal:exercises[0].goal,wkg:"70",wwdh:"12",
+          workSets:[{kg:"80",reps:"12"},{kg:"80",reps:"11"}],setCount:2,done:true,touched:true}]}]);
+      currentDay=day; activeExIdx=-1; openExIndices=new Set();
+      renderDayPicker(); renderExercises();
+    });
+    await planEditPage.locator('.ex[data-i="0"] .ex-top').click();
+    assert.match(await planEditPage.locator('.ex[data-i="0"] .last-v').textContent(),/80 kg/,
+      "Vor der Planbearbeitung muss die letzte Leistung sichtbar sein");
+
+    const planEditIds=await planEditPage.evaluate(async()=>{
+      const before={version:planConfig.versionId,lineage:planConfig.lineageId};
+      resetSetupPlanDraft();
+      setupPlanDraft[planConfig.dayOrder[0]][1].n="Butterfly";   // eine Übung austauschen
+      setupPlanDraft[planConfig.dayOrder[0]][1].id="chest-fly";
+      setupPlanDirty=true;
+      const pending=saveSetupPlanChanges("setup");   // kann nach einem Dialog fragen
+      await new Promise(r=>setTimeout(r,80));
+      if(document.querySelector("#modal-bg.show")) document.querySelector("#m-ok").click();
+      await pending;
+      return {before,after:{version:planConfig.versionId,lineage:planConfig.lineageId}};
+    });
+    assert.notEqual(planEditIds.after.version,planEditIds.before.version,
+      "Eine Planbearbeitung muss eine neue Planversion erzeugen");
+    assert.equal(planEditIds.after.lineage,planEditIds.before.lineage,
+      "Eine Planbearbeitung darf die Plan-Linie nicht wechseln");
+
+    await planEditPage.locator('.tab[data-view="log"]').click();
+    await planEditPage.locator('.ex[data-i="0"] .ex-top').click();
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .last-box').count(),1,
+      "Nach einem Übungstausch im Setup müssen die Vorwerte der übrigen Übungen sichtbar bleiben");
+    assert.match(await planEditPage.locator('.ex[data-i="0"] .last-v').textContent(),/80 kg/,
+      "Nach einem Übungstausch muss weiterhin die richtige letzte Leistung stehen");
+
+    /* Ein echter Splitwechsel soll dagegen weiterhin trennen. */
+    const splitLineage=await planEditPage.evaluate(async()=>{
+      const before=planConfig.lineageId;
+      const pending=applySplitPreset("ppl3");        // wartet auf den Sicherheitsdialog
+      await new Promise(r=>setTimeout(r,80));
+      if(document.querySelector("#modal-bg.show")) document.querySelector("#m-ok").click();
+      await pending;
+      return {before,after:planConfig.lineageId,visible:loadLog().filter(belongsToCurrentPlan).length};
+    });
+    assert.notEqual(splitLineage.after,splitLineage.before,"Ein Splitwechsel muss eine neue Plan-Linie starten");
+    assert.equal(splitLineage.visible,0,"Nach einem Splitwechsel darf die alte Linie nicht mitgezählt werden");
+    assert.deepEqual(planEditErrors,[],`Planbearbeitungs-Browserfehler: ${planEditErrors.join(" | ")}`);
+    await planEditContext.close();
+
     assert.deepEqual(errors,[],`Browserfehler: ${errors.join(" | ")}`);
     console.log("PASS: Backup v5/Live-v3, Onboarding, Zusatzübungen, Dashboard-Plan, Historie, Themes und Mobile-Flows");
   } finally {

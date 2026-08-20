@@ -1,5 +1,33 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 24 · Datenintegrität (App-Version 925, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- **Vorwerte überleben eine Planbearbeitung.** Bisher erhielt der Plan bei jeder Änderung eine neue Versions-ID. Da die Anzeige danach filtert, verschwanden nach dem Austausch einer einzigen Übung im Setup bei allen übrigen Übungen **Letztes Training** und **Gewichte übernehmen**, ebenso die Wochenzählung und der Volumentrend. Die Daten waren vorhanden, aber unsichtbar.
+- Neu unterscheidet die App zwischen **Plan bearbeitet** und **Split gewechselt**. Eine zusätzliche Plan-Linie (`lineageId`) bleibt beim Bearbeiten von Übungen erhalten; nur ein echter Splitwechsel über Vorlage oder Onboarding startet eine neue Linie und trennt die Historie wie bisher bewusst ab.
+- Vorwerte bleiben weiterhin **pro Trainingstag getrennt**. An diesem Verhalten ändert sich nichts.
+- **Speichern kann den Trainingsfluss nicht mehr unterbrechen.** Ist der Gerätespeicher voll oder vom Browser gesperrt, erscheint ein Hinweis statt eines stillen Abbruchs mitten in der Eingabe. Der Hinweis erscheint höchstens alle zehn Sekunden.
+- Der Versionsabgleich beim Start blockiert nicht mehr, wenn der Speicher nicht verfügbar ist. Die App startet dann trotzdem.
+
+### Welches Nutzerproblem löst das?
+
+Hesselink verliert nach einer Plananpassung nicht mehr den Bezug zur letzten Einheit. Genau diese Information – *welches Gewicht hatte ich letztes Mal* – ist der Kern der App für Trainingsanfänger.
+
+### Datenkompatibilität
+
+Es wird kein bestehendes Feld umbenannt oder entfernt. Gespeicherte Workouts erhalten zusätzlich `planLineageId`; ältere Einträge ohne dieses Feld greifen automatisch auf `planVersionId` zurück. Bestehende Backups bleiben unverändert importierbar.
+
+### Automatisiert getestet
+
+- vorhandene Leistung vor der Planbearbeitung sichtbar
+- Übungstausch im Setup erzeugt eine neue Planversion, **behält** aber die Plan-Linie
+- nach dem Übungstausch bleiben die Vorwerte der übrigen Übungen sichtbar
+- ein echter Splitwechsel startet weiterhin eine neue Linie und trennt die Historie
+- gesperrter Speicher: App läuft weiter, genau ein Hinweis statt Dauermeldung
+- Gegenprobe: Der neue Test schlägt mit der alten Logik nachweislich fehl
+- vollständige bestehende Regressionssuite grün
+
 ## v1.3 Beta – Testpaket 23 (lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?
