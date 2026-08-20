@@ -126,6 +126,24 @@ assert.equal(L.draftHasMeaningfulData({}), false, "Ein leerer Entwurf ist bedeut
 assert.equal(L.draftHasMeaningfulData(null), false, "Kein Entwurf ist kein Entwurf");
 assert.throws(() => L.validateBackupPayload({app:"fremd"}), /Format/, "Fremde Dateien müssen abgelehnt werden");
 
+/* ---- Sanfte Nachfrage bei fehlenden Wiederholungen ---- */
+assert.deepEqual([...L.saetzeOhneWiederholungen(satz(20, "", ""))], [1, 2],
+  "Gewicht ohne Wiederholungen muss in beiden Sätzen auffallen");
+assert.deepEqual([...L.saetzeOhneWiederholungen(satz(20, 10, ""))], [2],
+  "Nur der unvollständige Satz darf gemeldet werden");
+assert.deepEqual([...L.saetzeOhneWiederholungen(satz(20, 10, 9))], [],
+  "Vollständige Sätze lösen keine Nachfrage aus");
+assert.deepEqual([...L.saetzeOhneWiederholungen(satz(0, "", ""))], [],
+  "Eine komplett leere Übung ist kein Fall für die Nachfrage");
+assert.deepEqual([...L.saetzeOhneWiederholungen({workSets:[{kg:"", reps:"20"}]})], [],
+  "Wiederholungen ohne Gewicht sind bei Körpergewichtsübungen normal");
+assert.match(L.fehlendeWdhText([2]), /In Satz 2 steht ein Gewicht/, "Einzahl bei einem Satz");
+assert.match(L.fehlendeWdhText([1,2]), /In den Sätzen 1 und 2/, "Mehrzahl bei zwei Sätzen");
+assert.match(L.fehlendeWdhText([1,2,3]), /Sätzen 1, 2 und 3/, "Aufzählung bei drei Sätzen");
+assert.match(L.fehlendeWdhText([1]), /trotzdem abschließen/,
+  "Die Nachfrage muss immer einen Weg nach vorn anbieten");
+assert.equal(L.fehlendeWdhText([]), "", "Ohne Lücke gibt es keinen Text");
+
 /* ---- Trend einer Übung ---- */
 const einheit = (kg, ...wdh) => ({set: satz(kg, ...wdh), entry: {date: "2026-08-01"}});
 /* Liefert den Status oder eine sprechende Meldung statt eines TypeErrors. */

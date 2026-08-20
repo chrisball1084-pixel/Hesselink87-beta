@@ -663,6 +663,60 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(coachErrors,[],`Notiz-/Empfehlungs-Browserfehler: ${coachErrors.join(" | ")}`);
     await coachContext.close();
 
+    /* Sanfte Nachfrage, wenn ein Gewicht ohne Wiederholungen abgeschlossen wird.
+       Im echten Backup von Hesselink kam das am 17.08. tatsächlich vor. */
+    const wdhContext=await browser.newContext({viewport:{width:390,height:844}});
+    await wdhContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+    });
+    const wdhPage=await wdhContext.newPage();
+    const wdhErrors=[];
+    wdhPage.on("pageerror",error=>wdhErrors.push(error.message));
+    await wdhPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await wdhPage.locator('.tab[data-view="log"]').click();
+    await openExercise(wdhPage,0);
+
+    /* Vollständige Übung: keine Nachfrage. */
+    await wdhPage.locator('.ex[data-i="0"] input[data-f="kg1"]').fill("40");
+    await wdhPage.locator('.ex[data-i="0"] input[data-f="wdh1"]').fill("12");
+    await wdhPage.locator('.ex[data-i="0"] input[data-f="kg2"]').fill("40");
+    await wdhPage.locator('.ex[data-i="0"] input[data-f="wdh2"]').fill("10");
+    await wdhPage.locator('.ex-done-btn[data-done="0"]').click();
+    await wdhPage.waitForTimeout(200);
+    assert.equal(await wdhPage.locator("#modal-bg.show").count(),0,
+      "Eine vollständig ausgefüllte Übung darf nicht nachfragen");
+    assert.equal(await wdhPage.locator('.ex[data-i="0"]').evaluate(el=>el.classList.contains("done")),true,
+      "Sie muss direkt abgeschlossen werden");
+
+    /* Gewicht ohne Wiederholungen: Nachfrage, Abbrechen führt ins fehlende Feld. */
+    await openExercise(wdhPage,1);
+    await wdhPage.locator('.ex[data-i="1"] input[data-f="kg1"]').fill("20");
+    await wdhPage.locator('.ex[data-i="1"] input[data-f="kg2"]').fill("20");
+    await wdhPage.locator('.ex-done-btn[data-done="1"]').click();
+    await wdhPage.waitForTimeout(200);
+    assert.equal(await wdhPage.locator("#modal-bg.show").count(),1,
+      "Gewicht ohne Wiederholungen muss eine Nachfrage auslösen");
+    assert.match(await wdhPage.locator("#m-txt").textContent(),/In den Sätzen 1 und 2/,
+      "Die Nachfrage muss benennen, welche Sätze betroffen sind");
+    assert.match(await wdhPage.locator("#m-ok").textContent(),/Trotzdem abschließen/,
+      "Es muss immer möglich bleiben, trotzdem abzuschließen");
+    await wdhPage.locator("#m-cancel").click();
+    await wdhPage.waitForTimeout(200);
+    assert.equal(await wdhPage.locator('.ex[data-i="1"]').evaluate(el=>el.classList.contains("done")),false,
+      "Nach dem Abbrechen darf die Übung nicht abgeschlossen sein");
+    assert.equal(await wdhPage.evaluate(()=>document.activeElement.dataset.f),"wdh1",
+      "Der Fokus muss im ersten fehlenden Wiederholungsfeld landen");
+
+    /* Trotzdem abschließen bleibt möglich. */
+    await wdhPage.locator('.ex-done-btn[data-done="1"]').click();
+    await wdhPage.waitForTimeout(200);
+    await wdhPage.locator("#m-ok").click();
+    await wdhPage.waitForTimeout(200);
+    assert.equal(await wdhPage.locator('.ex[data-i="1"]').evaluate(el=>el.classList.contains("done")),true,
+      "Wer trotzdem abschließen will, muss das auch können");
+    assert.deepEqual(wdhErrors,[],`Nachfrage-Browserfehler: ${wdhErrors.join(" | ")}`);
+    await wdhContext.close();
+
     /* Hinweise und Monatsrückblick im Dashboard. */
     const trendContext=await browser.newContext({viewport:{width:390,height:844}});
     await trendContext.addInitScript(()=>{

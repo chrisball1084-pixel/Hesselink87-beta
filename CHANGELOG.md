@@ -1,5 +1,36 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 30 · Plan-Linie und fehlende Wiederholungen (App-Version 932, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+**Die Einrichtung trennt die Historie nicht mehr ohne Grund.**
+
+- Von Chris gemeldet: Wer die Ersteinrichtung erneut durchläuft und dabei zwei Workouts behält, aber das Wochenziel von 2 auf 3 stellt, verlor sämtliche Vorwerte. **Gewichte übernehmen** und **Letztes Training** waren leer.
+- Ursache war **nicht** die Umbenennung von Day 1/2 auf Ganzkörper A/B. Die Zuordnung läuft über den Tagesschlüssel und den Übungsnamen, beide unverändert. Ursache war die Plan-Linie aus Testpaket 24: Die Einrichtung vergab immer eine neue, auch wenn sich an der Struktur nichts änderte.
+- Neu wechselt die Linie nur, wenn sich die **Tagesstruktur** wirklich ändert, also Anzahl oder Anordnung der Workouts. Ein anderes Wochenziel, andere Tagesnamen oder getauschte Übungen ändern nichts daran, dass Tag 1 weiterhin Tag 1 ist. Ein echter Splitwechsel trennt weiterhin.
+- **Die Daten waren nie betroffen**, nur ihre Anzeige.
+
+**Sanfte Nachfrage bei fehlenden Wiederholungen.**
+
+- Steht in einem Satz ein Gewicht, aber keine Wiederholung, fragt die App beim Abschließen der Übung einmal nach und benennt die betroffenen Sätze. **Abschließen bleibt jederzeit möglich** – es ist ein Hinweis, keine Sperre. Wer nachtragen möchte, landet direkt im fehlenden Feld.
+- Umgekehrt wird nicht gemahnt: Wiederholungen ohne Gewicht sind bei Körpergewichtsübungen normal.
+- Anlass war Hesselinks echtes Backup, in dem am 17.08. genau das passiert ist.
+
+### Datenkompatibilität
+
+Keine Änderung am Datenformat. Die Korrektur der Plan-Linie wirkt nur auf künftige Einrichtungen; bereits getrennte Geräte werden dadurch nicht automatisch repariert.
+
+### Automatisiert getestet
+
+- Einrichtung mit gleicher Tagesstruktur behält die Plan-Linie, das neue Wochenziel wird trotzdem übernommen, die Vorwerte bleiben sichtbar
+- echter Splitwechsel startet weiterhin eine neue Linie
+- vollständig ausgefüllte Übung fragt nicht nach
+- Gewicht ohne Wiederholungen fragt nach, benennt die Sätze, Abbrechen setzt den Fokus ins fehlende Feld
+- trotzdem abschließen bleibt möglich
+- Gegenproben für beide Änderungen
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 29 · Stagnation, Deload-Vorschlag und Monatsrückblick (App-Version 930, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

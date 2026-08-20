@@ -1090,6 +1090,24 @@ function dropText(s, goal){
 }
 
 /* Notiz, die aus der letzten Einheit dieser Übung mitwandert. */
+/* Sätze, in denen ein Gewicht steht, aber keine Wiederholungen.
+   Ohne Wiederholungen kann weder Volumen noch Progression gerechnet werden.
+   Umgekehrt ist "Wiederholungen ohne Gewicht" völlig normal (Körpergewicht),
+   das wird deshalb bewusst nicht bemängelt. */
+function saetzeOhneWiederholungen(s){
+  return workSetsOf(s)
+    .map((set,idx)=>({nummer:idx+1, kg:num(set.kg), reps:num(set.reps)}))
+    .filter(x=>x.kg>0 && !x.reps)
+    .map(x=>x.nummer);
+}
+/* Formulierung der Nachfrage – freundlich, nicht belehrend, und immer
+   mit der Möglichkeit, trotzdem abzuschließen. */
+function fehlendeWdhText(nummern){
+  if(!nummern||!nummern.length) return "";
+  const wo = nummern.length===1 ? `In Satz ${nummern[0]}` : `In den Sätzen ${nummern.slice(0,-1).join(", ")} und ${nummern[nummern.length-1]}`;
+  return `${wo} steht ein Gewicht, aber keine Wiederholungen. Ohne sie kann die App deinen Fortschritt für diese Übung nicht berechnen. Du kannst sie jetzt nachtragen oder die Übung trotzdem abschließen.`;
+}
+
 /* Der aussagekräftigste Arbeitssatz einer Einheit: das schwerste Gewicht,
    bei gleichem Gewicht die meisten Wiederholungen. */
 function besterArbeitssatz(s){
@@ -1212,7 +1230,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 931;
+const APP_VERSION = 932;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2090,9 +2108,21 @@ function bindExerciseEvents(){
     });
   });
   document.querySelectorAll(".ex-done-btn").forEach(b=>{
-    b.addEventListener("click",()=>{
+    b.addEventListener("click",async ()=>{
       const i  = b.dataset.done;
       const ex = document.querySelector(`.ex[data-i="${i}"]`);
+      /* Sanfte Nachfrage, wenn ein Gewicht ohne Wiederholungen dasteht.
+         Kein Zwang – nur ein Hinweis, damit es nicht unbemerkt passiert. */
+      const offeneWdh = saetzeOhneWiederholungen(readSets(i));
+      if(offeneWdh.length && !ex.dataset.wdhGefragt){
+        const weiter = await askConfirm("Wiederholungen fehlen", fehlendeWdhText(offeneWdh), "Trotzdem abschließen");
+        if(!weiter){
+          const feld=document.querySelector(`#ex-container input[data-ex="${i}"][data-f="wdh${offeneWdh[0]}"]`);
+          if(feld){ setActiveSet(+i,String(offeneWdh[0]),true); feld.focus(); }
+          return;
+        }
+        ex.dataset.wdhGefragt="1";   // im selben Anlauf nicht zweimal fragen
+      }
       if(ex.classList.contains("done")){
         if(!ex.classList.contains("editing-completed")) return;
         clearTimeout(autoAdvanceT); autoAdvanceT=null;
