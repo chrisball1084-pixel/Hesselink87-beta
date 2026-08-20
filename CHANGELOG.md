@@ -1,5 +1,36 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 26 · Übungsnotiz & Abwärts-Empfehlung (App-Version 927, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- **Notiz pro Übung, die ins nächste Training mitwandert.** Unter **Letztes Training** gibt es jetzt den Knopf **＋ Notiz fürs nächste Mal**. Was dort steht, erscheint beim nächsten Mal automatisch bei derselben Übung – mit dem Datum, an dem es geschrieben wurde, zum Beispiel **📌 Notiz vom 05.08.**
+- Die Notiz **bleibt stehen**, bis sie geändert oder geleert wird. Wird sie unverändert übernommen, behält sie ihr ursprüngliches Datum; wird sie geändert, bekommt sie das aktuelle. Eine alte Notiz sieht dadurch nicht jede Woche wie frisch geschrieben aus.
+- Ohne Notiz bleibt die Übungskarte unverändert ruhig: Statt eines Eingabefelds steht dort nur ein kleiner Knopf. Die Karte ist damit rund 160 Pixel kürzer als mit dauerhaft sichtbarem Feld.
+- **Empfehlung jetzt auch nach unten.** Bisher schlug die App nur vor, das Gewicht zu erhöhen. Bleibt jemand **zweimal hintereinander** unter dem Zielbereich, kommt nun ein warm gehaltener Hinweis, zum Beispiel: *Zweimal unter 10 Wdh – nimm 77,5 kg und arbeite dich sauber hoch.*
+- Bewusst erst ab der zweiten Einheit: Eine einzelne schwache Einheit ist meist nur Tagesform und darf keine Gewichtsreduktion auslösen.
+- Gewichtsvorschläge stehen jetzt in deutscher Schreibweise (**82,5 kg** statt 82.5 kg). Das gilt auch für die bestehende Aufwärts-Empfehlung.
+
+### Welches Nutzerproblem löst das?
+
+Beides nimmt Hesselink Denkarbeit im Gym ab. Der Gedanke *„nächstes Mal die Sitzhöhe anders einstellen"* geht nicht mehr verloren, und er muss nicht selbst erkennen, wann ein Gewicht zu schwer für ihn ist.
+
+### Datenkompatibilität
+
+Rein additiv: Übungen im Trainingsverlauf können zusätzlich `exNote` und `exNoteDate` tragen. Bestehende Einträge ohne diese Felder funktionieren unverändert, ältere Backups bleiben importierbar. Eine geschriebene Notiz wird auch dann gespeichert, wenn zu der Übung keine Werte eingetragen wurden – damit sie nicht verlorengeht.
+
+### Automatisiert getestet
+
+- nach zwei zu schwachen Einheiten erscheint die Abwärts-Empfehlung mit konkretem Gewicht
+- der Zielbereich stammt dabei aus dem aktuellen Plan, nicht aus dem alten Eintrag
+- eine einzelne schwache Einheit löst sie nicht aus
+- Notiz der letzten Einheit steht im nächsten Training, ausgewiesen mit ihrem Datum
+- unveränderte Notiz behält ihr Datum, geänderte bekommt das heutige
+- ohne Notiz zeigt die Karte nur den Knopf, kein Eingabefeld
+- eine reine Notiz ohne eingetragene Werte geht beim Speichern nicht verloren
+- Gegenproben: Ohne Abwärtslogik beziehungsweise ohne mitwandernde Notiz schlagen die Tests nachweislich fehl
+- vollständige bestehende Regressionssuite grün
+
 ## v1.3 Beta – Testpaket 25 · Offline im Gym (App-Version 926, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

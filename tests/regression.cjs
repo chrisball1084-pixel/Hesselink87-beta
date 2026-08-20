@@ -536,6 +536,88 @@ async function importBackup(page,payload,fileName){
       await page.locator(`.ex[data-i="${i}"] input[data-f="kg1"]`).waitFor({state:"visible"});
     };
 
+    /* Übungsnotiz wandert mit, Abwärts-Empfehlung bei zweimal zu schwach. */
+    const coachContext=await browser.newContext({viewport:{width:390,height:844}});
+    await coachContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+    });
+    const coachPage=await coachContext.newPage();
+    const coachErrors=[];
+    coachPage.on("pageerror",error=>coachErrors.push(error.message));
+    await coachPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await coachPage.locator('.tab[data-view="log"]').click();
+
+    /* Zwei schwache Einheiten der ersten Übung, plus eine Notiz in der jüngeren. */
+    await coachPage.evaluate(()=>{
+      const day=planConfig.dayOrder[0], ex=templates[day][0];
+      const weak=(reps,note)=>({name:ex.n,goal:"8–12",wkg:"60",wwdh:"10",
+        workSets:[{kg:"80",reps:String(reps)},{kg:"80",reps:String(reps-1)}],setCount:2,done:true,touched:true,
+        ...(note?{exNote:note,exNoteDate:"2026-08-05"}:{})});
+      saveLog([
+        {id:300,date:"2026-08-10",day,dayName:planConfig.dayNames[day],
+          planVersionId:planConfig.versionId,planLineageId:planConfig.lineageId,sets:[weak(6)]},
+        {id:301,date:"2026-08-12",day,dayName:planConfig.dayNames[day],
+          planVersionId:planConfig.versionId,planLineageId:planConfig.lineageId,sets:[weak(7,"Sitzhöhe 4 einstellen")]},
+      ]);
+      currentDay=day; activeExIdx=-1; openExIndices=new Set();
+      renderDayPicker(); renderExercises();
+    });
+    await openExercise(coachPage,0);
+
+    /* Der Zielbereich stammt bewusst aus dem aktuellen Plan, nicht aus dem alten Eintrag. */
+    const planLow=await coachPage.evaluate(()=>goalLower(templates[planConfig.dayOrder[0]][0].goal));
+    const badge=await coachPage.locator('.ex[data-i="0"] .prog-badge').textContent();
+    assert.match(badge,new RegExp(`Zweimal unter ${planLow} Wdh`),
+      "Nach zwei zu schwachen Einheiten muss weniger Gewicht vorgeschlagen werden");
+    assert.match(badge,/77,5 kg/,"Der Vorschlag muss ein konkretes Gewicht in deutscher Schreibweise nennen");
+    assert.equal(await coachPage.locator('.ex[data-i="0"] .prog-badge.down').count(),1,
+      "Die Abwärts-Empfehlung muss als solche gekennzeichnet sein");
+
+    /* Die Notiz der letzten Einheit steht im Feld und trägt ihr ursprüngliches Datum. */
+    assert.equal(await coachPage.locator('.ex[data-i="0"] .ex-note-inp').inputValue(),"Sitzhöhe 4 einstellen",
+      "Die Notiz der letzten Einheit muss im nächsten Training stehen");
+    assert.match(await coachPage.locator('.ex[data-i="0"] .ex-note-lbl').textContent(),/Notiz vom 05\.08\./,
+      "Die Notiz muss mit ihrem ursprünglichen Datum ausgewiesen werden");
+    assert.match(await coachPage.locator('.ex[data-i="1"] .ex-note-lbl').textContent(),/Notiz fürs nächste Mal/,
+      "Ohne Vorgeschichte muss das Notizfeld neutral beschriftet sein");
+
+    /* Ohne Notiz bleibt die Karte ruhig: nur ein kleiner Knopf, kein Eingabefeld. */
+    await coachPage.locator('.ex[data-i="1"] .ex-top').click();
+    assert.equal(await coachPage.locator('.ex[data-i="1"] .ex-note-inp').isVisible(),false,
+      "Ohne Notiz darf das Eingabefeld die Übungskarte nicht aufblähen");
+    assert.equal(await coachPage.locator('.ex[data-i="1"] .ex-note-add').isVisible(),true,
+      "Stattdessen muss ein unaufdringlicher Knopf angeboten werden");
+    await coachPage.locator('.ex[data-i="1"] .ex-note-add').click();
+    assert.equal(await coachPage.locator('.ex[data-i="1"] .ex-note-inp').isVisible(),true,
+      "Der Knopf muss das Notizfeld öffnen");
+    assert.equal(await coachPage.locator('.ex[data-i="0"] .ex-note-inp').isVisible(),true,
+      "Eine mitgewanderte Notiz muss ohne Zutun sichtbar sein");
+
+    /* Unverändert übernommene Notiz behält ihr Datum, geänderte bekommt ein neues. */
+    const noteDates=await coachPage.evaluate(()=>{
+      const unchanged=readSets(0).exNoteDate;
+      const inp=document.querySelector('.ex[data-i="0"] .ex-note-inp');
+      inp.value="jetzt doch Sitzhöhe 5";
+      return {unchanged,changed:readSets(0).exNoteDate,heute:$("#f-date").value};
+    });
+    assert.equal(noteDates.unchanged,"2026-08-05","Eine unveränderte Notiz darf ihr Datum nicht verlieren");
+    assert.equal(noteDates.changed,noteDates.heute,"Eine geänderte Notiz muss das heutige Datum bekommen");
+
+    /* Eine Notiz allein darf beim Speichern nicht verlorengehen. */
+    const notesSurvive=await coachPage.evaluate(()=>{
+      const inp=document.querySelector('.ex[data-i="1"] .ex-note-inp');
+      inp.value="Gerät war belegt";
+      const src=workoutExerciseSource(currentDay);
+      const all=src.map((ex,i)=>Object.assign({name:ex.n,goal:ex.goal||""},readSets(i)));
+      return all.filter((s,i)=>!!document.querySelector(`.ex[data-i="${i}"].done`)
+        ||!!document.querySelector(`.ex[data-i="${i}"] input[type=number][data-touched="1"]`)
+        ||!!s.exNote).map(s=>s.exNote).filter(Boolean);
+    });
+    assert.ok(notesSurvive.includes("Gerät war belegt"),
+      "Eine reine Notiz ohne eingetragene Werte muss mitgespeichert werden");
+    assert.deepEqual(coachErrors,[],`Notiz-/Empfehlungs-Browserfehler: ${coachErrors.join(" | ")}`);
+    await coachContext.close();
+
     /* Offline: Die App muss sich im Gym auch ohne Empfang öffnen lassen. */
     const offlineContext=await browser.newContext({viewport:{width:390,height:844}});
     await offlineContext.addInitScript(()=>{

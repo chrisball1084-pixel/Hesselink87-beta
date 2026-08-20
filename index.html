@@ -300,6 +300,26 @@
   .prog-badge{display:flex;align-items:center;gap:7px;padding:7px 12px;
     background:linear-gradient(90deg,#1d2a0e,#131c08);border-top:1px solid #3f5a14;
     font-size:12px;font-weight:800;color:var(--pr)}
+  /* Abwärts-Empfehlung: bewusst warm statt alarmierend – es ist ein Hinweis, kein Fehler. */
+  .prog-badge.down{background:linear-gradient(90deg,#2a200e,#1c1408);border-top-color:#5a4414;color:var(--warm)}
+  html[data-theme="light"] .prog-badge.down{background:#fff6e3;border-top-color:#e8c98a;color:#7a5410}
+
+  /* Standardmäßig nur ein unaufdringlicher Knopf – das Feld erscheint erst bei Bedarf
+     oder wenn aus der letzten Einheit eine Notiz mitgewandert ist. */
+  .ex-note-row{margin:0 12px 8px;display:flex;flex-direction:column;gap:4px}
+  .ex-note-row .ex-note-lbl,.ex-note-row .ex-note-inp{display:none}
+  .ex-note-row.open .ex-note-lbl,.ex-note-row.open .ex-note-inp{display:block}
+  .ex-note-row.open .ex-note-add{display:none}
+  .ex-note-add{align-self:flex-start;min-height:36px;padding:6px 10px;border:1px dashed var(--line-strong);
+    border-radius:11px;background:transparent;color:var(--muted);font:800 11px inherit;cursor:pointer}
+  .ex.done:not(.editing-completed) .ex-note-row:not(.open){display:none}
+  .ex-note-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:800}
+  .ex-note-inp{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--line);
+    border-radius:var(--radius-sm);background:var(--panel-2);color:var(--ink);
+    font-family:inherit;font-weight:650;font-size:16px;line-height:22px;-webkit-appearance:none}
+  .ex-note-inp::placeholder{color:var(--muted);font-weight:600}
+  .ex-note-inp:focus{outline:none;border-color:var(--blue-bright)}
+  html[data-theme="light"] .ex-note-inp{background:#fff;border-color:#c5d5db;color:#10242d}
 
   .set-row{display:grid;grid-template-columns:62px minmax(0,1fr) minmax(0,1fr);align-items:end;
     gap:7px;padding:9px 12px;border-top:1px solid var(--line);
@@ -909,7 +929,7 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 926;
+const APP_VERSION = 927;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -1300,6 +1320,24 @@ function goalUpper(goal){
   const single = String(goal||"").match(/^\s*(\d+)\s*$/);
   return single ? parseInt(single[1],10) : null;
 }
+/* Gewicht in deutscher Schreibweise, also 77,5 statt 77.5 */
+const fmtKg = kg => (Math.round(kg*10)/10).toLocaleString("de-DE");
+/* unteres Ende des Zielbereichs, z. B. "8–12" -> 8 */
+function goalLower(goal){
+  const m = String(goal||"").match(/(\d+)\s*[–\-]\s*(\d+)/);
+  if(m) return parseInt(m[1],10);
+  const single = String(goal||"").match(/^\s*(\d+)\s*$/);
+  return single ? parseInt(single[1],10) : null;
+}
+/* bestes Wiederholungsergebnis der Arbeitssätze */
+function bestReps(s){ return Math.max(0,...workSetsOf(s).map(set=>num(set.reps))); }
+/* Einheit klar unter dem Zielbereich geblieben? */
+function belowRange(s, goal){
+  const low = goalLower(goal);
+  if(!low) return false;
+  const reps = bestReps(s);
+  return reps > 0 && reps < low;
+}
 /* beide Arbeitssätze am oberen Ende? */
 function hitTop(s, goal){
   const up = goalUpper(goal);
@@ -1315,17 +1353,40 @@ function lastEntryForDay(day, excludeId){
     .pop() || null;
 }
 
-function lastSetForExercise(day,name,excludeId){
+/* Die letzten Einheiten dieser Übung, neueste zuerst. */
+function lastSetsForExercise(day,name,limit=1,excludeId){
   const target=String(name||"").trim().toLowerCase();
-  if(!target) return null;
+  if(!target) return [];
   const entries=loadLog()
     .filter(e=>e.day===day&&e.id!==excludeId&&belongsToCurrentPlan(e))
     .sort((a,b)=>a.date===b.date?b.id-a.id:(a.date<b.date?1:-1));
+  const found=[];
   for(const entry of entries){
     const set=(entry.sets||[]).find(s=>String(s.name||"").trim().toLowerCase()===target);
-    if(set) return {entry,set};
+    if(set){ found.push({entry,set}); if(found.length>=limit) break; }
   }
-  return null;
+  return found;
+}
+function lastSetForExercise(day,name,excludeId){
+  return lastSetsForExercise(day,name,1,excludeId)[0] || null;
+}
+
+/* Zweimal hintereinander unter dem Zielbereich? Dann weniger Gewicht vorschlagen.
+   Eine einzelne schwache Einheit reicht bewusst nicht – das ist oft nur Tagesform. */
+function needsWeightDrop(history, goal){
+  if(!Array.isArray(history) || history.length < 2) return false;
+  return history.slice(0,2).every(h => belowRange(h.set, goal));
+}
+function dropText(s, goal){
+  const low = goalLower(goal), top = maxKg(s);
+  const target = top > KG_STEP ? `${fmtKg(top-KG_STEP)} kg` : "etwas weniger Gewicht";
+  return `Zweimal unter ${low} Wdh – nimm ${target} und arbeite dich sauber hoch.`;
+}
+
+/* Notiz, die aus der letzten Einheit dieser Übung mitwandert. */
+function carriedNote(info){
+  if(!info || !info.set || !String(info.set.exNote||"").trim()) return null;
+  return {text:String(info.set.exNote).trim(), date:info.set.exNoteDate || info.entry.date};
 }
 
 /* ================= Entwurf (Autosave) ================= */
@@ -1553,7 +1614,7 @@ function previousText(s){
 function targetText(s, goal){
   if(!s) return `Zielbereich ${goal||"–"}`;
   if(hitTop(s,goal)){
-    const next = maxKg(s)>0 ? `${Math.round((maxKg(s)+KG_STEP)*10)/10} kg versuchen` : "Schwierigkeit leicht erhöhen";
+    const next = maxKg(s)>0 ? `${fmtKg(maxKg(s)+KG_STEP)} kg versuchen` : "Schwierigkeit leicht erhöhen";
     return `Ziel heute: ${next}`;
   }
   return `Ziel heute: ${goal||"saubere Wiederholungen"}`;
@@ -1591,11 +1652,23 @@ function renderExercises(){
     const temporaryOverride=!editing&&!!draft?.exerciseOverrides?.[i];
     const sessionAddition=temporaryOverride&&i>=(templates[currentDay]||[]).length;
     const nameSelectable=!!editing;
-    const previousInfo = editing ? null : lastSetForExercise(currentDay,name);
+    const history = editing ? [] : lastSetsForExercise(currentDay,name,2);
+    const previousInfo = history[0] || null;
     const previous = previousInfo?.set||null;
-    /* Progressions-Badge: letzte Einheit hat Zielbereich geknackt? */
+    /* Progressions-Badge: hoch, wenn der Zielbereich geknackt wurde –
+       runter, wenn zweimal hintereinander darunter geblieben wurde. */
     let badge = "";
     if(previous && hitTop(previous, goal)) badge = `<div class="prog-badge">↑ ${targetText(previous,goal)}</div>`;
+    else if(previous && needsWeightDrop(history, goal)) badge = `<div class="prog-badge down">↓ ${dropText(previous,goal)}</div>`;
+    /* Notiz aus der letzten Einheit: bleibt stehen, bis sie geändert oder geleert wird. */
+    const note = editing ? null : carriedNote(previousInfo);
+    const noteRow = editing ? "" : `<div class="ex-note-row ${note?"open":""}" data-note-row="${i}">
+      <button class="ex-note-add" type="button" data-note-open="${i}">＋ Notiz fürs nächste Mal</button>
+      <label class="ex-note-lbl" for="ex-note-${i}">${note?`📌 Notiz vom ${fmtShort(note.date)}`:"Notiz fürs nächste Mal"}</label>
+      <input class="ex-note-inp" id="ex-note-${i}" type="text" data-ex="${i}" maxlength="120"
+        placeholder="z. B. nächstes Mal 2,5 kg mehr" value="${escAttr(note?note.text:"")}"
+        data-carried-note="${escAttr(note?note.text:"")}" data-carried-date="${escAttr(note?note.date:"")}">
+    </div>`;
     const nameLockAttr = 'readonly aria-readonly="true"';
     const delStyle = editing ? "" : 'style="display:none"';
     const exClass = editing ? (i===activeExIdx ? "focus" : "") : `${i===activeExIdx ? "focus" : ""} ${openExIndices.has(i) ? "" : "compact"}`;
@@ -1618,6 +1691,7 @@ function renderExercises(){
           ${temporaryOverride?`<div class="temporary-ex-note">${sessionAddition?"＋ Zusätzlich nur für heute":"↔ Nur für dieses Training ersetzt"}</div>`:""}
           ${badge}
           ${lastBox}
+          ${noteRow}
           ${setRow(i,"warm","Warm-Up")}
           ${setRow(i,"1","Satz 1")}
           ${setRow(i,"2","Satz 2")}
@@ -1654,6 +1728,10 @@ function renderExercises(){
     }
     ensureSetCount(i,setCount);
     if(vals){
+      /* Ein laufender Entwurf hat Vorrang vor der mitgewanderten Notiz. */
+      const noteInp=document.querySelector(`.ex[data-i="${i}"] .ex-note-inp`);
+      if(noteInp && vals.exNote!==undefined) noteInp.value=vals.exNote||"";
+      if(noteInp && noteInp.value) noteInp.closest(".ex-note-row").classList.add("open");
       setVal(i,"wkg",vals.wkg);   setVal(i,"wwdh",vals.wwdh);
       workSetsOf(vals).forEach((set,idx)=>{
         setVal(i,`kg${idx+1}`,set.kg); setVal(i,`wdh${idx+1}`,set.reps);
@@ -1776,6 +1854,18 @@ function bindRowEvents(scope){
 }
 
 function bindExerciseEvents(){
+  /* Übungsnotiz sichern, ohne den Trainingsfluss zu stören. */
+  document.querySelectorAll(".ex-note-inp").forEach(inp=>{
+    inp.addEventListener("input",()=>saveDraftNow());
+    inp.addEventListener("change",()=>saveDraftNow());
+  });
+  document.querySelectorAll("[data-note-open]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const row=btn.closest(".ex-note-row");
+      row.classList.add("open");
+      row.querySelector(".ex-note-inp").focus();
+    });
+  });
   document.querySelectorAll(".ex-top").forEach(top=>{
     top.addEventListener("click",e=>{
       if(e.target.closest("button")) return;
@@ -2373,6 +2463,16 @@ function readSets(i){
   });
   const result={wkg:g("wkg"),wwdh:g("wwdh"),workSets,setCount:workSets.length};
   workSets.forEach((set,idx)=>{ result[`kg${idx+1}`]=set.kg; result[`wdh${idx+1}`]=set.reps; });
+  /* Übungsnotiz: Bleibt sie unverändert, behält sie ihr ursprüngliches Datum –
+     sonst sähe eine alte Notiz jede Woche wie frisch geschrieben aus. */
+  const noteInp=document.querySelector(`#ex-container .ex-note-inp[data-ex="${i}"]`);
+  const noteText=String(noteInp&&noteInp.value||"").trim();
+  if(noteText){
+    const carried=String(noteInp.dataset.carriedNote||"");
+    const carriedDate=String(noteInp.dataset.carriedDate||"");
+    result.exNote=noteText;
+    result.exNoteDate=(noteText===carried&&carriedDate)?carriedDate:($("#f-date").value||todayISO());
+  }
   return result;
 }
 function updateVolume(i){
@@ -2635,7 +2735,8 @@ $("#btn-save").addEventListener("click", async ()=>{
     {name:(editing?ex.name:ex.n)||("Übung "+(i+1)), goal:ex.goal||""}, readSets(i)));
   const sets = editing ? allSets : allSets.filter((s,i)=>
     !!document.querySelector(`.ex[data-i="${i}"].done`) ||
-    !!document.querySelector(`.ex[data-i="${i}"] input[type=number][data-touched="1"]`));
+    !!document.querySelector(`.ex[data-i="${i}"] input[type=number][data-touched="1"]`) ||
+    !!s.exNote); // eine geschriebene Notiz darf nicht verlorengehen
 
   if(editing){
     const updated = {
