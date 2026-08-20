@@ -88,14 +88,15 @@ async function importBackup(page,payload,fileName){
     assert.equal(await page.locator("#today-card").isVisible(),false,"Der doppelte Heute-Block muss ausgeblendet bleiben");
     assert.equal(await page.locator("#timer-fab-wrap").isVisible(),false,"Der globale Pausentimer darf die Trainingsansicht nicht überlagern");
     assert.equal(await page.locator('.card-timer.show[data-card-timer="2"]').count(),1,"Der Timer muss in der aktiven Übungskarte sitzen");
-    const closedExerciseName=page.locator('.ex[data-i="3"] .ex-name-inp');
+    const closedExerciseHeader=page.locator('.ex[data-i="3"] .ex-top');
     assert.equal(await page.locator('.ex[data-i="3"]').getAttribute("class").then(value=>value.includes("compact")),true,"Eine spätere Übung muss zunächst geschlossen sein");
-    await closedExerciseName.click();
-    assert.equal(await page.locator('.ex[data-i="3"]').getAttribute("class").then(value=>value.includes("compact")),false,"Der erste Tipp auf den Namen muss die geschlossene Karte öffnen");
-    assert.equal(await page.locator("#modal-bg").isVisible(),false,"Der erste Tipp darf noch keinen Übungstausch auslösen");
-    await closedExerciseName.click();
-    assert.equal(await page.locator("#modal-bg.show").isVisible(),true,"Erst der zweite Tipp auf den Namen einer offenen Karte darf den Übungstausch anbieten");
+    await closedExerciseHeader.click();
+    assert.equal(await page.locator('.ex[data-i="3"]').getAttribute("class").then(value=>value.includes("compact")),false,"Ein Tipp auf den Kartenkopf muss die geschlossene Karte öffnen");
+    assert.equal(await page.locator("#modal-bg").isVisible(),false,"Der Kartenkopf darf keinen Übungstausch auslösen");
+    await page.locator('.ex[data-i="3"] [data-swap-exercise="3"]').click();
+    assert.equal(await page.locator("#modal-bg.show").isVisible(),true,"Nur der separate Tauschen-Button darf den Übungstausch anbieten");
     await page.locator("#m-cancel").click();
+    await page.locator('.ex[data-i="2"] .ex-num').click();
     await page.locator('.ex[data-i="2"] .ex-num').click();
     if(process.env.VISUAL_CHECK) await page.screenshot({path:path.join(os.tmpdir(),"hesselink-training-919.png"),fullPage:true});
 
@@ -217,15 +218,100 @@ async function importBackup(page,payload,fileName){
     freshTrainingPage.on("pageerror",error=>freshTrainingErrors.push(error.message));
     await freshTrainingPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
     await freshTrainingPage.locator('.tab[data-view="log"]').click();
+    const expectedToday=await freshTrainingPage.evaluate(()=>todayISO());
+    assert.equal(await freshTrainingPage.locator("#f-date").inputValue(),expectedToday,"Ein frisches Training muss das lokale Tagesdatum vorbelegen");
+    await freshTrainingPage.locator("#session-toggle").click();
+    const sessionFieldTops=await freshTrainingPage.evaluate(()=>["f-date","f-weight","f-energy"].map(id=>document.getElementById(id).getBoundingClientRect().top));
+    assert.ok(Math.max(...sessionFieldTops)-Math.min(...sessionFieldTops)<=1,"Datum, Körpergewicht und Energie/Schlaf müssen bündig ausgerichtet sein");
+    await freshTrainingPage.evaluate(()=>document.getElementById("f-date").value="");
+    await freshTrainingPage.locator('.tab[data-view="dashboard"]').click();
+    await freshTrainingPage.locator('.tab[data-view="log"]').click();
+    assert.equal(await freshTrainingPage.locator("#f-date").inputValue(),expectedToday,"Ein leeres Datumsfeld muss beim erneuten Öffnen abgesichert werden");
     const freshExerciseCount=await freshTrainingPage.locator("#ex-container .ex").count();
     assert.equal(await freshTrainingPage.locator("#ex-container .ex.compact").count(),freshExerciseCount,"Ein frisches Training muss mit vollständig eingeklappten Übungen starten");
+    assert.equal(await freshTrainingPage.locator('.ex[data-i="1"] .ex-summary').isHidden(),true,"Der Zielbereich darf bei einer unangetasteten kompakten Übung nicht doppelt erscheinen");
+    if(process.env.VISUAL_CHECK) await freshTrainingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-session-layout-923.png"),fullPage:false});
     if(process.env.VISUAL_CHECK) await freshTrainingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-training-collapsed-921.png"),fullPage:true});
     await freshTrainingPage.locator('.ex[data-i="0"] .ex-num').click();
     assert.equal(await freshTrainingPage.locator("#ex-container .ex:not(.compact)").count(),1,"Der erste Tipp muss genau eine Übung öffnen");
     await freshTrainingPage.locator('.ex[data-i="1"] .ex-num').click();
     assert.equal(await freshTrainingPage.locator("#ex-container .ex:not(.compact)").count(),2,"Eine zweite Übung muss parallel geöffnet werden können");
+    const plannedExerciseCount=await freshTrainingPage.evaluate(()=>templates[currentDay].length);
+    await freshTrainingPage.locator("#btn-add-ex").click();
+    assert.equal(await freshTrainingPage.locator("#library-title").textContent(),"Zusätzliche Übung wählen","Der Hinzufügen-Button muss die gemeinsame Übungsbibliothek öffnen");
+    await freshTrainingPage.locator('[data-library-id="lateral-raise"]').click();
+    assert.equal(await freshTrainingPage.locator("#ex-container .ex").count(),plannedExerciseCount+1,"Die Bibliotheksübung muss als zusätzliche Trainingskarte erscheinen");
+    assert.match(await freshTrainingPage.locator(`.ex[data-i="${plannedExerciseCount}"]`).textContent(),/Seitheben/);
+    assert.match(await freshTrainingPage.locator(`.ex[data-i="${plannedExerciseCount}"] .temporary-ex-note`).textContent(),/Zusätzlich nur für heute/);
+    if(process.env.VISUAL_CHECK) await freshTrainingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-training-add-exercise-922.png"),fullPage:true});
+    assert.equal(await freshTrainingPage.evaluate(()=>templates[currentDay].length),plannedExerciseCount,"Eine zusätzliche Tagesübung darf den dauerhaften Plan nicht verändern");
+    assert.equal(await freshTrainingPage.evaluate(index=>JSON.parse(localStorage.getItem("hesselink_beta_draft_v1"))[currentDay].exerciseOverrides[index].n,plannedExerciseCount),"Seitheben","Zusätzliche Übung muss sofort im Entwurf gespeichert werden");
+    await freshTrainingPage.reload({waitUntil:"load"});
+    await freshTrainingPage.locator('.tab[data-view="log"]').click();
+    assert.match(await freshTrainingPage.locator(`.ex[data-i="${plannedExerciseCount}"]`).textContent(),/Seitheben/,"Zusätzliche Übung muss nach Neuladen erhalten bleiben");
+    await freshTrainingPage.locator("#btn-add-ex").click();
+    await freshTrainingPage.locator("#library-custom").click();
+    const customIndex=plannedExerciseCount+1;
+    const customInput=freshTrainingPage.locator(`.ex[data-i="${customIndex}"] .ex-name-inp`);
+    await customInput.fill("Farmer Walk");
+    await customInput.blur();
+    assert.equal(await freshTrainingPage.evaluate(index=>JSON.parse(localStorage.getItem("hesselink_beta_draft_v1"))[currentDay].exerciseOverrides[index].n,customIndex),"Farmer Walk","Eigene zusätzliche Übung muss im Entwurf gespeichert werden");
+    await freshTrainingPage.locator(`input[data-ex="${plannedExerciseCount}"][data-f="kg1"]`).fill("12.5");
+    await freshTrainingPage.locator(`input[data-ex="${plannedExerciseCount}"][data-f="wdh1"]`).fill("15");
+    await freshTrainingPage.locator("#btn-save").click();
+    await freshTrainingPage.locator("#m-ok").click();
+    assert.equal(await freshTrainingPage.evaluate(()=>JSON.parse(localStorage.getItem("hesselink_beta_log_v2")).at(-1).sets.some(set=>set.name==="Seitheben"&&set.workSets?.[0]?.kg==="12.5")),true,"Bearbeitete zusätzliche Übung muss in der Historie gespeichert werden");
     assert.deepEqual(freshTrainingErrors,[],`Frisches Training – Browserfehler: ${freshTrainingErrors.join(" | ")}`);
     await freshTrainingContext.close();
+
+    const parallelContext=await browser.newContext({viewport:{width:390,height:844}});
+    await parallelContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+      localStorage.setItem("hesselink_beta_theme_v1","light");
+    });
+    const parallelPage=await parallelContext.newPage();
+    const parallelErrors=[];
+    parallelPage.on("pageerror",error=>parallelErrors.push(error.message));
+    await parallelPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await parallelPage.locator('.tab[data-view="log"]').click();
+    await parallelPage.evaluate(()=>{
+      const day=planConfig.dayOrder[0], exercises=templates[day];
+      const makeSet=(exercise,kg)=>({name:exercise.n,goal:exercise.goal,wkg:String(+kg-10),wwdh:"12",workSets:[{kg:String(kg),reps:"12"},{kg:String(kg),reps:"11"}],setCount:2,done:true,touched:true});
+      saveLog([
+        {id:100,date:"2026-08-10",day,dayName:planConfig.dayNames[day],planVersionId:planConfig.versionId,sets:[makeSet(exercises[0],77.5),makeSet(exercises[1],35)]},
+        {id:101,date:"2026-08-12",day,dayName:planConfig.dayNames[day],planVersionId:planConfig.versionId,sets:[makeSet(exercises[0],80)]},
+      ]);
+      currentDay=day; activeExIdx=-1; openExIndices=new Set();
+      renderDayPicker(); renderExercises();
+    });
+    await parallelPage.locator('.ex[data-i="0"] .ex-top').click();
+    assert.equal(await parallelPage.locator('.ex[data-i="0"] .last-box').isVisible(),true,"Die erste offene Übung muss ihre letzte Leistung sofort zeigen");
+    assert.match(await parallelPage.locator('.ex[data-i="0"] .last-v').textContent(),/80 kg/,"Die jüngste passende Leistung muss verwendet werden");
+    await parallelPage.locator('.ex[data-i="1"] .ex-top').click();
+    assert.equal(await parallelPage.locator('.ex[data-i="1"] .last-box').isVisible(),true,"Eine parallel geöffnete zweite Übung muss ihre letzte Leistung sofort zeigen");
+    assert.match(await parallelPage.locator('.ex[data-i="1"] .last-v').textContent(),/35 kg/,"Bei einem unvollständigen jüngsten Workout muss der letzte passende Übungseintrag verwendet werden");
+    assert.equal(await parallelPage.locator('#library-bg.show').count(),0,"Das parallele Öffnen darf die Übungsauswahl nicht starten");
+    await parallelPage.locator('.ex[data-i="1"] .ex-top').click();
+    assert.equal(await parallelPage.locator('.ex[data-i="1"]').evaluate(el=>el.classList.contains("compact")),true,"Ein weiterer Tipp auf den Kartenkopf muss die Übung einklappen");
+    await parallelPage.locator('.ex[data-i="1"] .ex-top').click();
+    await parallelPage.locator('.ex[data-i="1"] [data-swap-exercise="1"]').click();
+    assert.equal(await parallelPage.locator("#modal-bg.show").count(),1,"Nur der Tauschen-Button darf den Sicherheitsdialog öffnen");
+    await parallelPage.locator("#m-cancel").click();
+    const navigationColors=await parallelPage.evaluate(()=>({tabs:getComputedStyle(document.querySelector(".tabs")).backgroundColor,safe:getComputedStyle(document.querySelector(".tabs"),"::before").backgroundColor}));
+    assert.doesNotMatch(navigationColors.tabs,/rgba\([^)]*,\s*0?\.[0-9]+\)/,"Die Navigation muss vollständig deckend sein");
+    assert.doesNotMatch(navigationColors.safe,/rgba\([^)]*,\s*0?\.[0-9]+\)/,"Der obere Sicherheitsbereich muss vollständig deckend sein");
+    const goalBadge=await parallelPage.locator('.ex[data-i="0"] .ex-goal-badge').evaluate(el=>{
+      const style=getComputedStyle(el), canvas=document.createElement("canvas"), ctx=canvas.getContext("2d");
+      ctx.font=style.font;
+      return {value:el.textContent,font:parseFloat(style.fontSize),width:el.getBoundingClientRect().width,textWidth:ctx.measureText(el.textContent).width,padding:parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)};
+    });
+    assert.equal(goalBadge.value,"10–15");
+    assert.ok(goalBadge.font<=10&&goalBadge.width<=48&&goalBadge.textWidth+goalBadge.padding<=goalBadge.width,`Der Zielbereich muss kompakt und vollständig sichtbar sein: ${JSON.stringify(goalBadge)}`);
+    const lightContrast=await parallelPage.locator('.ex[data-i="0"] .last-box').evaluate(el=>({background:getComputedStyle(el).backgroundColor,text:getComputedStyle(el.querySelector(".last-v")).color,button:getComputedStyle(el.querySelector(".last-copy")).color}));
+    assert.notEqual(lightContrast.background,lightContrast.text,"Die letzte Leistung muss im Hellmodus einen klaren Kontrast besitzen");
+    if(process.env.VISUAL_CHECK) await parallelPage.screenshot({path:path.join(os.tmpdir(),"hesselink-parallel-training-light-924.png"),fullPage:false});
+    assert.deepEqual(parallelErrors,[],`Paralleles Training – Browserfehler: ${parallelErrors.join(" | ")}`);
+    await parallelContext.close();
 
     const onboardingContext=await browser.newContext({viewport:{width:320,height:700}});
     const onboardingPage=await onboardingContext.newPage();
@@ -360,7 +446,7 @@ async function importBackup(page,payload,fileName){
     await liveImportContext.close();
 
     assert.deepEqual(errors,[],`Browserfehler: ${errors.join(" | ")}`);
-    console.log("PASS: Backup v5/Live-v3, Onboarding, Dashboard-Plan, Historien-Akkordeon, Themes und Mobile-Flows");
+    console.log("PASS: Backup v5/Live-v3, Onboarding, Zusatzübungen, Dashboard-Plan, Historie, Themes und Mobile-Flows");
   } finally {
     await browser.close();
     await new Promise(resolve=>server.close(resolve));

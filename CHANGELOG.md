@@ -1,5 +1,69 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 23 (lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- Ein Tipp auf den Kopf beziehungsweise Namen einer Übung öffnet oder schließt im Trainingsmodus ausschließlich die Übungskarte.
+- Der temporäre Austausch einer Übung ist jetzt eine klar getrennte Aktion über den kleinen Button **Tauschen** innerhalb der geöffneten Karte.
+- Die feste Hauptnavigation und der iPhone-Sicherheitsbereich darüber besitzen in Hell- und Dunkelmodus einen vollständig deckenden Hintergrund. Beim Scrollen scheinen keine Inhalte mehr hindurch.
+- Der Zielbereich rechts oben ist kompakter und verwendet eine kleinere Schrift, damit auch **10–15** auf schmalen iPhones vollständig sichtbar bleibt.
+- **Letztes Training** und **Gewichte übernehmen** besitzen im hellen Design einen kontrastreicheren Hintergrund und lesbare Farben.
+- Frühere Leistungen werden nun pro Übung aus dem letzten tatsächlich vorhandenen Historieneintrag ermittelt. Dadurch stehen **Letztes Training** und **Gewichte übernehmen** auch sofort zur Verfügung, wenn mehrere Übungen parallel geöffnet werden oder das jüngste Workout nur einen Teil der Übungen enthielt.
+
+### Datenkompatibilität
+
+Es werden keine Trainings- oder Backupdaten migriert. Die neue Suche liest ausschließlich die bestehende Historie genauer aus; Plan, Entwürfe und historische Einheiten bleiben unverändert.
+
+### Automatisiert und visuell getestet
+
+- Kartenkopf öffnet und schließt, ohne den Austauschdialog zu starten
+- eigener **Tauschen**-Button öffnet den bestehenden Sicherheitsdialog
+- zwei Übungen parallel geöffnet, beide mit sofort sichtbarer vorheriger Leistung
+- unvollständiges jüngstes Workout greift für weitere Übungen auf den letzten passenden Historieneintrag zurück
+- Zielbereich ohne Textabschnitt auf schmalem iPhone
+- deckender Safe-Area-/Navigationshintergrund und lesbare Letztes-Training-Karte im Hellmodus
+
+## v1.3 Beta – Testpaket 22 (lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- Das Session-Datum wird bei einem neuen oder unvollständigen Entwurf robust mit dem lokalen Tagesdatum vorbelegt.
+- Ein leeres beziehungsweise ungültiges Datumsfeld wird beim Öffnen des Trainings und vor dem Autosave erneut abgesichert.
+- Datum, Körpergewicht und Energie/Schlaf verwenden im Session-Akkordeon dieselbe Label- und Feldhöhe, damit die Eingaben auf einer sauberen Grundlinie stehen.
+- Bei eingeklappten Übungen wird der Zielbereich nicht mehr doppelt angezeigt. Der Badge rechts oben bleibt die eindeutige Zielangabe; die Zusatzzeile erscheint nur, wenn bereits Satzwerte vorhanden sind.
+
+### Automatisiert und visuell getestet
+
+- aktuelles Datum bei einem frischen Training
+- Wiederherstellung des Tagesdatums nach einem leeren Feld und erneutem Öffnen
+- einheitliche Feldpositionen im Session-Akkordeon
+- keine doppelte Zielangabe bei unangetasteten, eingeklappten Übungen
+- bestehende Zusatzübungs-, Trainings-, Backup-, Dashboard-, Historien-, Theme- und Onboarding-Flows weiterhin grün
+
+## v1.3 Beta – Testpaket 21 (lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- Unterhalb der letzten Übung steht im laufenden Training jetzt **+ Übung hinzufügen** zur Verfügung.
+- Eine zusätzliche Übung kann über dieselbe Übungsbibliothek ausgewählt oder als eigene Übung frei benannt werden.
+- Die Ergänzung gilt ausschließlich für das aktuelle Training und verändert den dauerhaft geplanten Trainingsplan nicht.
+- Zusätzliche Übungen verwenden dieselbe Satz-, Volumen-, Timer-, Abschluss- und Autosave-Logik wie geplante Übungen.
+- Laufende Ergänzungen bleiben nach Neuladen sowie in einem Backup erhalten und werden beim Speichern in die Trainingshistorie übernommen, sobald Werte eingetragen oder die Übung abgeschlossen wurden.
+
+### Datenkompatibilität
+
+Das Backupformat bleibt unverändert. Zusätzliche Übungen werden innerhalb des bereits vorhandenen Entwurfsfeldes für temporäre Übungsanpassungen gespeichert; bestehende Backups und Trainingspläne bleiben kompatibel.
+
+### Automatisiert getestet
+
+- zusätzliche Übung über die Bibliothek auswählen
+- neue Übung als **Zusätzlich nur für heute** kennzeichnen
+- dauerhaften Trainingsplan unverändert lassen
+- zusätzliche Übung nach Neuladen wiederherstellen
+- eigene Übung manuell benennen und im Entwurf speichern
+- bestehende Trainings-, Backup-, Dashboard-, Historien-, Theme- und Onboarding-Flows weiterhin grün
+
 ## v1.3 Beta – Testpaket 20 (veröffentlicht am 16.08.2026)
 
 ### Was wurde verändert?
