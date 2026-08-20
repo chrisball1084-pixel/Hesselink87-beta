@@ -907,17 +907,20 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 924;
+const APP_VERSION = 925;
 (function ensureLatestVersion(){
-  const seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
-  if(seen !== APP_VERSION){
-    localStorage.setItem("hesselink_beta_app_version", String(APP_VERSION));
-    if(seen !== 0){ // nicht beim allerersten Start neu laden, nur bei echten Updates
-      const url = new URL(window.location.href);
-      url.searchParams.set("_v", String(APP_VERSION) + "_" + Date.now());
-      window.location.replace(url.toString());
-      return; // Rest des Scripts nicht mehr ausführen, Seite lädt gleich neu
-    }
+  let seen = 0;
+  try{
+    seen = parseInt(localStorage.getItem("hesselink_beta_app_version")||"0", 10);
+    if(seen !== APP_VERSION) localStorage.setItem("hesselink_beta_app_version", String(APP_VERSION));
+  }catch(e){
+    return; // Speicher gesperrt: App trotzdem starten statt am Neuladen zu hängen
+  }
+  // nicht beim allerersten Start neu laden, nur bei echten Updates
+  if(seen !== APP_VERSION && seen !== 0){
+    const url = new URL(window.location.href);
+    url.searchParams.set("_v", String(APP_VERSION) + "_" + Date.now());
+    window.location.replace(url.toString());
   }
 })();
 
@@ -1091,7 +1094,20 @@ const QUOTES = [
 
 const $ = s => document.querySelector(s);
 const loadJSON = (k,fb) => { try{ const v=JSON.parse(localStorage.getItem(k)); return v??fb }catch(e){ return fb } };
-const saveJSON = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+/* Schreiben darf den Trainingsfluss nie unterbrechen. Wenn der Speicher voll ist oder
+   der Browser ihn sperrt (z. B. iOS-Privatmodus), gibt es einen sichtbaren Hinweis
+   statt eines stillen Absturzes mitten in der Eingabe. */
+let storageWarnedAt = 0;
+function warnStorageProblem(){
+  const now = Date.now();
+  if(now - storageWarnedAt < 10000) return;
+  storageWarnedAt = now;
+  try{ toast("Speichern nicht möglich – bitte Backup exportieren"); }catch(e){}
+}
+const saveJSON = (k,v) => {
+  try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ warnStorageProblem(); return false; }
+};
 
 /* TESTABLE_BACKUP_HELPERS_START */
 function isObjectRecord(value){ return !!value && typeof value==="object" && !Array.isArray(value); }
@@ -1134,6 +1150,9 @@ if(!storedPlanConfig && JSON.stringify(templates)!==JSON.stringify(DEFAULT_TPL))
 }
 if(!Array.isArray(planConfig.dayOrder) || !planConfig.dayOrder.length){ planConfig=defaultPlanConfig(); }
 if(!planConfig.versionId) planConfig.versionId="legacy";
+/* Plan-Linie: bleibt beim Bearbeiten von Übungen erhalten, damit Vorwerte nicht verschwinden.
+   Nur ein echter Splitwechsel (Setup-Vorlage / Onboarding) startet eine neue Linie. */
+if(!planConfig.lineageId) planConfig.lineageId=planConfig.versionId;
 planConfig.weeklyTarget=Math.max(1,Math.min(7,Number(planConfig.weeklyTarget)||planConfig.dayOrder.length));
 planConfig.dayOrder=planConfig.dayOrder.filter(day=>Array.isArray(templates[day]));
 Object.keys(templates).forEach(day=>{ if(!planConfig.dayOrder.includes(day)) planConfig.dayOrder.push(day); });
@@ -1347,8 +1366,14 @@ function renderLibraryFilters(){
     libraryMuscle=b.dataset.muscle; renderLibraryFilters(); renderLibraryList();
   }));
 }
+/* Zu welcher Plan-Linie gehört ein gespeichertes Workout?
+   Ältere Einträge kennen nur planVersionId – die zählt dann als eigene Linie. */
+function planLineageOf(entry){
+  return entry.planLineageId || entry.planVersionId || "legacy";
+}
 function belongsToCurrentPlan(entry){
-  return planConfig.versionId==="legacy" ? !entry.planVersionId || entry.planVersionId==="legacy" : entry.planVersionId===planConfig.versionId;
+  const current = planConfig.lineageId || planConfig.versionId || "legacy";
+  return current==="legacy" ? planLineageOf(entry)==="legacy" : planLineageOf(entry)===current;
 }
 function renderLibraryList(){
   const query = $("#library-search").value.trim().toLowerCase();
@@ -2134,7 +2159,8 @@ async function applySplitPreset(id){
   const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(preset.templates));
-  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  /* Echter Splitwechsel: neue Plan-Linie, damit Tag 1 nicht die Vorwerte eines anderen Splits erbt. */
+  planConfig={id,name:preset.name,versionId:`${id}-${Date.now()}`,lineageId:`${id}-${Date.now()}`,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
@@ -2285,7 +2311,7 @@ async function applyOnboardingPlan(){
   templates=JSON.parse(JSON.stringify(onboardingDraft));
   Object.values(templates).forEach(day=>day.forEach(ex=>{ delete ex.manual; delete ex.focus; }));
   const customized=onboardingPresetId==="custom"||JSON.stringify(templates)!==JSON.stringify(preset.templates);
-  planConfig={id:customized?"custom":onboardingPresetId,name:onboardingPresetId==="custom"?"Individueller Plan":customized?`${preset.name} · angepasst`:preset.name,versionId:`onboarding-${onboardingPresetId}-${Date.now()}`,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  planConfig={id:customized?"custom":onboardingPresetId,name:onboardingPresetId==="custom"?"Individueller Plan":customized?`${preset.name} · angepasst`:preset.name,versionId:`onboarding-${onboardingPresetId}-${Date.now()}`,lineageId:`onboarding-${onboardingPresetId}-${Date.now()}`,weeklyTarget:onboardingDays,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{}); saveJSON(ONBOARDING_KEY,{completed:true,version:1});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
   renderDayPicker(); renderChartFilters(); renderExercises(); renderDashboard(); renderSetup(); updateBrand(); closeOnboarding(); setView("dashboard");
@@ -2499,7 +2525,9 @@ async function saveSetupPlanChanges(surface="setup"){
   templates=JSON.parse(JSON.stringify(setupPlanDraft));
   Object.values(templates).forEach(day=>day.forEach(ex=>{ delete ex.manual; delete ex.focus; }));
   if(planConfig.id!=="custom") planConfig.name=`${planConfig.name} · angepasst`;
+  /* Übungen ändern = gleiche Plan-Linie. Vorwerte und Wochenzählung bleiben sichtbar. */
   planConfig.id="custom"; planConfig.versionId=`custom-${Date.now()}`;
+  if(!planConfig.lineageId) planConfig.lineageId=planConfig.versionId;
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder.includes(currentDay)?currentDay:planConfig.dayOrder[0];
   activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); completedEditReturnIdx=null;
@@ -2589,7 +2617,8 @@ $("#btn-save").addEventListener("click", async ()=>{
 
   if(editing){
     const updated = {
-      id: editing.id, day: editing.day, dayName: editing.dayName, planVersionId: editing.planVersionId,
+      id: editing.id, day: editing.day, dayName: editing.dayName,
+      planVersionId: editing.planVersionId, planLineageId: planLineageOf(editing),
       date: $("#f-date").value || editing.date,
       weight: $("#f-weight").value, energy: $("#f-energy").value,
       note: $("#f-note").value, sets,
@@ -2617,6 +2646,7 @@ $("#btn-save").addEventListener("click", async ()=>{
     id: Date.now(),
     day: currentDay, dayName: PLANNAME(),
     planVersionId: planConfig.versionId,
+    planLineageId: planConfig.lineageId || planConfig.versionId,
     date: $("#f-date").value || todayISO(),
     weight: $("#f-weight").value,
     energy: $("#f-energy").value,
@@ -3060,6 +3090,7 @@ $("#import-file").addEventListener("change",ev=>{
         planConfig=p.planConfig&&Array.isArray(p.planConfig.dayOrder)?p.planConfig:{id:"imported",name:"Importierter Trainingsplan",versionId:"imported-"+Date.now(),
           dayOrder:Object.keys(templates),dayNames:Object.fromEntries(Object.keys(templates).map((day,idx)=>[day,`Day ${idx+1}`]))};
         if(!planConfig.versionId) planConfig.versionId="imported-"+Date.now();
+        if(!planConfig.lineageId) planConfig.lineageId=planConfig.versionId;
         planConfig.weeklyTarget=Math.max(1,Math.min(7,Number(planConfig.weeklyTarget)||planConfig.dayOrder.length));
         saveJSON(PLAN_KEY,planConfig); currentDay=planConfig.dayOrder[0]; chartFilter="all";
         setupPlanDraft=null; setupPlanDay=null; setupPlanDirty=false;
