@@ -1273,7 +1273,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 935;
+const APP_VERSION = 936;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -1396,6 +1396,27 @@ const SPLIT_PRESETS = {
   fullbody2:{
     name:"Ganzkörper · 2 Tage", short:"2er Ganzkörper", description:"Einfacher Einstieg mit zwei Ganzkörpereinheiten pro Woche.",
     weeklyTarget:2, dayOrder:["1","2"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B"}, templates:DEFAULT_TPL,
+  },
+  fullbody3:{
+    name:"Ganzkörper · 3 Workouts", short:"3× Ganzkörper (A / B / C)",
+    description:"Drei Ganzkörpereinheiten mit unterschiedlichen Übungen. Jedes Training deckt den ganzen Körper ab – gut, wenn mal eine Einheit ausfällt.",
+    weeklyTarget:3, dayOrder:["1","2","3"], dayNames:{"1":"Ganzkörper A","2":"Ganzkörper B","3":"Ganzkörper C"}, templates:{
+      "1":[
+        {id:"leg-press",n:"Beinpresse",goal:"10–15"},{id:"bench-machine",n:"Bankdrücken (Maschine)",goal:"8–12"},
+        {id:"lat-wide",n:"Latzug (weiter Griff)",goal:"8–12"},{id:"biceps-machine",n:"Bizeps Curl (Maschine)",goal:"10–12"},
+        {id:"triceps-rope",n:"Trizeps Push (Seilzug)",goal:"10–12"},
+      ],
+      "2":[
+        {id:"squat",n:"Kniebeuge",goal:"6–10"},{id:"chest-fly",n:"Butterfly",goal:"8–12"},
+        {id:"cable-row",n:"Rudern am Kabel",goal:"8–12"},{id:"lateral-raise",n:"Seitheben",goal:"10–15"},
+        {id:"leg-raise",n:"Beinheben (Bauch)",goal:"frei"},
+      ],
+      "3":[
+        {id:"romanian-deadlift",n:"Rumänisches Kreuzheben",goal:"8–12"},{id:"incline-dumbbell",n:"Schrägbankdrücken Kurzhantel",goal:"8–12"},
+        {id:"row-machine",n:"Rudern Maschine",goal:"8–12"},{id:"shoulder-machine",n:"Schulterdrücken Maschine",goal:"8–12"},
+        {id:"hyperextension",n:"Hyperextension (Core)",goal:"frei"},
+      ],
+    },
   },
   ppl3:{
     name:"Push / Pull / Legs · 3 Tage", short:"Push / Pull / Legs", description:"Drei klar getrennte Einheiten für Drücken, Ziehen und Beine.",
@@ -2591,7 +2612,10 @@ function rotationPreview(workouts, days){
 function onboardingCandidateIds(){
   if(onboardingWorkouts===1) return ["fullbody1","custom"];
   if(onboardingWorkouts===2) return ["fullbody2","upperlower2","pushpull2","custom"];
-  if(onboardingWorkouts===3) return ["ppl3","custom"];
+  /* Drei verschiedene Workouts müssen nicht Push/Pull/Legs heißen –
+     drei Ganzkörpereinheiten mit unterschiedlichen Übungen sind für
+     Anfänger oft die robustere Wahl. */
+  if(onboardingWorkouts===3) return ["fullbody3","ppl3","custom"];
   return ["upperlower4","custom"];
 }
 function onboardingPreset(id=onboardingPresetId){
@@ -2661,17 +2685,19 @@ function renderOnboarding(){
   $("#onboarding-step").textContent=`Schritt ${onboardingStep+1} von 5`;
   preview.hidden=true; options.style.display="grid"; adjust.hidden=true; actions.classList.remove("has-adjust"); back.textContent=onboardingStep===0?"Später":"Zurück";
   if(onboardingStep===0){
-    $("#onboarding-title").textContent="Hell oder dunkel?";
-    $("#onboarding-text").textContent="Automatisch folgt der Einstellung deines iPhones. Du kannst das später im Setup jederzeit ändern.";
+    $("#onboarding-title").textContent="Wie soll die App aussehen?";
+    $("#onboarding-text").textContent="Mit „Automatisch“ übernimmt die App, was auf deinem iPhone eingestellt ist – damit machst du nichts falsch. Ändern kannst du das jederzeit im Setup.";
     options.style.gridTemplateColumns="repeat(3,1fr)";
     options.innerHTML=[["auto","Automatisch"],["light","Hell"],["dark","Dunkel"]].map(([id,label])=>
       `<button class="onboarding-option ${id===themeChoice?"active":""}" data-onboarding-theme="${id}" type="button">${label}</button>`).join("");
     next.textContent="Weiter";
   }else if(onboardingStep===1){
     $("#onboarding-title").textContent="Wie oft möchtest du trainieren?";
-    $("#onboarding-text").textContent="Wähle ein realistisches Wochenziel. Das ist unabhängig davon, wie viele verschiedene Workouts du hast.";
+    $("#onboarding-text").textContent="Wähle ein Ziel, das du wirklich schaffst – lieber einmal pro Woche verlässlich als viermal auf dem Papier. Ändern kannst du es jederzeit.";
     options.style.gridTemplateColumns="repeat(3,1fr)";
-    options.innerHTML=[2,3,4].map(n=>`<button class="onboarding-option ${n===onboardingDays?"active":""}" data-onboarding-days="${n}" type="button">${n}×<br><small>pro Woche</small></button>`).join("");
+    /* Einmal pro Woche muss möglich sein – gerade für Anfänger und
+       Wiedereinsteiger ist das oft der ehrlichste Start. */
+    options.innerHTML=[1,2,3,4,5,6].map(n=>`<button class="onboarding-option ${n===onboardingDays?"active":""}" data-onboarding-days="${n}" type="button">${n}×<br><small>pro Woche</small></button>`).join("");
     next.textContent="Weiter";
   }else if(onboardingStep===2){
     $("#onboarding-title").textContent="Wie viele verschiedene Workouts?";

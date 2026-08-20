@@ -1,5 +1,34 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 34 · Einstieg für Anfänger geöffnet (App-Version 936, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+Drei Punkte aus dem Feedback-Eingang, alle in der Ersteinrichtung.
+
+**Verständlicherer erster Schritt.** Aus „Hell oder dunkel?" mit dem knappen Satz *„Automatisch folgt der Einstellung deines iPhones"* wurde: **„Wie soll die App aussehen?"** – *Mit „Automatisch" übernimmt die App, was auf deinem iPhone eingestellt ist – damit machst du nichts falsch. Ändern kannst du das jederzeit im Setup.*
+
+**Einmal pro Woche ist jetzt wählbar.** Bisher gab es nur 2×, 3× oder 4×. Neu stehen **1× bis 6×** zur Wahl. Für Anfänger und Wiedereinsteiger ist einmal pro Woche oft der ehrlichste Start – und wer nur diese Option nicht findet, fängt gar nicht erst an. Der begleitende Text sagt das jetzt auch: *„Wähle ein Ziel, das du wirklich schaffst – lieber einmal pro Woche verlässlich als viermal auf dem Papier."*
+
+**Drei verschiedene Workouts müssen nicht Push/Pull/Legs sein.** Neue Vorlage **3× Ganzkörper (A / B / C)**: drei Ganzkörpereinheiten mit unterschiedlichen Übungen. Jedes Training deckt den ganzen Körper ab – fällt eine Einheit aus, fehlt keine Muskelgruppe. Damit muss niemand mehr jede Übung einzeln zusammenstellen, nur weil er drei abwechslungsreiche Ganzkörpertage möchte.
+
+### Welches Nutzerproblem löst das?
+
+Alle drei Punkte betreffen den allerersten Kontakt mit der App. Wer dort keine passende Option findet, richtet sich entweder etwas Falsches ein oder gibt auf. Betrifft nur Neukunden – für Hesselink ändert sich nichts.
+
+### Datenkompatibilität
+
+Keine Änderung. Nur Beschriftung, Auswahlumfang und eine zusätzliche Vorlage.
+
+### Automatisiert getestet
+
+- 1× und 5× pro Woche sind wählbar, die Auswahl umfasst sechs Optionen
+- bei drei Workouts wird die Ganzkörper-Variante angeboten
+- die Vorlage hat drei Einheiten, benannt als Ganzkörper A/B/C
+- **neue allgemeine Absicherung:** Jede Vorlage darf ausschließlich Übungen aus der Bibliothek verwenden – gilt ab jetzt für alle Vorlagen, nicht nur die neue
+- Sichtprüfung bei 320 × 700 und 390 × 844: kein Textüberlauf, Dialog passt vollständig ins Bild
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 33 · Wiederholungsziel und ruhigerer Kartenkopf (App-Version 935, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?

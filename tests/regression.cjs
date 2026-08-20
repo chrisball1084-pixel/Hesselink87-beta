@@ -358,6 +358,14 @@ async function importBackup(page,payload,fileName){
       "Die Wahl im Onboarding muss sofort wirken");
     await onboardingPage.locator("#onboarding-next").click();
 
+    /* Ein Training pro Woche muss wählbar sein – gerade für Anfänger. */
+    assert.equal(await onboardingPage.locator('[data-onboarding-days="1"]').count(),1,
+      "Einmal pro Woche muss angeboten werden");
+    assert.equal(await onboardingPage.locator('[data-onboarding-days="5"]').count(),1,
+      "Auch fünfmal pro Woche muss wählbar sein");
+    assert.equal(await onboardingPage.locator("[data-onboarding-days]").count(),6,
+      "Die Auswahl reicht von einmal bis sechsmal pro Woche");
+
     await onboardingPage.locator('[data-onboarding-days="3"]').click();
     await onboardingPage.locator("#onboarding-next").click();
 
@@ -379,6 +387,36 @@ async function importBackup(page,payload,fileName){
     await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').click();
     assert.match(await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').textContent(),/Oberkörper/);
     assert.match(await onboardingPage.locator('[data-onboarding-preset="upperlower2"]').textContent(),/Beinpresse/);
+    /* Drei verschiedene Workouts müssen nicht Push/Pull/Legs sein. */
+    const dreiWorkouts=await onboardingPage.evaluate(()=>{
+      onboardingWorkouts=3; renderOnboarding();
+      const karten=[...document.querySelectorAll("[data-onboarding-preset]")];
+      const ganzkoerper=karten.find(k=>k.dataset.onboardingPreset==="fullbody3");
+      return {ids:karten.map(k=>k.dataset.onboardingPreset),
+        tage:SPLIT_PRESETS.fullbody3.dayOrder.length,
+        namen:Object.values(SPLIT_PRESETS.fullbody3.dayNames),
+        text:ganzkoerper?ganzkoerper.textContent:""};
+    });
+    assert.ok(dreiWorkouts.ids.includes("fullbody3"),
+      "Bei drei Workouts muss auch eine Ganzkörper-Variante angeboten werden");
+    assert.equal(dreiWorkouts.tage,3,"Die Vorlage hat drei unterschiedliche Einheiten");
+    assert.deepEqual([...dreiWorkouts.namen],["Ganzkörper A","Ganzkörper B","Ganzkörper C"],
+      "Die drei Einheiten sind als Ganzkörper A/B/C benannt");
+    assert.match(dreiWorkouts.text,/Ganzkörper/,"Die Karte muss als Ganzkörper-Variante erkennbar sein");
+
+    /* Jede Vorlage darf nur Übungen aus der Bibliothek verwenden. */
+    const unbekannt=await onboardingPage.evaluate(()=>{
+      const bekannt=new Set(EXERCISE_LIBRARY.map(x=>x.id));
+      const fehler=[];
+      Object.entries(SPLIT_PRESETS).forEach(([id,preset])=>
+        Object.values(preset.templates).forEach(tag=>tag.forEach(ex=>{
+          if(!bekannt.has(ex.id)) fehler.push(`${id}: ${ex.n} (${ex.id})`);
+        })));
+      return fehler;
+    });
+    assert.deepEqual(unbekannt,[],`Vorlagen mit unbekannten Übungen: ${unbekannt.join(" | ")}`);
+
+    await onboardingPage.evaluate(()=>{ onboardingWorkouts=2; renderOnboarding(); });
     await onboardingPage.locator('[data-onboarding-preset="fullbody2"]').click();
     await onboardingPage.locator("#onboarding-next").click();
     if(process.env.VISUAL_CHECK) await onboardingPage.screenshot({path:path.join(os.tmpdir(),"hesselink-onboarding-review-919.png"),fullPage:false});
