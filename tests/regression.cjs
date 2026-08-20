@@ -640,6 +640,69 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(coachErrors,[],`Notiz-/Empfehlungs-Browserfehler: ${coachErrors.join(" | ")}`);
     await coachContext.close();
 
+    /* Hinweise und Monatsrückblick im Dashboard. */
+    const trendContext=await browser.newContext({viewport:{width:390,height:844}});
+    await trendContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+    });
+    const trendPage=await trendContext.newPage();
+    const trendErrors=[];
+    trendPage.on("pageerror",error=>trendErrors.push(error.message));
+    await trendPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+
+    /* Ohne Vorgeschichte darf das Dashboard nicht mit Hinweisen zutexten. */
+    assert.equal(await trendPage.locator("#dash-hints-card").isVisible(),false,
+      "Ohne Auffälligkeiten muss die Hinweiskarte verborgen bleiben");
+    assert.equal(await trendPage.locator("#dash-month-card").isVisible(),false,
+      "Ohne Training in diesem Monat darf kein Monatsrückblick erscheinen");
+
+    /* Beinpresse dreimal unverändert, Bankdrücken zuletzt schwächer, Latzug steigert sich. */
+    await trendPage.evaluate(()=>{
+      const day=planConfig.dayOrder[0], ex=templates[day];
+      const s=(name,kg)=>({name,goal:"8–12",wkg:"40",wwdh:"10",
+        workSets:[{kg:String(kg),reps:"10"},{kg:String(kg),reps:"9"}],setCount:2,done:true,touched:true});
+      const einheit=(id,datum,werte)=>({id,date:datum,day,dayName:planConfig.dayNames[day],
+        planVersionId:planConfig.versionId,planLineageId:planConfig.lineageId,sets:werte});
+      const heute=new Date(), iso=t=>new Date(heute.getFullYear(),heute.getMonth(),heute.getDate()-t)
+        .toISOString().slice(0,10);
+      saveLog([
+        einheit(1,iso(21),[s(ex[0].n,80), s(ex[1].n,60), s(ex[2].n,50)]),
+        einheit(2,iso(14),[s(ex[0].n,80), s(ex[1].n,62.5), s(ex[2].n,52.5)]),
+        einheit(3,iso(7), [s(ex[0].n,80), s(ex[1].n,62.5), s(ex[2].n,55)]),
+        einheit(4,iso(1), [s(ex[0].n,80), s(ex[1].n,57.5), s(ex[2].n,57.5)]),
+      ]);
+      renderDashboard();
+    });
+
+    assert.equal(await trendPage.locator("#dash-hints-card").isVisible(),true,
+      "Bei Auffälligkeiten muss die Hinweiskarte erscheinen");
+    const hinweise=await trendPage.locator("#dash-hints").textContent();
+    assert.match(hinweise,/Seit drei Einheiten unverändert/,
+      "Eine seit drei Einheiten unveränderte Übung muss gemeldet werden");
+    assert.match(hinweise,/Zuletzt ging es zurück/,
+      "Eine zurückgegangene Übung muss gemeldet werden");
+    assert.doesNotMatch(hinweise,/Latzug/,
+      "Eine Übung, die sich steigert, darf keinen Hinweis erzeugen");
+    assert.equal(await trendPage.locator("#dash-hints .hint-row.deload").count(),1,
+      "Bei zwei betroffenen Übungen muss eine leichtere Woche vorgeschlagen werden");
+    assert.match(await trendPage.locator("#dash-hints .hint-row.deload").textContent(),/normal und kein Rückschritt/,
+      "Der Deload-Vorschlag muss einen Anfänger nicht verunsichern");
+
+    /* Der Plan darf sich davon nicht von selbst verändern (Briefing 15). */
+    const planVorher=await trendPage.evaluate(()=>JSON.stringify(templates));
+    await trendPage.reload({waitUntil:"load"});
+    assert.equal(await trendPage.evaluate(()=>JSON.stringify(templates)),planVorher,
+      "Ein Deload-Vorschlag darf den Trainingsplan niemals selbst ändern");
+
+    assert.equal(await trendPage.locator("#dash-month-card").isVisible(),true,
+      "Mit Training im laufenden Monat muss der Rückblick erscheinen");
+    assert.equal(await trendPage.locator(".month-cell").count(),3,
+      "Der Rückblick zeigt Einheiten, Volumen und Bestleistungen");
+    assert.match(await trendPage.locator("#dash-month-note").textContent(),/Einheit/,
+      "Der Rückblick muss einen verständlichen Satz enthalten");
+    assert.deepEqual(trendErrors,[],`Dashboard-Browserfehler: ${trendErrors.join(" | ")}`);
+    await trendContext.close();
+
     /* Offline: Die App muss sich im Gym auch ohne Empfang öffnen lassen. */
     const offlineContext=await browser.newContext({viewport:{width:390,height:844}});
     await offlineContext.addInitScript(()=>{

@@ -122,6 +122,20 @@
   .record-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
   .record-value{flex:0 0 auto;text-align:right;color:var(--pr);font-size:15px;font-weight:900}
   .record-new{display:inline-block;margin-left:5px;padding:2px 5px;border-radius:8px;background:rgba(168,224,99,.12);color:var(--pr);font-size:8px;text-transform:uppercase;vertical-align:2px}
+  .hint-row{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+  .hint-row:first-child{border-top:none;padding-top:2px}
+  .hint-icon{flex:0 0 auto;font-size:15px;line-height:1.2}
+  .hint-body strong{display:block;font-size:13px;font-weight:850;color:var(--ink)}
+  .hint-body span{display:block;margin-top:2px;font-size:12px;font-weight:650;color:var(--muted);line-height:1.45}
+  .hint-row.deload .hint-body strong{color:var(--warm)}
+  .month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .month-cell{border:1px solid var(--line);border-radius:12px;padding:9px 8px;background:var(--panel-2);text-align:center}
+  .month-cell span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:800}
+  .month-cell strong{display:block;margin-top:3px;font-size:15px;font-weight:900;color:var(--ink)}
+  .month-cell em{display:block;margin-top:2px;font-size:10px;font-style:normal;font-weight:750;color:var(--muted)}
+  .month-cell em.up{color:var(--pr)}
+  .month-note{margin-top:9px;font-size:12px;font-weight:650;color:var(--muted);line-height:1.45}
+  html[data-theme="light"] .month-cell{background:#fff;border-color:#c5d5db}
   .record-more{width:100%;min-height:42px;margin-top:9px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--blue-bright);font:800 11px inherit;cursor:pointer}
 
   .setup-current{padding:15px;border:1px solid rgba(19,200,239,.3);background:var(--blue-soft);border-radius:16px;margin-bottom:14px}
@@ -692,6 +706,15 @@
     <div class="card-head"><span class="bar"></span><h2>Dein Trainingsplan</h2></div>
     <div class="dash-plan" id="dash-plan"></div>
   </div>
+  <div class="card" id="dash-hints-card" hidden>
+    <div class="card-head"><span class="bar"></span><h2>Worauf du achten kannst</h2></div>
+    <div class="hint-list" id="dash-hints"></div>
+  </div>
+  <div class="card" id="dash-month-card" hidden>
+    <div class="card-head"><span class="bar"></span><h2>Monatsrückblick</h2></div>
+    <div class="month-grid" id="dash-month"></div>
+    <div class="month-note" id="dash-month-note"></div>
+  </div>
   <div class="card">
     <div class="card-head"><span class="bar"></span><h2>Persönliche Rekorde</h2></div>
     <div class="record-list" id="dash-records"></div>
@@ -1067,6 +1090,83 @@ function dropText(s, goal){
 }
 
 /* Notiz, die aus der letzten Einheit dieser Übung mitwandert. */
+/* Der aussagekräftigste Arbeitssatz einer Einheit: das schwerste Gewicht,
+   bei gleichem Gewicht die meisten Wiederholungen. */
+function besterArbeitssatz(s){
+  const saetze=workSetsOf(s).filter(x=>num(x.kg)>0&&num(x.reps)>0);
+  if(!saetze.length) return null;
+  return saetze.reduce((best,x)=>{
+    const kg=num(x.kg), reps=num(x.reps);
+    if(kg>best.kg || (kg===best.kg && reps>best.reps)) return {kg,reps};
+    return best;
+  },{kg:num(saetze[0].kg),reps:num(saetze[0].reps)});
+}
+const istBessererSatz = (a,b) => !!a && !!b && (a.kg>b.kg || (a.kg===b.kg && a.reps>b.reps));
+const istGleicherSatz = (a,b) => !!a && !!b && a.kg===b.kg && a.reps===b.reps;
+
+/* Wohin läuft eine Übung? Bewusst über drei Einheiten, denn eine einzelne
+   schwache Einheit ist meist nur Tagesform und darf kein Plateau auslösen.
+   Bei uneindeutigem Bild wird absichtlich nichts gemeldet, damit das
+   Dashboard ruhig bleibt. */
+function uebungsTrend(verlauf){
+  if(!Array.isArray(verlauf) || verlauf.length<3) return null;
+  const [jetzt,davor,davor2]=verlauf.slice(0,3).map(h=>besterArbeitssatz(h&&h.set));
+  if(!jetzt||!davor||!davor2) return null;
+  if(istBessererSatz(jetzt,davor))
+    return {status:"fortschritt", text:"Läuft – zuletzt gesteigert."};
+  if(istBessererSatz(davor2,jetzt))
+    return {status:"abfall", text:"Zuletzt ging es zurück. Halte das Gewicht und achte auf saubere Ausführung."};
+  if(istGleicherSatz(jetzt,davor) && istGleicherSatz(davor,davor2))
+    return {status:"plateau", text:"Seit drei Einheiten unverändert. Versuch eine Wiederholung mehr – oder eine leichtere Woche."};
+  return null;
+}
+
+/* Deload wird nur vorgeschlagen, nie automatisch angewendet (Briefing 15).
+   Erst wenn es bei mehreren Übungen gleichzeitig hakt, ist es ein Muster
+   und nicht bloß eine zähe Übung. */
+function deloadEmpfehlung(trends){
+  const betroffen=(trends||[]).filter(t=>t&&t.trend&&(t.trend.status==="plateau"||t.trend.status==="abfall"));
+  if(betroffen.length<2) return null;
+  return {anzahl:betroffen.length, uebungen:betroffen.map(t=>t.name),
+    text:`Bei ${betroffen.length} Übungen geht es gerade nicht voran. Das ist normal und kein Rückschritt. Oft hilft eine leichtere Woche: gleiche Übungen, etwa 20 % weniger Gewicht, gleiche Wiederholungen – danach normal weitertrainieren.`};
+}
+
+/* Monatsrückblick: Einheiten, Volumen und neue Bestgewichte im Vergleich
+   zum Vormonat. Rechnet nur, formuliert nicht. */
+function monatsBericht(log, heute){
+  const monat=String(heute||"").slice(0,7);
+  if(!/^\d{4}-\d{2}$/.test(monat)) return null;
+  const d=new Date(monat+"-01T00:00:00");
+  const v=new Date(d.getFullYear(), d.getMonth()-1, 1);
+  const vormonat=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,"0")}`;
+  const inMonat=m=>(log||[]).filter(e=>String(e&&e.date||"").slice(0,7)===m);
+  const volumen=a=>a.reduce((s,e)=>s+sessionVolume(e),0);
+  const diesen=inMonat(monat), letzten=inMonat(vormonat);
+
+  const vorherBest=new Map();
+  (log||[]).filter(e=>String(e&&e.date||"").slice(0,7)<monat).forEach(e=>(e.sets||[]).forEach(s=>{
+    const k=String(s.name||"").trim().toLowerCase(); if(!k) return;
+    vorherBest.set(k, Math.max(vorherBest.get(k)||0, maxKg(s)));
+  }));
+  const bestleistungen=new Set();
+  diesen.forEach(e=>(e.sets||[]).forEach(s=>{
+    const k=String(s.name||"").trim().toLowerCase(); if(!k) return;
+    if(maxKg(s)>(vorherBest.get(k)||0)) bestleistungen.add(k);
+  }));
+
+  return {monat, vormonat, einheiten:diesen.length, einheitenVormonat:letzten.length,
+    volumen:volumen(diesen), volumenVormonat:volumen(letzten), neueBestleistungen:bestleistungen.size};
+}
+
+/* Ein Satz in einfacher Sprache zum Monatsbericht. */
+function monatsText(b){
+  if(!b || !b.einheiten) return "In diesem Monat ist noch kein Training gespeichert.";
+  const teile=[`${b.einheiten} ${b.einheiten===1?"Einheit":"Einheiten"}`];
+  if(b.einheitenVormonat) teile.push(`im Vormonat waren es ${b.einheitenVormonat}`);
+  if(b.neueBestleistungen) teile.push(`${b.neueBestleistungen} neue ${b.neueBestleistungen===1?"Bestleistung":"Bestleistungen"}`);
+  return teile.join(" · ") + ".";
+}
+
 function carriedNote(info){
   if(!info || !info.set || !String(info.set.exNote||"").trim()) return null;
   return {text:String(info.set.exNote).trim(), date:info.set.exNoteDate || info.entry.date};
@@ -1097,7 +1197,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 929;
+const APP_VERSION = 930;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2200,6 +2300,56 @@ function bindDashboardPlanEditor(day){
   $("#dash-plan-save")?.addEventListener("click",()=>saveSetupPlanChanges("dashboard"));
   $("#dash-plan-cancel")?.addEventListener("click",()=>discardSetupPlanChanges("dashboard"));
 }
+/* Trends aller Übungen des aktuellen Plans einsammeln.
+   Die Rechenregeln stehen im Trainingslogik-Block; hier wird nur beschafft. */
+function planTrends(){
+  const gesehen=new Set(), trends=[];
+  planConfig.dayOrder.forEach(day=>(templates[day]||[]).forEach(ex=>{
+    const name=String(ex.n||"").trim();
+    const schluessel=`${day}|${name.toLowerCase()}`;
+    if(!name||gesehen.has(schluessel)) return;
+    gesehen.add(schluessel);
+    trends.push({name, day, trend:uebungsTrend(lastSetsForExercise(day,name,3))});
+  }));
+  return trends;
+}
+
+/* Hinweise bewusst nur im Dashboard, nicht während des Trainings –
+   dort soll die Oberfläche reduziert bleiben (Briefing 3). */
+function renderHinweise(){
+  const karte=$("#dash-hints-card"), liste=$("#dash-hints");
+  if(!karte||!liste) return;
+  const trends=planTrends();
+  const auffaellig=trends.filter(t=>t.trend&&t.trend.status!=="fortschritt");
+  const deload=deloadEmpfehlung(trends);
+  if(!auffaellig.length&&!deload){ karte.hidden=true; liste.innerHTML=""; return; }
+  const symbol={plateau:"⏸",abfall:"↓"};
+  liste.innerHTML=auffaellig.map(t=>`<div class="hint-row">
+      <span class="hint-icon">${symbol[t.trend.status]||"•"}</span>
+      <div class="hint-body"><strong>${escAttr(t.name)}</strong><span>${escAttr(t.trend.text)}</span></div>
+    </div>`).join("")
+    + (deload?`<div class="hint-row deload">
+      <span class="hint-icon">🌙</span>
+      <div class="hint-body"><strong>Leichtere Woche einlegen?</strong><span>${escAttr(deload.text)}</span></div>
+    </div>`:"");
+  karte.hidden=false;
+}
+
+function renderMonatsrueckblick(){
+  const karte=$("#dash-month-card"), gitter=$("#dash-month"), notiz=$("#dash-month-note");
+  if(!karte||!gitter) return;
+  const b=monatsBericht(loadLog(), todayISO());
+  if(!b||!b.einheiten){ karte.hidden=true; return; }
+  const tonnen=kg=>`${(kg/1000).toLocaleString("de-DE",{maximumFractionDigits:1})} t`;
+  const zelle=(titel,wert,vergleich,besser)=>`<div class="month-cell"><span>${titel}</span><strong>${wert}</strong>${vergleich?`<em class="${besser?"up":""}">${vergleich}</em>`:""}</div>`;
+  gitter.innerHTML=
+    zelle("Einheiten", b.einheiten, b.einheitenVormonat?`Vormonat ${b.einheitenVormonat}`:"", b.einheiten>b.einheitenVormonat)
+    + zelle("Volumen", tonnen(b.volumen), b.volumenVormonat?`Vormonat ${tonnen(b.volumenVormonat)}`:"", b.volumen>b.volumenVormonat)
+    + zelle("Bestleistungen", b.neueBestleistungen, "", b.neueBestleistungen>0);
+  notiz.textContent=monatsText(b);
+  karte.hidden=false;
+}
+
 function renderDashboard(){
   const arr=loadLog().sort((a,b)=>b.id-a.id), next=nextPlannedDay(), draft=meaningfulDraft(next);
   const thisWeek=arr.filter(e=>belongsToCurrentPlan(e)&&weekKey(e.date)===weekKey(todayISO()));
@@ -2232,7 +2382,7 @@ function renderDashboard(){
   $("#dash-plan").querySelectorAll("[data-dash-edit-day]").forEach(b=>b.addEventListener("click",()=>{ setupPlanDay=b.dataset.dashEditDay; if(!setupPlanDraft) resetSetupPlanDraft(); dashboardPlanEditing=true; renderDashboard(); }));
   if(dashboardPlanEditing) bindDashboardPlanEditor(dashboardExpandedDay);
   $("#dash-last").textContent=last?`${last.dayName} · ${fmtDate(last.date)} · ${Math.round(sessionVolume(last)).toLocaleString("de-DE")} kg Volumen`:"Noch kein Training gespeichert.";
-  renderChartFilters(); renderChart(); renderPersonalRecords();
+  renderChartFilters(); renderChart(); renderPersonalRecords(); renderHinweise(); renderMonatsrueckblick();
 }
 function openTrainingDay(day){ selectDay(day); setView("log"); }
 

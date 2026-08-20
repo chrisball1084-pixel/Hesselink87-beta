@@ -26,6 +26,8 @@ Zusätzlich wird geprüft, dass eine Planbearbeitung die Vorwerte nicht versteck
 
 Ebenfalls geprüft wird die Offline-Fähigkeit: Die App muss sich ohne Empfang öffnen lassen, ein begonnener Entwurf muss erhalten bleiben, Eingaben müssen weiter speicherbar sein, und ein zweites Öffnen darf nicht in einer Neulade-Schleife enden.
 
+Geprüft werden außerdem die beiden Dashboard-Karten **Worauf du achten kannst** und **Monatsrückblick**: Sie bleiben verborgen, solange es nichts zu melden gibt, erscheinen bei Plateau oder Leistungsabfall, schlagen eine leichtere Woche erst ab zwei betroffenen Übungen vor – und dürfen den Trainingsplan dabei niemals selbst verändern.
+
 Geprüft werden außerdem die Übungsnotiz, die mit ihrem Datum ins nächste Training mitwandert und ohne Inhalt nur als Knopf erscheint, sowie die Empfehlung, das Gewicht zu reduzieren, wenn zweimal hintereinander der Zielbereich unterschritten wurde.
 
 Voraussetzungen: Node.js, Playwright und ein installiertes Google Chrome. Falls Chrome an einem anderen Ort liegt, kann der Pfad über `PLAYWRIGHT_CHROME` gesetzt werden.

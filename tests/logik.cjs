@@ -109,6 +109,65 @@ assert.equal(L.draftHasMeaningfulData({}), false, "Ein leerer Entwurf ist bedeut
 assert.equal(L.draftHasMeaningfulData(null), false, "Kein Entwurf ist kein Entwurf");
 assert.throws(() => L.validateBackupPayload({app:"fremd"}), /Format/, "Fremde Dateien müssen abgelehnt werden");
 
+/* ---- Trend einer Übung ---- */
+const einheit = (kg, ...wdh) => ({set: satz(kg, ...wdh), entry: {date: "2026-08-01"}});
+/* Liefert den Status oder eine sprechende Meldung statt eines TypeErrors. */
+const trendStatus = verlauf => {
+  const t = L.uebungsTrend(verlauf);
+  assert.ok(t, "Für diesen Verlauf wurde ein Trend erwartet, es kam aber keiner");
+  return t.status;
+};
+assert.equal(L.uebungsTrend([einheit(80,10,9), einheit(80,10,9)]), null,
+  "Unter drei Einheiten darf kein Trend behauptet werden");
+assert.equal(trendStatus([einheit(82.5,8,8), einheit(80,10,9), einheit(80,10,9)]), "fortschritt",
+  "Mehr Gewicht als zuletzt ist Fortschritt");
+assert.equal(trendStatus([einheit(80,11,9), einheit(80,10,9), einheit(80,10,9)]), "fortschritt",
+  "Gleiches Gewicht mit mehr Wiederholungen ist ebenfalls Fortschritt");
+assert.equal(trendStatus([einheit(80,10,9), einheit(80,10,9), einheit(80,10,9)]), "plateau",
+  "Drei unveränderte Einheiten sind ein Plateau");
+assert.equal(trendStatus([einheit(75,10,9), einheit(80,10,9), einheit(80,10,9)]), "abfall",
+  "Weniger als zwei Einheiten zuvor ist ein Leistungsabfall");
+assert.equal(L.uebungsTrend([einheit(80,9,9), einheit(80,10,9), einheit(80,9,9)]), null,
+  "Ein schwankendes Bild darf keinen Hinweis auslösen");
+assert.equal(L.uebungsTrend([einheit(80,10,9), einheit(0,0,0), einheit(80,10,9)]), null,
+  "Ohne vollständige Werte gibt es keinen Trend");
+
+/* ---- Deload wird vorgeschlagen, nie angewendet ---- */
+const trend = (name, status) => ({name, trend: status ? {status, text: ""} : null});
+assert.equal(L.deloadEmpfehlung([trend("Beinpresse","plateau")]), null,
+  "Eine einzelne zähe Übung rechtfertigt noch keinen Deload");
+assert.equal(L.deloadEmpfehlung([trend("Beinpresse","plateau"), trend("Latzug","fortschritt")]), null,
+  "Läuft der Rest, ist kein Deload nötig");
+const deload = L.deloadEmpfehlung([trend("Beinpresse","plateau"), trend("Latzug","abfall"), trend("Curl","fortschritt")]);
+assert.equal(deload.anzahl, 2, "Plateau und Abfall zählen gemeinsam");
+assert.deepEqual([...deload.uebungen], ["Beinpresse","Latzug"], "Die betroffenen Übungen müssen benannt werden");
+assert.match(deload.text, /leichtere Woche/, "Der Vorschlag muss verständlich erklären, was zu tun ist");
+assert.match(deload.text, /normal und kein Rückschritt/, "Der Ton muss einen Anfänger nicht verunsichern");
+
+/* ---- Monatsrückblick ---- */
+const einheitAm = (datum, name, kg, wdh) => ({id: Date.parse(datum), date: datum, day: "1",
+  sets: [{name, goal: "8–12", workSets: [{kg: String(kg), reps: String(wdh)}]}]});
+const protokoll = [
+  einheitAm("2026-07-05", "Beinpresse", 70, 10),
+  einheitAm("2026-07-20", "Beinpresse", 75, 10),
+  einheitAm("2026-08-03", "Beinpresse", 80, 10),
+  einheitAm("2026-08-12", "Beinpresse", 80, 12),
+];
+const bericht = L.monatsBericht(protokoll, "2026-08-20");
+assert.equal(bericht.einheiten, 2, "Einheiten des laufenden Monats");
+assert.equal(bericht.einheitenVormonat, 2, "Einheiten des Vormonats");
+assert.equal(bericht.volumen, 80*10 + 80*12, "Volumen des laufenden Monats");
+assert.equal(bericht.volumenVormonat, 70*10 + 75*10, "Volumen des Vormonats");
+assert.equal(bericht.neueBestleistungen, 1, "80 kg übertrifft die 75 kg aus dem Vormonat");
+assert.equal(L.monatsBericht(protokoll, "2026-09-20").einheiten, 0, "Ein Monat ohne Training zählt null");
+assert.equal(L.monatsBericht(protokoll, "2026-09-20").einheitenVormonat, 2, "Der Vormonat wird korrekt bestimmt");
+assert.equal(L.monatsBericht([], "2026-01-15").vormonat, "2025-12", "Der Jahreswechsel darf nicht danebengreifen");
+assert.equal(L.monatsBericht(protokoll, "Unsinn"), null, "Ein unbrauchbares Datum ergibt keinen Bericht");
+assert.match(L.monatsText(bericht), /2 Einheiten/, "Der Text nennt die Anzahl der Einheiten");
+assert.match(L.monatsText(bericht), /1 neue Bestleistung\b/, "Einzahl bei genau einer Bestleistung");
+assert.match(L.monatsText(L.monatsBericht(protokoll, "2026-09-20")), /noch kein Training/,
+  "Ohne Einheiten muss der Text das sagen, statt Nullen aufzuzählen");
+
 /* ---- Datum ---- */
 assert.equal(L.fmtShort("2026-08-05"), "05.08.", "Kurzdatum in deutscher Schreibweise");
 assert.equal(L.weekKey("2026-08-12"), L.weekKey("2026-08-14"),

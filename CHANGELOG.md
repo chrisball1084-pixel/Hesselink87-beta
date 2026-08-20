@@ -1,5 +1,45 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 29 · Stagnation, Deload-Vorschlag und Monatsrückblick (App-Version 930, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+Zwei neue Karten im Dashboard. Beide bleiben **unsichtbar, solange es nichts zu sagen gibt.**
+
+**Worauf du achten kannst**
+
+- Erkennt pro Übung, ob es vorangeht, stillsteht oder zurückgeht – **über drei Einheiten**, nicht über eine. Eine einzelne schwache Einheit ist meist nur Tagesform und darf kein Plateau auslösen.
+- Verglichen wird der aussagekräftigste Arbeitssatz: das schwerste Gewicht, bei gleichem Gewicht die meisten Wiederholungen. Mehr Gewicht **oder** mehr Wiederholungen gilt als Fortschritt.
+- Gemeldet wird nur, was eindeutig ist. Bei schwankendem Bild bleibt die Karte still, statt Rauschen zu erzeugen.
+- Formulierungen in einfacher Sprache, zum Beispiel: *Seit drei Einheiten unverändert. Versuch eine Wiederholung mehr – oder eine leichtere Woche.*
+- **Deload-Vorschlag** erscheint erst, wenn **mindestens zwei** Übungen gleichzeitig stocken – dann ist es ein Muster und nicht bloß eine zähe Übung. Der Ton ist bewusst entlastend: *Das ist normal und kein Rückschritt.*
+- **Der Plan wird dabei niemals von selbst verändert** (Briefing 15). Es ist ausschließlich ein Hinweis; ein automatisierter Test wacht darüber.
+
+**Monatsrückblick**
+
+- Einheiten, Volumen und neue Bestleistungen des laufenden Monats, jeweils mit dem Vormonat verglichen, dazu ein zusammenfassender Satz.
+
+### Wo das steht – und wo nicht
+
+Beides erscheint **ausschließlich im Dashboard**, nicht während des Trainings. Im Training bleibt die Oberfläche reduziert (Briefing 3): Dort steht weiterhin nur die unmittelbar handlungsrelevante Empfehlung für die Übung, die gerade dran ist.
+
+### Datenkompatibilität
+
+Keine Änderung. Beide Karten lesen ausschließlich die vorhandene Historie; es wird nichts geschrieben und kein Feld ergänzt.
+
+### Automatisiert getestet
+
+- Trend über drei Einheiten: Fortschritt bei mehr Gewicht, Fortschritt bei mehr Wiederholungen, Plateau bei Stillstand, Abfall bei Rückgang
+- unter drei Einheiten und bei schwankendem Bild wird kein Trend behauptet
+- unvollständige Werte erzeugen keinen Trend
+- Deload erst ab zwei betroffenen Übungen, nicht bei einer, nicht wenn der Rest läuft
+- **der Trainingsplan bleibt nach einem Deload-Vorschlag nachweislich unverändert**
+- Monatsrückblick: Einheiten, Volumen, Bestleistungen, Vormonatsvergleich, Jahreswechsel, unbrauchbares Datum, Einzahl/Mehrzahl im Text
+- ohne Auffälligkeiten und ohne Training im Monat bleiben beide Karten verborgen
+- Sichtprüfung in Hell und Dunkel, kein horizontales Scrollen
+- Gegenprobe: Ohne Trenderkennung schlagen beide Testläufe fehl
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 28 · Trainingslogik von der Oberfläche getrennt (App-Version 929, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?
