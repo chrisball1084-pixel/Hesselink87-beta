@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="HESSELINK BETA">
 <meta name="theme-color" content="#0a0e1a">
 <meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -907,7 +909,8 @@
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 925;
+const APP_VERSION = 926;
+const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
   try{
@@ -916,13 +919,32 @@ const APP_VERSION = 925;
   }catch(e){
     return; // Speicher gesperrt: App trotzdem starten statt am Neuladen zu hängen
   }
-  // nicht beim allerersten Start neu laden, nur bei echten Updates
-  if(seen !== APP_VERSION && seen !== 0){
-    const url = new URL(window.location.href);
-    url.searchParams.set("_v", String(APP_VERSION) + "_" + Date.now());
-    window.location.replace(url.toString());
+  if(seen === APP_VERSION){
+    try{ sessionStorage.removeItem(RELOAD_GUARD_KEY); }catch(e){}
+    return;
   }
+  if(seen === 0) return; // allererster Start: nichts nachladen
+
+  /* Schutz gegen Endlosschleifen: Ohne Empfang liefert der Service Worker die
+     zuletzt gespeicherte Fassung. Ist die älter als zuletzt gesehen, würde ein
+     stures Neuladen die App im Kreis drehen. Deshalb genau ein Versuch. */
+  let tried = 0;
+  try{ tried = parseInt(sessionStorage.getItem(RELOAD_GUARD_KEY)||"0", 10); }catch(e){}
+  if(tried >= 1) return; // wir bleiben bei dieser Fassung, statt hängenzubleiben
+  try{ sessionStorage.setItem(RELOAD_GUARD_KEY, String(tried+1)); }catch(e){}
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("_v", String(APP_VERSION) + "_" + Date.now());
+  window.location.replace(url.toString());
 })();
+
+/* Offline-Unterstützung: registriert den Service Worker, der die App auch
+   ohne Empfang startbar macht. Schlägt das fehl, läuft die App wie bisher. */
+if("serviceWorker" in navigator && location.protocol !== "file:"){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
 
 /* ================= Keys & Defaults ================= */
 const TPL_KEY   = "hesselink_beta_templates_v2";

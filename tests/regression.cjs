@@ -16,6 +16,26 @@ function serveApp(){
         res.end("User-agent: *\nDisallow: /");
         return;
       }
+      /* Service Worker, Manifest und Icon brauchen ihren echten Inhalt und
+         den richtigen Content-Type, sonst verweigert der Browser die
+         Registrierung. Alles Übrige bleibt die App selbst. */
+      const staticFiles={
+        "/sw.js":["sw.js","text/javascript; charset=utf-8"],
+        "/manifest.webmanifest":["manifest.webmanifest","application/manifest+json; charset=utf-8"],
+        "/icon.svg":["icon.svg","image/svg+xml"],
+      };
+      const asset=staticFiles[(req.url||"").split("?")[0]];
+      if(asset){
+        const file=path.join(__dirname,"..",asset[0]);
+        if(fs.existsSync(file)){
+          res.writeHead(200,{"Content-Type":asset[1],"Cache-Control":"no-store"});
+          res.end(fs.readFileSync(file));
+          return;
+        }
+        res.writeHead(404,{"Content-Type":"text/plain"});
+        res.end("not found");
+        return;
+      }
       res.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"});
       res.end(html);
     });
@@ -507,6 +527,57 @@ async function importBackup(page,payload,fileName){
     assert.equal(splitLineage.visible,0,"Nach einem Splitwechsel darf die alte Linie nicht mitgezählt werden");
     assert.deepEqual(planEditErrors,[],`Planbearbeitungs-Browserfehler: ${planEditErrors.join(" | ")}`);
     await planEditContext.close();
+
+    /* Öffnet eine Übungskarte nur, wenn sie zugeklappt ist – nach einem
+       Neuladen kann sie aus dem Entwurf bereits offen wiederhergestellt sein. */
+    const openExercise=async(page,i)=>{
+      const card=page.locator(`.ex[data-i="${i}"]`);
+      if(await card.evaluate(el=>el.classList.contains("compact"))) await card.locator(".ex-top").click();
+      await page.locator(`.ex[data-i="${i}"] input[data-f="kg1"]`).waitFor({state:"visible"});
+    };
+
+    /* Offline: Die App muss sich im Gym auch ohne Empfang öffnen lassen. */
+    const offlineContext=await browser.newContext({viewport:{width:390,height:844}});
+    await offlineContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+    });
+    const offlinePage=await offlineContext.newPage();
+    await offlinePage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+    await offlinePage.waitForFunction(()=>navigator.serviceWorker.controller!==null,null,{timeout:15000});
+
+    /* Ein Training anfangen, damit auch der Entwurf offline geprüft wird. */
+    await offlinePage.locator('.tab[data-view="log"]').click();
+    await openExercise(offlinePage,0);
+    await offlinePage.locator('.ex[data-i="0"] input[data-f="kg1"]').fill("72.5");
+    await offlinePage.locator('.ex[data-i="0"] input[data-f="wdh1"]').fill("10");
+    await offlinePage.evaluate(()=>saveDraftNow());
+
+    await offlineContext.setOffline(true);
+    await offlinePage.reload({waitUntil:"load"});
+    assert.equal(await offlinePage.locator("#view-dashboard").count(),1,
+      "Die App muss sich ohne Empfang öffnen lassen");
+    assert.match(await offlinePage.locator("#brand-sub").textContent(),/Trainingstagebuch/,
+      "Ohne Empfang muss die App vollständig gerendert werden");
+
+    /* Ohne Empfang weitertrainieren und speichern. */
+    await offlinePage.locator('.tab[data-view="log"]').click();
+    const offlineDraft=await offlinePage.evaluate(()=>{
+      const drafts=loadDrafts(), day=Object.keys(drafts)[0];
+      return day?(drafts[day].sets||[]).map(s=>(s.workSets||[]).map(w=>w.kg).join(",")).join("|"):"";
+    });
+    assert.match(offlineDraft,/72\.5/,"Der begonnene Entwurf muss offline erhalten bleiben");
+    await openExercise(offlinePage,0);
+    await offlinePage.locator('.ex[data-i="0"] input[data-f="wdh2"]').fill("9");
+    await offlinePage.evaluate(()=>saveDraftNow());
+    assert.match(await offlinePage.evaluate(()=>JSON.stringify(loadDrafts())),/"9"/,
+      "Eingaben müssen auch ohne Empfang gespeichert werden");
+
+    /* Kein Neulade-Karussell: Die Seite darf offline nicht in einer Schleife hängen. */
+    await offlinePage.reload({waitUntil:"load"});
+    assert.equal(await offlinePage.locator("#view-dashboard").count(),1,
+      "Auch ein zweites Öffnen ohne Empfang muss funktionieren");
+    await offlineContext.setOffline(false);
+    await offlineContext.close();
 
     assert.deepEqual(errors,[],`Browserfehler: ${errors.join(" | ")}`);
     console.log("PASS: Backup v5/Live-v3, Onboarding, Zusatzübungen, Dashboard-Plan, Historie, Themes und Mobile-Flows");

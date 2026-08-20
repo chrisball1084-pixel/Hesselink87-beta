@@ -4,6 +4,8 @@ Der Test startet die App lokal, emuliert mobile Viewports und prüft Backup/Wied
 
 Zusätzlich wird geprüft, dass eine Planbearbeitung die Vorwerte nicht versteckt: Ein Übungstausch im Setup erzeugt eine neue Planversion, behält aber die Plan-Linie, sodass **Letztes Training** sichtbar bleibt; ein echter Splitwechsel trennt die Historie weiterhin.
 
+Ebenfalls geprüft wird die Offline-Fähigkeit: Die App muss sich ohne Empfang öffnen lassen, ein begonnener Entwurf muss erhalten bleiben, Eingaben müssen weiter speicherbar sein, und ein zweites Öffnen darf nicht in einer Neulade-Schleife enden.
+
 Voraussetzungen: Node.js, Playwright und ein installiertes Google Chrome. Falls Chrome an einem anderen Ort liegt, kann der Pfad über `PLAYWRIGHT_CHROME` gesetzt werden.
 
 ```powershell

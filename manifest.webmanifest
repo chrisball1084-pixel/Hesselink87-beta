@@ -1,0 +1,15 @@
+{
+  "name": "HESSELINK BETA · Trainingstagebuch",
+  "short_name": "HESSELINK",
+  "description": "Trainingstagebuch für den Hesselink-Coaching-Beta-Test.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "lang": "de",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

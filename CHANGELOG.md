@@ -1,5 +1,32 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 25 · Offline im Gym (App-Version 926, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- **Die App lässt sich jetzt auch ohne Empfang öffnen.** Bisher lag sie ausschließlich auf dem Server und wurde ausdrücklich nicht zwischengespeichert. Ohne Verbindung ließ sie sich deshalb gar nicht erst starten – die Trainingsdaten waren zwar sicher, aber unerreichbar.
+- Ein Service Worker (`sw.js`) speichert die zuletzt erfolgreich geladene Fassung. Strategie: **Netz zuerst, Cache als Rückfall.** Mit Empfang kommt immer die frische Datei vom Server, der bestehende Versionsabgleich bleibt also voll wirksam. Ohne Empfang oder bei sehr langsamer Verbindung (über drei Sekunden) übernimmt die gespeicherte Fassung.
+- **Schutz gegen Neulade-Schleifen.** Liefert der Cache ohne Empfang eine ältere Fassung als zuletzt gesehen, hätte der Versionsabgleich die App endlos neu geladen. Es gibt jetzt genau einen Versuch pro Sitzung; danach arbeitet die App mit der vorhandenen Fassung weiter.
+- Ein Web-App-Manifest (`manifest.webmanifest`) und ein Icon (`icon.svg`) wurden ergänzt, damit **Zum Home-Bildschirm hinzufügen** sich wie eine eigenständige App verhält.
+- Schlägt die Registrierung fehl, läuft die App unverändert wie bisher weiter.
+
+### Welches Nutzerproblem löst das?
+
+Trainiert Hesselink in einem Studio mit schlechtem Empfang, öffnete sich die App im Zweifel überhaupt nicht. Genau dann braucht er sie aber. Gewicht und Wiederholungen eintragen funktionierte schon immer ohne Verbindung – nur der Start nicht.
+
+### Datenkompatibilität
+
+Es werden keine Trainings-, Plan- oder Backupdaten berührt. Der Service Worker speichert ausschließlich die Programmdatei, nicht die Trainingsdaten; diese liegen unverändert im localStorage.
+
+### Automatisiert getestet
+
+- App startet ohne Empfang vollständig, inklusive Dashboard und Kopfzeile
+- ein vor dem Verbindungsverlust begonnener Trainingsentwurf bleibt erhalten
+- Eingaben lassen sich ohne Empfang weiter speichern
+- zweites Öffnen ohne Empfang funktioniert ebenfalls – keine Neulade-Schleife
+- Gegenprobe: Ohne `sw.js` schlägt der Offline-Test nachweislich fehl
+- vollständige bestehende Regressionssuite grün
+
 ## v1.3 Beta – Testpaket 24 · Datenintegrität (App-Version 925, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?
