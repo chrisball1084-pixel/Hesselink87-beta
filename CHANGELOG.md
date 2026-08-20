@@ -17,7 +17,7 @@ Wer die Ersteinrichtung erneut durchlaufen hatte, sah bei allen Übungen „Noch
 
 ### Datenkompatibilität
 
-Gespeicherte Einheiten bleiben unverändert. Angepasst wird ausschließlich .
+Gespeicherte Einheiten bleiben unverändert. Angepasst wird ausschließlich die Plan-Linie in den Einstellungen (`planConfig.lineageId`).
 
 ### Automatisiert getestet
 
