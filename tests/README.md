@@ -1,4 +1,24 @@
-# Regressionstest
+# Tests
+
+Es gibt zwei Testläufe.
+
+## 1. Trainingslogik (schnell, ohne Browser)
+
+Prüft die reinen Regeln – Sätze, Volumen, Zielbereiche, Progression nach oben und unten, Übungsnotiz, Plan-Linie, Backup-Prüfungen und Datumsformate – direkt gegen den Logik-Block in `index.html`. Läuft in unter einer Sekunde und braucht weder Playwright noch Chrome.
+
+```powershell
+node tests\logik.cjs
+```
+
+Erwartete Ausgabe:
+
+```text
+PASS: Trainingslogik – Sätze, Volumen, Zielbereiche, Progression, Notiz, Plan-Linie, Backup, Datum
+```
+
+Zusätzlich wird geprüft, dass der Logik-Block sauber bleibt: kein Zugriff auf das Dokument, auf localStorage oder auf globalen Zustand der Oberfläche. Neue Funktionen in diesem Block stehen dem Test automatisch zur Verfügung.
+
+## 2. Oberfläche und Abläufe (Browser)
 
 Der Test startet die App lokal, emuliert mobile Viewports und prüft Backup/Wiederherstellung einschließlich älterer Live-v3-Dateien, Vorlagen und individuelle Onboarding-Pläne, zusätzliche Tagesübungen, paralleles Öffnen und Schließen mehrerer Übungen, den getrennten Übungstausch, übungsbezogene Vorwerte, Setup-Akkordeons, persistente Themes, Dashboard-Rekorde und -Planbearbeitung, Volumentrend, kompakte Historienkarten, fortlaufende Split-Rotation sowie zentrale Trainings- und Historienabläufe.
 

@@ -1,5 +1,31 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 28 · Trainingslogik von der Oberfläche getrennt (App-Version 929, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+- Die reinen Rechen- und Regelfunktionen stehen jetzt in einem **eigenen, klar abgegrenzten Block** am Anfang von `index.html`, überschrieben mit **TRAININGSLOGIK**: Sätze und Volumen, Zielbereiche, Progression nach oben und unten, Übungsnotiz, Plan-Linie, Backup-Prüfungen und Datumsformate.
+- Für diesen Block gilt eine feste Regel: **kein Zugriff auf das Dokument, auf localStorage oder auf den Zustand der Oberfläche.** Alles kommt als Parameter herein.
+- Bewusst **keine zweite Datei**: `index.html` wird bei Updates mit `?_v=` am Browser-Cache vorbeigeladen. Eine separate `.js`-Datei hätte diesen Schutz nicht, sodass nach einem Update neue Oberfläche auf alte Logik treffen könnte. Die Ein-Datei-Architektur bleibt erhalten.
+- **Neuer Test `tests/logik.cjs`**: prüft die Trainingslogik direkt, ohne Browser, in unter einer Sekunde. 34 Prüfungen. Er wacht außerdem darüber, dass der Block sauber bleibt, und erkennt neu hinzugefügte Funktionen automatisch.
+
+### Welches Nutzerproblem löst das?
+
+Für Hesselink unmittelbar keines – **das Verhalten der App ist unverändert.** Der Nutzen liegt in der Weiterentwicklung: Die geplanten Bausteine Stagnationserkennung, Deload-Vorschlag und Monatsreport sind Regelwerk, kein Bildschirm. Sie lassen sich jetzt in Sekunden prüfen statt über einen mehrminütigen Browserlauf, und ein Fehler in der Regel kann nicht mehr in der Oberfläche versteckt entstehen.
+
+### Datenkompatibilität
+
+Keine Änderung. Es wurde ausschließlich verschoben.
+
+### Automatisiert getestet
+
+- **Nachweis, dass nur verschoben wurde:** Zeilenvergleich vor und nach der Umstellung – null verlorene Codezeilen, die einzigen elf neuen Zeilen sind die Script-Klammer und der Kommentarkopf
+- alle drei Script-Blöcke der Datei sind syntaktisch fehlerfrei
+- keine doppelten Deklarationen zwischen Logik- und Oberflächenblock
+- der Logik-Block enthält nachweislich keinen Dokument-, Speicher- oder Zustandszugriff
+- 34 Prüfungen der Trainingslogik ohne Browser
+- vollständige bestehende Regressionssuite grün
+
 ## v1.3 Beta – Testpaket 27 · Einstieg verständlicher (App-Version 928, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?
