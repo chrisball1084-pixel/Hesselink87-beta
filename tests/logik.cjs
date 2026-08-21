@@ -156,6 +156,32 @@ assert.equal(L.verwaisteLinie([eintrag("legacy")], "onboarding-x", []), null, "O
 assert.equal(L.verwaisteLinie([eintrag(null)], "onboarding-x", ["1","2"]), "legacy",
   "Uraltdaten ohne Kennung zählen als legacy und werden erkannt");
 
+/* ---- Datum: ein leerer Entwurf darf das heutige Training nicht datieren ---- */
+const HEUTE = "2026-08-20";
+const leererEntwurf = datum => ({date:datum, weight:"", energy:"", note:"", exerciseOverrides:{},
+  sets:[{wkg:"", wwdh:"", workSets:[{kg:"",reps:""},{kg:"",reps:""}], setCount:2, done:false, touched:false}]});
+const echterEntwurf = datum => ({...leererEntwurf(datum), weight:"93"});
+
+assert.equal(L.datumFuerEntwurf(leererEntwurf("2026-08-17"), HEUTE), HEUTE,
+  "Der gemeldete Fehler: Ein leerer Entwurf von neulich darf nicht das alte Datum setzen");
+assert.equal(L.datumFuerEntwurf(echterEntwurf("2026-08-19"), HEUTE), "2026-08-19",
+  "Ein angefangenes Training behält sein Datum – wer gestern anfing, hat gestern trainiert");
+assert.equal(L.datumFuerEntwurf(null, HEUTE), HEUTE, "Ohne Entwurf gilt heute");
+assert.equal(L.datumFuerEntwurf({date:"Unsinn", weight:"93"}, HEUTE), HEUTE, "Ein kaputtes Datum gilt nicht");
+assert.equal(L.datumFuerEntwurf(echterEntwurf(HEUTE), HEUTE), HEUTE, "Heutiger Entwurf bleibt heute");
+
+/* Leere Entwürfe von früher werden weggeräumt, alles andere bleibt. */
+const aufgeraeumt = L.ohneLeereAltEntwuerfe({
+  "1": leererEntwurf("2026-08-17"),
+  "2": echterEntwurf("2026-08-19"),
+  "3": leererEntwurf(HEUTE),
+}, HEUTE);
+assert.equal(aufgeraeumt.entfernt, 1, "Nur der leere Entwurf von früher wird entfernt");
+assert.deepEqual(Object.keys(aufgeraeumt.drafts).sort(), ["2","3"],
+  "Ein angefangenes Training und der heutige Entwurf bleiben erhalten");
+assert.equal(L.ohneLeereAltEntwuerfe({}, HEUTE).entfernt, 0, "Ohne Entwürfe gibt es nichts zu tun");
+assert.equal(L.ohneLeereAltEntwuerfe(null, HEUTE).entfernt, 0, "Auch ohne Datenstruktur passiert nichts");
+
 /* ---- Sanfte Nachfrage bei fehlenden Wiederholungen ---- */
 assert.deepEqual([...L.saetzeOhneWiederholungen(satz(20, "", ""))], [1, 2],
   "Gewicht ohne Wiederholungen muss in beiden Sätzen auffallen");

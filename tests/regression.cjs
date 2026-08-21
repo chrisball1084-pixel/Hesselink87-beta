@@ -811,6 +811,45 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(wdhErrors,[],`Nachfrage-Browserfehler: ${wdhErrors.join(" | ")}`);
     await wdhContext.close();
 
+    /* Von Hesselink gemeldet: Das Datum kam vom vorherigen Training statt von heute.
+       Ursache war ein leerer Entwurf, den das bloße Öffnen des Trainings anlegt. */
+    const datumContext=await browser.newContext({viewport:{width:390,height:844}});
+    await datumContext.addInitScript(()=>{
+      localStorage.setItem("hesselink_beta_onboarding_v1",JSON.stringify({completed:true,version:1}));
+      if(localStorage.getItem("hesselink_beta_draft_v1")) return;
+      const leer=datum=>({ts:Date.now(),date:datum,weight:"",energy:"",note:"",
+        activeExIdx:0,activeSetKey:"warm",openExIndices:[],exerciseOverrides:{},
+        sets:[{wkg:"",wwdh:"",workSets:[{kg:"",reps:""},{kg:"",reps:""}],setCount:2,done:false,touched:false}]});
+      const echt=datum=>({...leer(datum),weight:"93"});
+      localStorage.setItem("hesselink_beta_draft_v1",JSON.stringify({"1":leer("2020-01-05"),"2":echt("2020-01-07")}));
+    });
+    const datumPage=await datumContext.newPage();
+    const datumErrors=[];
+    datumPage.on("pageerror",error=>datumErrors.push(error.message));
+    await datumPage.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
+
+    const heute=await datumPage.evaluate(()=>todayISO());
+    await datumPage.locator('.tab[data-view="log"]').click();
+    await datumPage.evaluate(()=>{ currentDay=planConfig.dayOrder[0]; renderDayPicker(); renderExercises(); });
+    assert.equal(await datumPage.locator("#f-date").inputValue(),heute,
+      "Ein leerer Entwurf von früher darf nicht das alte Datum ins Training tragen");
+
+    /* Ein wirklich angefangenes Training behält sein Datum. */
+    await datumPage.evaluate(()=>{ currentDay=planConfig.dayOrder[1]; renderDayPicker(); renderExercises(); });
+    assert.equal(await datumPage.locator("#f-date").inputValue(),"2020-01-07",
+      "Ein angefangenes Training muss sein eigenes Datum behalten");
+
+    /* Der leere Altentwurf ist beim Start weggeräumt, der echte nicht. */
+    const entwuerfe=await datumPage.evaluate(()=>loadDrafts());
+    assert.ok("2" in entwuerfe,"Das angefangene Training darf nicht weggeräumt werden");
+    /* Tag 1 kann durch das Öffnen neu entstanden sein – dann aber mit heutigem Datum. */
+    if("1" in entwuerfe) assert.equal(entwuerfe["1"].date,heute,
+      "Ein neu angelegter Entwurf muss das heutige Datum tragen");
+    assert.equal(await datumPage.evaluate(()=>loadDrafts()["2"].date),"2020-01-07",
+      "Sein Datum bleibt unangetastet");
+    assert.deepEqual(datumErrors,[],`Datums-Browserfehler: ${datumErrors.join(" | ")}`);
+    await datumContext.close();
+
     /* Hinweise und Monatsrückblick im Dashboard. */
     const trendContext=await browser.newContext({viewport:{width:390,height:844}});
     await trendContext.addInitScript(()=>{

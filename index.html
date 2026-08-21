@@ -1118,6 +1118,34 @@ function verwaisteLinie(log, aktuelleLinie, tage){
   return [...linien][0];
 }
 
+/* Welches Datum gehört in das heutige Training?
+
+   Die App legt schon beim bloßen Öffnen des Trainings einen Entwurf an –
+   mit dem Datum von heute, aber ohne Inhalt. Bleibt der liegen, würde sein
+   Datum Tage später das neue Training überschreiben. Ein leerer Entwurf ist
+   aber nur eine geöffnete Ansicht von neulich, kein angefangenes Training.
+
+   Ein Entwurf mit echten Eingaben behält sein Datum: Wer gestern angefangen
+   hat und heute weitermacht, hat gestern trainiert. */
+function datumFuerEntwurf(draft, heute){
+  const datum = String(draft && draft.date || "");
+  const gueltig = /^\d{4}-\d{2}-\d{2}$/.test(datum);
+  return (gueltig && draftHasMeaningfulData(draft)) ? datum : heute;
+}
+
+/* Leere Entwürfe von früheren Tagen wegräumen. Sie enthalten nichts,
+   halten aber altes Datum und alten Bearbeitungsstand fest. */
+function ohneLeereAltEntwuerfe(drafts, heute){
+  const behalten = {}; let entfernt = 0;
+  Object.entries(drafts || {}).forEach(([tag, d]) => {
+    const leer = !draftHasMeaningfulData(d);
+    const vonFrueher = String(d && d.date || "") < String(heute);
+    if(leer && vonFrueher){ entfernt++; return; }
+    behalten[tag] = d;
+  });
+  return {drafts: behalten, entfernt};
+}
+
 /* Sätze, in denen ein Gewicht steht, aber keine Wiederholungen.
    Ohne Wiederholungen kann weder Volumen noch Progression gerechnet werden.
    Umgekehrt ist "Wiederholungen ohne Gewicht" völlig normal (Körpergewicht),
@@ -1273,7 +1301,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 936;
+const APP_VERSION = 937;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -1999,7 +2027,7 @@ function renderExercises(){
   /* Meta aus Entwurf */
   if(!editing){
     if(draft){
-      $("#f-date").value = ""; ensureSessionDate(draft.date);
+      $("#f-date").value = ""; ensureSessionDate(datumFuerEntwurf(draft, todayISO()));
       $("#f-weight").value = draft.weight || "";
       $("#f-energy").value = draft.energy || "";
       $("#f-note").value = draft.note || "";
@@ -3599,6 +3627,10 @@ setHistoryDataExpanded(false);
 updateSessionSummary();
 setSessionExpanded(false);
 repariereVerwaisteHistorie();   // vor dem ersten Zeichnen, damit gleich der richtige Stand erscheint
+(function raeumeAlteEntwuerfeAuf(){
+  const {drafts, entfernt} = ohneLeereAltEntwuerfe(loadDrafts(), todayISO());
+  if(entfernt) saveJSON(DRAFT_KEY, drafts);   // still, denn hier ging nichts verloren
+})();
 renderDayPicker();
 renderChartFilters();
 updateBrand();
