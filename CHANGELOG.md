@@ -1,4 +1,32 @@
+
 # Hesselink87 – Änderungsprotokoll
+
+## v1.3 Beta – Testpaket 36 · Alle Aufteilungen auffindbar (App-Version 938, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+Die Plan-Vorlagen waren hinter der Frage nach der Workout-Anzahl versteckt. Wer bei „Wie viele verschiedene Workouts?" auf **3** tippte, bekam nur Ganzkörper A/B/C und Push/Pull/Legs zu sehen – **Oberkörper/Unterkörper** und **Push/Pull** existierten längst, waren aber unerreichbar, weil sie zu zwei Workouts gehören.
+
+- Neu steht unter den passenden Vorlagen der Knopf **Andere Aufteilungen ansehen**. Dahinter erscheinen alle übrigen, jeweils mit ihrer Workout-Anzahl beschriftet.
+- Wählt man eine davon, **passt sich die Workout-Anzahl automatisch an** – niemand muss dafür zurückgehen und die vorherige Frage korrigieren. Eine kurze Meldung sagt, was passiert ist.
+- Die Empfehlung bleibt unverändert: Bei drei Workouts ist weiterhin **Push/Pull/Legs** als *Empfohlen* markiert.
+
+### Welches Nutzerproblem löst das?
+
+Aus dem Feedback: *„Oberkörper/Unterkörper im Zweierwechsel oder auch Push/Pull im Zweierwechsel ist auch eine Möglichkeit."* Beide gab es bereits – die Frage nach der Anzahl hatte sie nur unsichtbar gemacht. Wer eine Aufteilung nicht findet, baut sie sich mühsam von Hand nach oder nimmt die falsche.
+
+### Datenkompatibilität
+
+Keine Änderung. Betrifft ausschließlich die Darstellung in der Ersteinrichtung und damit nur Neukunden.
+
+### Automatisiert getestet
+
+- zunächst stehen nur die passenden Vorlagen da, mit einem Weg zu den übrigen
+- aufgeklappt erscheinen Oberkörper/Unterkörper, Push/Pull und das einzelne Ganzkörper-Workout
+- bereits oben stehende Vorlagen erscheinen nicht doppelt
+- die Auswahl setzt die Workout-Anzahl mit, klappt den Bereich zu und markiert die Vorlage oben als gewählt
+- Sichtprüfung bei 320 × 700: kein Textüberlauf, die letzte Karte ist erreichbar und anklickbar
+- beide Testläufe grün
 
 ## v1.3 Beta – Testpaket 35 · Datum kommt wieder von heute (App-Version 937, lokal, noch nicht veröffentlicht)
 

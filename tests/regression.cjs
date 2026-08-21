@@ -416,6 +416,31 @@ async function importBackup(page,payload,fileName){
     });
     assert.deepEqual(unbekannt,[],`Vorlagen mit unbekannten Übungen: ${unbekannt.join(" | ")}`);
 
+    /* Andere Aufteilungen dürfen nicht hinter der Workout-Anzahl verschwinden. */
+    await onboardingPage.evaluate(()=>{ onboardingWorkouts=3; onboardingShowAll=false; renderOnboarding(); });
+    assert.equal(await onboardingPage.locator("[data-onboarding-other]").count(),0,
+      "Zunächst stehen nur die passenden Vorlagen da");
+    assert.equal(await onboardingPage.locator("[data-onboarding-more]").count(),1,
+      "Es muss einen Weg zu den übrigen Aufteilungen geben");
+    await onboardingPage.locator("[data-onboarding-more]").click();
+    const andere=await onboardingPage.evaluate(()=>
+      [...document.querySelectorAll("[data-onboarding-other]")].map(x=>x.dataset.onboardingOther));
+    assert.ok(andere.includes("upperlower2"),"Oberkörper/Unterkörper muss auffindbar sein");
+    assert.ok(andere.includes("pushpull2"),"Push/Pull muss auffindbar sein");
+    assert.ok(andere.includes("fullbody1"),"Auch das einzelne Ganzkörper-Workout muss auffindbar sein");
+    assert.equal(andere.filter(id=>["fullbody3","ppl3"].includes(id)).length,0,
+      "Bereits oben stehende Vorlagen dürfen nicht doppelt erscheinen");
+
+    /* Die Auswahl setzt die Workout-Anzahl gleich mit. */
+    await onboardingPage.locator('[data-onboarding-other="upperlower2"]').click();
+    const nachWahl=await onboardingPage.evaluate(()=>({workouts:onboardingWorkouts,preset:onboardingPresetId,
+      offen:document.querySelectorAll("[data-onboarding-other]").length}));
+    assert.equal(nachWahl.workouts,2,"Oberkörper/Unterkörper muss die Anzahl auf 2 setzen");
+    assert.equal(nachWahl.preset,"upperlower2","Die gewählte Vorlage muss aktiv sein");
+    assert.equal(nachWahl.offen,0,"Nach der Wahl klappt der Bereich wieder zu");
+    assert.equal(await onboardingPage.locator('[data-onboarding-preset="upperlower2"].active').count(),1,
+      "Sie steht danach als ausgewählte Vorlage oben");
+
     await onboardingPage.evaluate(()=>{ onboardingWorkouts=2; renderOnboarding(); });
     await onboardingPage.locator('[data-onboarding-preset="fullbody2"]').click();
     await onboardingPage.locator("#onboarding-next").click();

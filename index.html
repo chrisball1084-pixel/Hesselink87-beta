@@ -453,6 +453,12 @@
   .card-timer-x.show{display:block}
 
   .onboarding-modal{max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
+  .onboarding-more{width:100%;margin-top:9px;min-height:44px;border:1px dashed var(--line-strong);
+    border-radius:12px;background:transparent;color:var(--blue-bright);font:800 12px inherit;cursor:pointer}
+  .onboarding-plans.other{margin-top:9px;opacity:.94}
+  .onboarding-plan-count{flex:0 0 auto;padding:3px 8px;border-radius:20px;background:var(--panel-3);
+    color:var(--muted);font-size:10px;font-weight:800}
+  html[data-theme="light"] .onboarding-plan-count{background:#e3ecf0;color:#526c77}
   .onboarding-option.rotation{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:11px 12px}
   .onboarding-option.rotation strong{font-size:13px;font-weight:900}
   .onboarding-option.rotation small{font-size:11px;font-weight:700;color:var(--muted);line-height:1.35}
@@ -1301,7 +1307,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 937;
+const APP_VERSION = 938;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2616,7 +2622,7 @@ async function applySplitPreset(id){
 
 /* ---------- Einfacher Beginner-Einstieg ---------- */
 let onboardingStep=0, onboardingDays=3, onboardingWorkouts=2;
-let onboardingPresetId="fullbody2", onboardingExpandedPresetId="fullbody2", onboardingDraft=null, onboardingDraftDay="1", onboardingEditing=false, onboardingDayNames={};
+let onboardingPresetId="fullbody2", onboardingExpandedPresetId="fullbody2", onboardingShowAll=false, onboardingDraft=null, onboardingDraftDay="1", onboardingEditing=false, onboardingDayNames={};
 function onboardingRecommendation(days=onboardingDays,workouts=onboardingWorkouts){
   if(workouts===1) return {id:"fullbody1",reason:`Ein Ganzkörpertraining ${days}× pro Woche – maximal einfach und gut planbar.`};
   if(workouts===2&&days>=4) return {id:"upperlower2",reason:`Oberkörper und Unterkörper wechseln sich über ${days} Trainingstage fortlaufend ab.`};
@@ -2749,7 +2755,26 @@ function renderOnboarding(){
         <span class="onboarding-plan-toggle">${expanded?"Vorschau schließen ▲":"Workouts ansehen ▼"}</span>
         ${expanded?`<span class="onboarding-plan-detail">${id==="custom"?`<span class="onboarding-day-preview"><strong>Frei konfigurierbar</strong><span>${onboardingWorkouts} ${onboardingWorkouts===1?"Workout":"Workouts"} selbst benennen und Übungen direkt auswählen.</span></span>`:preset.dayOrder.map(day=>onboardingDayPreview(preset,day)).join("")}</span>`:""}
       </div>`;
-    }).join("")}</div>`;
+    }).join("")}</div>`
+    /* Die übrigen Aufteilungen wären sonst hinter der Frage nach der
+       Workout-Anzahl versteckt: Wer auf „3“ getippt hat, sähe Oberkörper/
+       Unterkörper nie. Wählt man hier eine, wird die Anzahl mit angepasst. */
+    + (()=>{
+      const andere=Object.keys(SPLIT_PRESETS).filter(id=>!candidates.includes(id));
+      if(!andere.length) return "";
+      return `<button class="onboarding-more" data-onboarding-more type="button">
+          ${onboardingShowAll?"Andere Aufteilungen ausblenden ▲":"Andere Aufteilungen ansehen ▼"}
+        </button>
+        ${onboardingShowAll?`<div class="onboarding-plans other">${andere.map(id=>{
+          const preset=SPLIT_PRESETS[id], anzahl=preset.dayOrder.length;
+          return `<div class="onboarding-plan" data-onboarding-other="${id}" role="button" tabindex="0">
+            <span class="onboarding-plan-head"><span class="onboarding-plan-title">${escAttr(preset.short)}</span>
+              <span class="onboarding-plan-count">${anzahl} ${anzahl===1?"Workout":"Workouts"}</span></span>
+            <span class="onboarding-plan-desc">${escAttr(preset.description)}</span>
+            <span class="onboarding-plan-toggle">Auswählen – die Anzahl passt sich an</span>
+          </div>`;
+        }).join("")}</div>`:""}`;
+    })();
     next.textContent="Plan prüfen";
   }else{
     const preset=onboardingPreset();
@@ -2763,6 +2788,23 @@ function renderOnboarding(){
   options.querySelectorAll("[data-onboarding-theme]").forEach(b=>b.addEventListener("click",()=>{ applyTheme(b.dataset.onboardingTheme); renderOnboarding(); }));
   options.querySelectorAll("[data-onboarding-days]").forEach(b=>b.addEventListener("click",()=>{ onboardingDays=+b.dataset.onboardingDays; renderOnboarding(); }));
   options.querySelectorAll("[data-onboarding-workouts]").forEach(b=>b.addEventListener("click",()=>{ onboardingWorkouts=+b.dataset.onboardingWorkouts; const rec=onboardingRecommendation(); onboardingPresetId=rec.id; onboardingExpandedPresetId=rec.id; resetOnboardingDraft(rec.id); renderOnboarding(); }));
+  options.querySelectorAll("[data-onboarding-more]").forEach(b=>b.addEventListener("click",()=>{
+    onboardingShowAll=!onboardingShowAll; renderOnboarding();
+  }));
+  /* Eine Aufteilung aus „Andere“ setzt die Workout-Anzahl gleich mit. */
+  options.querySelectorAll("[data-onboarding-other]").forEach(b=>{
+    const waehlen=()=>{
+      const id=b.dataset.onboardingOther, preset=SPLIT_PRESETS[id];
+      if(!preset) return;
+      onboardingWorkouts=preset.dayOrder.length;
+      onboardingPresetId=id; onboardingExpandedPresetId=id; onboardingShowAll=false;
+      resetOnboardingDraft(id);
+      renderOnboarding();
+      toast(`${preset.short} gewählt · ${onboardingWorkouts} ${onboardingWorkouts===1?"Workout":"Workouts"}`);
+    };
+    b.addEventListener("click",waehlen);
+    b.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); waehlen(); } });
+  });
   options.querySelectorAll("[data-onboarding-preset]").forEach(b=>b.addEventListener("click",()=>{
     const id=b.dataset.onboardingPreset, changed=id!==onboardingPresetId; onboardingPresetId=id;
     onboardingExpandedPresetId=onboardingExpandedPresetId===id&&!changed?null:id;
