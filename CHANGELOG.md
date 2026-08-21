@@ -1,5 +1,34 @@
 # Hesselink87 – Änderungsprotokoll
 
+## v1.3 Beta – Testpaket 35 · Datum kommt wieder von heute (App-Version 937, lokal, noch nicht veröffentlicht)
+
+### Was wurde verändert?
+
+**Von Hesselink aus dem echten Gebrauch gemeldet:** Das Datumsfeld zeigte das Datum des *vorherigen* Trainings statt das heutige.
+
+- Ursache: Die App legt schon beim bloßen **Öffnen** des Trainings einen Entwurf an – mit dem Datum von heute, aber ohne jeden Inhalt. Bleibt der liegen, übernimmt die App Tage später dessen Datum ins Datumsfeld.
+- In seinem Backup standen genau solche Entwürfe: Tag 1 mit Datum **17.08.**, zuletzt angefasst am **20.08.**, völlig leer.
+- Es lag **weder am iPhone noch an seinen Trainingsdaten**. Bei Chris trat es nicht auf, weil dessen Entwürfe zwischendurch gelöscht wurden – das passiert automatisch beim Speichern eines Plans und bei der Einrichtung.
+- Neu zählt das Datum eines Entwurfs nur, wenn er **echte Eingaben** enthält. Wer gestern angefangen hat und heute weitermacht, behält sein Datum – das ist richtig so.
+- Zusätzlich werden leere Entwürfe von früheren Tagen beim Start weggeräumt. Dort geht nichts verloren, deshalb ohne Meldung.
+
+### Wurden dadurch Trainings falsch datiert?
+
+**Nein.** Alle 13 Einheiten im Backup wurden geprüft, Speicherzeitpunkt gegen eingetragenes Datum: Sie stimmen ausnahmslos überein. Hesselink hat das Datum offenbar jedes Mal von Hand korrigiert.
+
+### Datenkompatibilität
+
+Gespeicherte Einheiten werden nicht berührt. Entfernt werden ausschließlich Entwürfe ohne jeden Inhalt, deren Datum vor dem heutigen Tag liegt.
+
+### Automatisiert getestet
+
+- ein leerer Entwurf von früher setzt nicht mehr das alte Datum
+- ein angefangenes Training behält sein eigenes Datum
+- kaputtes oder fehlendes Datum fällt auf heute zurück
+- beim Aufräumen bleibt der angefangene Entwurf erhalten, nur der leere von früher verschwindet
+- **beide Absicherungen einzeln geprüft:** Datumsregel allein genügt; erst wenn beide abgeschaltet sind, schlägt der Test fehl
+- beide Testläufe grün
+
 ## v1.3 Beta – Testpaket 34 · Einstieg für Anfänger geöffnet (App-Version 936, lokal, noch nicht veröffentlicht)
 
 ### Was wurde verändert?
