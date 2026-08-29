@@ -5,7 +5,7 @@ Read `docs/PROJECT.md` before making changes.
 ## Sources of truth
 
 - Technical truth: current repository + `docs/PROJECT.md`
-- Product truth: Notion page `Hesselink87 App updates`
+- Product truth: Notion page `Hesselink87 Beta — Product Hub` (the page formerly named `Hesselink87 App updates` is now `Hesselink87 Beta — Arbeitsarchiv` and is history only)
 - Historical implementation details: `CHANGELOG.md` and older Notion implementation pages, only when needed
 
 ## Standard command

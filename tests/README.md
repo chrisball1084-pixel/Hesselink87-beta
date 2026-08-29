@@ -32,8 +32,10 @@ Geprüft werden außerdem die Übungsnotiz, die mit ihrem Datum ins nächste Tra
 
 Voraussetzungen: Node.js, Playwright und ein installiertes Google Chrome. Falls Chrome an einem anderen Ort liegt, kann der Pfad über `PLAYWRIGHT_CHROME` gesetzt werden.
 
+Die Playwright-Installation liegt bewusst außerhalb des Repos unter `C:\Users\chris\.hesselink-testenv` – dauerhaft und ohne das Repository zu belasten. Fehlt sie, genügt dort `npm install playwright`; der Browser-Download ist nicht nötig, weil der Test das installierte Chrome verwendet.
+
 ```powershell
-$env:NODE_PATH = "Pfad\zu\node_modules"
+$env:NODE_PATH = "C:\Users\chris\.hesselink-testenv\node_modules"
 node tests\regression.cjs
 ```
 
