@@ -7,9 +7,11 @@ Hesselink87 Beta ist die aktiv weiterentwickelte Trainings-App der Hesselink87-R
 ## Source-of-Truth-Regel
 
 - Dieses Dokument ist die zentrale technische Projektdokumentation.
-- Das zugehörige Notion-Dokument `Hesselink87 App updates` ist die Product Source of Truth für Feedback, Bugs, Wünsche, Produktentscheidungen und aktuellen Produktstatus.
+- Das Notion-Dokument **`Hesselink87 Beta — Product Hub`** ist die aktive Product Source of Truth für Feedback, Bugs, Wünsche, Produktentscheidungen und aktuellen Produktstatus.
+- `Hesselink87 Beta — Arbeitsarchiv` ist nur historische Referenz und wird bei normalen Syncs nicht gelesen.
 - `CHANGELOG.md` enthält historische technische Änderungen und wird nicht standardmäßig vollständig gelesen.
 - Der aktuelle Code ist maßgeblich dafür, was tatsächlich implementiert ist.
+- Notion ist keine technische Langzeithistorie; Git/GitHub übernimmt diese Rolle.
 
 ## Architektur
 
@@ -77,17 +79,26 @@ Die alte App kann weiterhin relevant sein, um frühere lokale Datenstände zu pr
 - Persönliche Trainingsdaten nicht unnötig ins Repository kopieren.
 - Backups mit echten Nutzerdaten nur gezielt und bewusst behandeln.
 
+## Notion Retention / Housekeeping
+
+- `CURRENT STATE` aktualisieren statt anhängen.
+- Verarbeitete `INBOX`- und erledigte `OPEN`-Punkte entfernen.
+- `PRODUCT DECISIONS` nur für dauerhaft relevantes Produktwissen nutzen.
+- `CHANGELOG` auf **maximal 10 relevante Einträge bzw. ca. 60 Tage** begrenzen.
+- Testpaket-, Versions- und Implementierungsdetails gehören in GitHub/`CHANGELOG.md`, nicht in den aktiven Product Hub.
+- Die Arbeitsarchiv-Seite nur gezielt bei konkretem historischem Bedarf lesen.
+
 ## Notion-Sync-Workflow
 
 Der Befehl **„Notion Sync durchführen“** bedeutet:
 
 1. `AGENTS.md` bzw. `CLAUDE.md` und dieses Dokument lesen.
-2. In Notion primär `CURRENT STATE`, `INBOX`, `OPEN`, `WAITING FOR ME` und relevante `PRODUCT DECISIONS` lesen.
-3. Historische Notion-Implementierungsseiten und `CHANGELOG.md` nur bei tatsächlichem Bedarf lesen.
+2. Ausschließlich den aktiven Notion-Hub `Hesselink87 Beta — Product Hub` lesen: `CURRENT STATE`, `INBOX`, `OPEN`, `WAITING FOR ME` und relevante `PRODUCT DECISIONS`.
+3. Arbeitsarchiv und `CHANGELOG.md` nur bei tatsächlichem historischen Bedarf lesen.
 4. Neue Anforderungen gegen den aktuellen Beta-Code prüfen.
 5. Bug, Feature, Verbesserung, Frage und echte Nutzerentscheidung unterscheiden.
 6. Eindeutig definierte Änderungen möglichst klein implementieren.
 7. Relevante Tests ausführen.
 8. Dieses Dokument nur bei dauerhaft relevanten technischen Änderungen aktualisieren.
-9. Notion Current State/Open/Waiting/Changelog aktualisieren und abgearbeitete Inbox leeren.
+9. Notion gemäß Retention-Regel aufräumen und kompakt aktualisieren.
 10. Abschließend Änderungen, Tests und offene Nutzerentscheidungen kurz berichten.
