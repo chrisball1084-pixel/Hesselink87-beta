@@ -185,7 +185,8 @@
   .setup-ex-goal{text-align:center;color:var(--blue-bright)}
   .setup-ex-remove{width:44px;height:44px;border:1px solid rgba(255,92,122,.35);border-radius:11px;background:rgba(255,92,122,.06);
     color:var(--danger);font-size:18px;cursor:pointer}
-  .setup-plan-day.add{border-style:dashed;color:var(--blue-bright);font-weight:800}
+  .setup-add-day{width:100%;min-height:44px;margin-top:4px;border:1px dashed var(--blue);
+    border-radius:12px;background:transparent;color:var(--blue-bright);font:850 12px inherit;cursor:pointer}
   .setup-plan-meta{display:flex;flex-direction:column;gap:5px;margin:10px 0 4px}
   .setup-meta-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:800}
   .setup-day-name{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--line-strong);
@@ -2648,10 +2649,13 @@ function renderSetupPlan(){
   if(!setupPlanDraft) resetSetupPlanDraft();
   if(!planConfig.dayOrder.includes(setupPlanDay)) setupPlanDay=planConfig.dayOrder[0];
   const day=setupPlanDay, list=setupPlanDraft[day]||[], tage=setupPlanTage();
-  $("#setup-plan-days").innerHTML=tage.map((d,idx)=>`<button class="setup-plan-day ${d===day?"active":""}" data-setup-day="${escAttr(d)}" type="button">${idx+1}. ${escAttr(setupPlanName(d))}</button>`).join("")
-    + `<button class="setup-plan-day add" data-setup-add-day type="button">＋ Workout</button>`;
-  /* Wochenziel und Workout-Name gehören zum selben Bearbeitungsstand wie die Übungen. */
+  $("#setup-plan-days").innerHTML=tage.map((d,idx)=>`<button class="setup-plan-day ${d===day?"active":""}" data-setup-day="${escAttr(d)}" type="button">${idx+1}. ${escAttr(setupPlanName(d))}</button>`).join("");
+  /* Bewusst außerhalb der Tagesleiste: Die scrollt seitlich, und dort wäre der
+     Knopf bei mehreren Workouts nicht mehr zu sehen. */
   $("#setup-plan-meta").innerHTML=`
+    <button class="setup-add-day" data-setup-add-day type="button">＋ Workout hinzufügen</button>`;
+  /* Wochenziel und Workout-Name gehören zum selben Bearbeitungsstand wie die Übungen. */
+  $("#setup-plan-meta").innerHTML+=`
     <label class="setup-meta-lbl" for="setup-day-name">Name dieses Workouts</label>
     <input class="setup-day-name" id="setup-day-name" type="text" maxlength="40"
       value="${escAttr(setupPlanName(day))}" aria-label="Name dieses Workouts">
