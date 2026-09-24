@@ -1372,7 +1372,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 939;
+const APP_VERSION = 940;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -2684,17 +2684,16 @@ function renderSetupPlan(){
     setupWeeklyDraft=+b.dataset.setupWeekly; markiereSetupAenderung(); renderSetupPlan();
   }));
   const hinzu=document.querySelector("[data-setup-add-day]");
-  if(hinzu) hinzu.addEventListener("click",async ()=>{
-    const quellen=setupPlanTage();
-    /* Kopie ist vorausgewählt: Fünf Übungen einzeln zu suchen ist mühsam,
-       anpassen ist schneller als zusammenstellen. */
-    const kopieren=await askConfirm("Workout hinzufügen",
-      `Dein neues Workout kann als Kopie von „${setupPlanName(quellen[quellen.length-1])}“ starten – Übungen danach einfach anpassen. Oder du beginnst mit einer leeren Liste.`,
-      "Als Kopie starten");
-    fuegeWorkoutHinzu(kopieren ? quellen[quellen.length-1] : null);
+  if(hinzu) hinzu.addEventListener("click",()=>{
+    /* Bewusst ohne Rückfrage: Das neue Workout startet immer als Kopie des
+       gerade geöffneten. Fünf Übungen einzeln zu suchen ist mühsam – anpassen
+       geht schneller als zusammenstellen, und jede Übung lässt sich direkt
+       darunter austauschen oder entfernen. */
+    const quelle=setupPlanDay, quellName=setupPlanName(quelle);
+    fuegeWorkoutHinzu(quelle);
     renderSetupPlan();
     const feld=$("#setup-day-name"); if(feld){ feld.focus(); feld.select(); }
-    toast(`${setupPlanName(setupPlanDay)} angelegt · noch nicht gespeichert`);
+    toast(`Kopie von „${quellName}“ angelegt · Name und Übungen jetzt anpassen`);
   });
   document.querySelectorAll("[data-setup-select]").forEach(b=>b.addEventListener("click",()=>openSetupLibrary(day,+b.dataset.setupSelect)));
   document.querySelectorAll("[data-setup-name]").forEach(inp=>{

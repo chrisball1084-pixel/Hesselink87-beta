@@ -672,6 +672,23 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(drittesWorkout.nachher.uebungenNeu, drittesWorkout.nachher.uebungenQuelle,
       "Als Kopie gestartet übernimmt das neue Workout die Übungen der Vorlage");
 
+    /* Der Knopf selbst: ein Tipp, kein Dialog, und das Ergebnis ist eine Kopie. */
+    const perKnopf=await planEditPage.evaluate(async()=>{
+      setView("setup"); resetSetupPlanDraft();
+      const vorherTage=setupPlanTage().length, quelle=setupPlanDay;
+      document.querySelector("[data-setup-add-day]").click();
+      await new Promise(r=>setTimeout(r,120));
+      return {dialog:document.querySelectorAll("#modal-bg.show").length,
+        tageVorher:vorherTage, tageNachher:setupPlanTage().length,
+        neueUebungen:(setupPlanDraft[setupPlanDay]||[]).map(x=>x.n),
+        quellUebungen:(setupPlanDraft[quelle]||[]).map(x=>x.n)};
+    });
+    assert.equal(perKnopf.dialog,0,"Das Hinzufügen darf keine missverständliche Rückfrage stellen");
+    assert.equal(perKnopf.tageNachher,perKnopf.tageVorher+1,"Ein Tipp legt genau ein Workout an");
+    assert.deepEqual(perKnopf.neueUebungen,perKnopf.quellUebungen,
+      "Das neue Workout startet als Kopie des gerade geöffneten");
+    await planEditPage.evaluate(()=>{ resetSetupPlanDraft(); });
+
     /* Die Vorwerte der bestehenden Tage müssen unverändert dastehen. */
     await planEditPage.locator('.tab[data-view="log"]').click();
     await planEditPage.evaluate(()=>{ currentDay=planConfig.dayOrder[0]; renderDayPicker(); renderExercises(); });
