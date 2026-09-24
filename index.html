@@ -185,6 +185,19 @@
   .setup-ex-goal{text-align:center;color:var(--blue-bright)}
   .setup-ex-remove{width:44px;height:44px;border:1px solid rgba(255,92,122,.35);border-radius:11px;background:rgba(255,92,122,.06);
     color:var(--danger);font-size:18px;cursor:pointer}
+  .setup-plan-day.add{border-style:dashed;color:var(--blue-bright);font-weight:800}
+  .setup-plan-meta{display:flex;flex-direction:column;gap:5px;margin:10px 0 4px}
+  .setup-meta-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:800}
+  .setup-day-name{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--line-strong);
+    border-radius:12px;background:var(--field);color:var(--ink);font-family:inherit;font-weight:800;
+    font-size:16px;-webkit-appearance:none}
+  .setup-day-name:focus{outline:none;border-color:var(--blue-bright)}
+  .setup-weekly{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+  .setup-weekly-opt{min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);
+    color:var(--ink);font:800 12px inherit;cursor:pointer}
+  .setup-weekly-opt.active{border-color:var(--blue);background:var(--blue-soft);color:var(--blue-bright)}
+  html[data-theme="light"] .setup-day-name{background:#fff;border-color:#c5d5db;color:#10242d}
+  html[data-theme="light"] .setup-weekly-opt{background:#fff;border-color:#c5d5db}
   .setup-plan-add{width:100%;min-height:46px;margin-top:10px;border:1px dashed var(--blue);border-radius:12px;
     background:transparent;color:var(--blue-bright);font:850 13px inherit;cursor:pointer}
   .setup-plan-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
@@ -325,6 +338,11 @@
 
   /* Standardmäßig nur ein unaufdringlicher Knopf – das Feld erscheint erst bei Bedarf
      oder wenn aus der letzten Einheit eine Notiz mitgewandert ist. */
+  /* Bewusst ruhiger als "Letztes Training" – es ist ein Hinweis, kein Vorwert. */
+  .orient-box{margin:0 12px 8px;padding:9px 12px;border:1px dashed var(--line-strong);
+    border-radius:var(--radius-sm);background:transparent}
+  .orient-box .orient-k{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:800}
+  .orient-box .orient-v{margin-top:3px;font-size:12px;font-weight:700;color:var(--muted)}
   .ex-note-row{margin:0 12px 8px;display:flex;flex-direction:column;gap:4px}
   .ex-note-row .ex-note-lbl,.ex-note-row .ex-note-inp{display:none}
   .ex-note-row.open .ex-note-lbl,.ex-note-row.open .ex-note-inp{display:block}
@@ -861,6 +879,7 @@
     <div class="setup-section-body" id="setup-plan-body" hidden>
       <p class="dash-sub" style="margin:0 0 13px">Tippe auf eine Übung, um sie auszutauschen. Änderungen gelten nur für zukünftige Trainings.</p>
       <div class="setup-plan-days" id="setup-plan-days"></div>
+      <div class="setup-plan-meta" id="setup-plan-meta"></div>
       <div class="setup-plan-list" id="setup-plan-list"></div>
       <button class="setup-plan-add" id="setup-plan-add" type="button">+ Übung hinzufügen</button>
       <div class="setup-plan-actions">
@@ -1124,6 +1143,51 @@ function verwaisteLinie(log, aktuelleLinie, tage){
   return [...linien][0];
 }
 
+/* Der nächste freie Tagesschlüssel. Bestehende Tage behalten ihren Schlüssel,
+   damit ihre Historie zugeordnet bleibt – ein neuer Tag bekommt einen neuen. */
+function naechsterTagesschluessel(dayOrder){
+  const vergeben=new Set((dayOrder||[]).map(String));
+  let n=1; while(vergeben.has(String(n))) n++;
+  return String(n);
+}
+
+/* Ein passender Name für ein neues Workout.
+   Heißen die bestehenden "Ganzkörper A" und "Ganzkörper B", ist "Ganzkörper C"
+   die naheliegende Fortsetzung. Sonst schlicht durchnummeriert. */
+function vorgeschlagenerWorkoutName(dayNames, dayOrder){
+  const namen=(dayOrder||[]).map(d=>String((dayNames||{})[d]||"").trim()).filter(Boolean);
+  const treffer=namen.map(n=>n.match(/^(.+?)\s+([A-Za-z])$/));
+  if(namen.length && treffer.every(Boolean)){
+    const basis=treffer[0][1];
+    if(treffer.every(t=>t[1]===basis)){
+      const hoechster=Math.max(...treffer.map(t=>t[2].toUpperCase().charCodeAt(0)));
+      if(hoechster<90) return `${basis} ${String.fromCharCode(hoechster+1)}`;
+    }
+  }
+  return `Workout ${(dayOrder||[]).length+1}`;
+}
+
+/* Orientierung für einen Trainingstag ohne eigene Historie.
+
+   Gibt es dieselbe Übung an einem anderen Tag, wird das als benannter Hinweis
+   angeboten – ausdrücklich nicht als Vorwert. Grund: Gleicher Name heißt nicht
+   gleiche Übung. In Hesselinks Plan stand an Tag 2 "Beinpresse" mit 30 kg,
+   während die echte Beinpresse an Tag 1 bei 150 kg lief. Ein stiller Vorschlag
+   wäre dort gefährlich gewesen, ein benannter Hinweis ist hilfreich.
+
+   Erwartet bereits gefilterte Einträge (zum Plan gehörend), neueste zuerst. */
+function orientierungAusAnderemTag(eintraege, aktuellerTag, name){
+  const ziel=String(name||"").trim().toLowerCase();
+  if(!ziel) return null;
+  for(const e of (eintraege||[])){
+    if(!e || String(e.day)===String(aktuellerTag)) continue;
+    const satz=(e.sets||[]).find(s=>String(s.name||"").trim().toLowerCase()===ziel);
+    if(satz && workSetsOf(satz).some(w=>num(w.kg)>0||num(w.reps)>0))
+      return {tag:String(e.day), datum:e.date, set:satz};
+  }
+  return null;
+}
+
 /* Welches Datum gehört in das heutige Training?
 
    Die App legt schon beim bloßen Öffnen des Trainings einen Entwurf an –
@@ -1307,7 +1371,7 @@ function targetText(s, goal){
 /* Bei jeder inhaltlichen Änderung der App diese Nummer erhöhen.
    Stimmt sie nicht mit der zuletzt geladenen Version überein,
    wird die Seite einmalig hart neu geladen (Cache umgangen). */
-const APP_VERSION = 938;
+const APP_VERSION = 939;
 const RELOAD_GUARD_KEY = "hesselink_beta_reload_guard_v1";
 (function ensureLatestVersion(){
   let seen = 0;
@@ -1594,6 +1658,10 @@ let libraryTargetDay = null;
 let libraryPlanContext = "setup";
 let editingReturnDay = null;
 let setupPlanDraft = null;
+/* Tagesreihenfolge, Namen und Wochenziel gehoeren zum selben Bearbeitungsstand:
+   Ein neues Workout existiert erst im Entwurf und wird mit "Plan speichern"
+   uebernommen - ueber denselben Weg, der die Plan-Linie bereits erhaelt. */
+let setupDayOrderDraft = null, setupDayNamesDraft = null, setupWeeklyDraft = null;
 let setupPlanDay = null;
 let setupPlanDirty = false;
 let setupSplitExpanded = false;
@@ -1951,6 +2019,17 @@ function renderExercises(){
       <div><div class="last-k">Letztes Training</div><div class="last-v">${previousText(previous)}</div></div>
       <button class="last-copy" type="button" data-copy-last="${i}">Gewichte übernehmen</button>
     </div>` : "";
+    /* Neuer Trainingstag ohne eigene Historie: Orientierung von einem anderen Tag,
+       ausdrücklich mit Herkunft benannt und bewusst ohne Übernehmen-Knopf –
+       gleicher Übungsname heißt nicht gleiche Übung. */
+    let orientBox = "";
+    if(!editing && !previous){
+      const hinweis=orientierungAusAnderemTag(planEintraegeNeuesteZuerst(), currentDay, name);
+      if(hinweis) orientBox = `<div class="orient-box">
+        <div class="orient-k">Noch keine Werte an diesem Tag</div>
+        <div class="orient-v">zuletzt an ${escAttr(planConfig.dayNames[hinweis.tag]||`Workout ${hinweis.tag}`)}: ${previousText(hinweis.set)}</div>
+      </div>`;
+    }
     c.insertAdjacentHTML("beforeend", `
       <div class="ex ${exClass} ${nameSelectable ? "name-selectable" : ""}" data-i="${i}">
         <div class="ex-top">
@@ -1965,6 +2044,7 @@ function renderExercises(){
           ${temporaryOverride?`<div class="temporary-ex-note">${sessionAddition?"＋ Zusätzlich nur für heute":"↔ Nur für dieses Training ersetzt"}</div>`:""}
           ${badge}
           ${lastBox}
+          ${orientBox}
           ${noteRow}
           ${setRow(i,"warm","Warm-Up")}
           ${setRow(i,"1","Satz 1")}
@@ -2446,6 +2526,11 @@ function bindDashboardPlanEditor(day){
 }
 /* Trends aller Übungen des aktuellen Plans einsammeln.
    Die Rechenregeln stehen im Trainingslogik-Block; hier wird nur beschafft. */
+/* Einheiten des aktuellen Plans, neueste zuerst – Grundlage für Trend und Orientierung. */
+function planEintraegeNeuesteZuerst(){
+  return loadLog().filter(belongsToCurrentPlan)
+    .sort((a,b)=>a.date===b.date?b.id-a.id:(a.date<b.date?1:-1));
+}
 function planTrends(){
   const gesehen=new Set(), trends=[];
   planConfig.dayOrder.forEach(day=>(templates[day]||[]).forEach(ex=>{
@@ -2532,14 +2617,47 @@ function openTrainingDay(day){ selectDay(day); setView("log"); }
 
 function resetSetupPlanDraft(){
   setupPlanDraft=JSON.parse(JSON.stringify(templates));
-  setupPlanDay=planConfig.dayOrder.includes(setupPlanDay)?setupPlanDay:planConfig.dayOrder[0];
+  setupDayOrderDraft=[...planConfig.dayOrder];
+  setupDayNamesDraft={...planConfig.dayNames};
+  setupWeeklyDraft=planConfig.weeklyTarget;
+  setupPlanDay=setupDayOrderDraft.includes(setupPlanDay)?setupPlanDay:setupDayOrderDraft[0];
   setupPlanDirty=false;
+}
+const setupPlanTage = () => setupDayOrderDraft || planConfig.dayOrder;
+const setupPlanName = day => (setupDayNamesDraft||planConfig.dayNames)[day] || `Workout ${setupPlanTage().indexOf(day)+1}`;
+function markiereSetupAenderung(){
+  setupPlanDirty=true;
+  const speichern=$("#setup-plan-save"); if(speichern) speichern.disabled=false;
+  const status=$("#setup-plan-status"); if(status) status.textContent="Nicht gespeicherte Änderungen";
+}
+
+/* Ein zusätzliches Workout anlegen – bestehende Tage bleiben unangetastet,
+   damit ihre Historie zugeordnet bleibt. */
+function fuegeWorkoutHinzu(quelleTag){
+  const neuerTag=naechsterTagesschluessel(setupPlanTage());
+  const vorlage=quelleTag && setupPlanDraft[quelleTag] ? JSON.parse(JSON.stringify(setupPlanDraft[quelleTag])) : [{id:"",n:"",goal:"8–12",manual:true,focus:true}];
+  setupPlanDraft[neuerTag]=vorlage;
+  setupDayOrderDraft=[...setupPlanTage(), neuerTag];
+  setupDayNamesDraft={...(setupDayNamesDraft||planConfig.dayNames)};
+  setupDayNamesDraft[neuerTag]=vorgeschlagenerWorkoutName(setupDayNamesDraft, setupPlanTage().filter(t=>t!==neuerTag));
+  setupPlanDay=neuerTag;
+  markiereSetupAenderung();
+  return neuerTag;
 }
 function renderSetupPlan(){
   if(!setupPlanDraft) resetSetupPlanDraft();
   if(!planConfig.dayOrder.includes(setupPlanDay)) setupPlanDay=planConfig.dayOrder[0];
-  const day=setupPlanDay, list=setupPlanDraft[day]||[];
-  $("#setup-plan-days").innerHTML=planConfig.dayOrder.map((d,idx)=>`<button class="setup-plan-day ${d===day?"active":""}" data-setup-day="${escAttr(d)}" type="button">${idx+1}. ${escAttr(PLANNAME(d))}</button>`).join("");
+  const day=setupPlanDay, list=setupPlanDraft[day]||[], tage=setupPlanTage();
+  $("#setup-plan-days").innerHTML=tage.map((d,idx)=>`<button class="setup-plan-day ${d===day?"active":""}" data-setup-day="${escAttr(d)}" type="button">${idx+1}. ${escAttr(setupPlanName(d))}</button>`).join("")
+    + `<button class="setup-plan-day add" data-setup-add-day type="button">＋ Workout</button>`;
+  /* Wochenziel und Workout-Name gehören zum selben Bearbeitungsstand wie die Übungen. */
+  $("#setup-plan-meta").innerHTML=`
+    <label class="setup-meta-lbl" for="setup-day-name">Name dieses Workouts</label>
+    <input class="setup-day-name" id="setup-day-name" type="text" maxlength="40"
+      value="${escAttr(setupPlanName(day))}" aria-label="Name dieses Workouts">
+    <span class="setup-meta-lbl">Trainingstage pro Woche</span>
+    <div class="setup-weekly">${[1,2,3,4,5,6].map(n=>
+      `<button class="setup-weekly-opt ${n===Number(setupWeeklyDraft)?"active":""}" data-setup-weekly="${n}" type="button">${n}×</button>`).join("")}</div>`;
   $("#setup-plan-list").innerHTML=list.map((ex,i)=>`<div class="setup-plan-ex" data-setup-ex="${i}">
     <span class="setup-plan-num">${i+1}.</span>
     ${ex.manual?`<input class="setup-ex-name" data-setup-name="${i}" data-focus="${ex.focus?"1":"0"}" value="${escAttr(ex.n)}" placeholder="Eigene Übung" aria-label="Eigener Übungsname">`:`<button class="setup-ex-select" data-setup-select="${i}" type="button">${escAttr(ex.n||"Übung wählen")}</button>`}
@@ -2549,6 +2667,31 @@ function renderSetupPlan(){
   $("#setup-plan-save").disabled=!setupPlanDirty;
   $("#setup-plan-status").textContent=setupPlanDirty?"Nicht gespeicherte Änderungen":"Plan ist gespeichert";
   document.querySelectorAll("[data-setup-day]").forEach(b=>b.addEventListener("click",()=>{ setupPlanDay=b.dataset.setupDay; renderSetupPlan(); }));
+  const nameFeld=$("#setup-day-name");
+  if(nameFeld) nameFeld.addEventListener("input",()=>{
+    setupDayNamesDraft={...(setupDayNamesDraft||planConfig.dayNames)};
+    setupDayNamesDraft[day]=nameFeld.value;
+    markiereSetupAenderung();
+    document.querySelectorAll(`[data-setup-day="${day}"]`).forEach(b=>{
+      b.textContent=`${tage.indexOf(day)+1}. ${nameFeld.value||"Workout"}`;
+    });
+  });
+  document.querySelectorAll("[data-setup-weekly]").forEach(b=>b.addEventListener("click",()=>{
+    setupWeeklyDraft=+b.dataset.setupWeekly; markiereSetupAenderung(); renderSetupPlan();
+  }));
+  const hinzu=document.querySelector("[data-setup-add-day]");
+  if(hinzu) hinzu.addEventListener("click",async ()=>{
+    const quellen=setupPlanTage();
+    /* Kopie ist vorausgewählt: Fünf Übungen einzeln zu suchen ist mühsam,
+       anpassen ist schneller als zusammenstellen. */
+    const kopieren=await askConfirm("Workout hinzufügen",
+      `Dein neues Workout kann als Kopie von „${setupPlanName(quellen[quellen.length-1])}“ starten – Übungen danach einfach anpassen. Oder du beginnst mit einer leeren Liste.`,
+      "Als Kopie starten");
+    fuegeWorkoutHinzu(kopieren ? quellen[quellen.length-1] : null);
+    renderSetupPlan();
+    const feld=$("#setup-day-name"); if(feld){ feld.focus(); feld.select(); }
+    toast(`${setupPlanName(setupPlanDay)} angelegt · noch nicht gespeichert`);
+  });
   document.querySelectorAll("[data-setup-select]").forEach(b=>b.addEventListener("click",()=>openSetupLibrary(day,+b.dataset.setupSelect)));
   document.querySelectorAll("[data-setup-name]").forEach(inp=>{
     inp.addEventListener("input",()=>{
@@ -2607,11 +2750,13 @@ async function applySplitPreset(id){
   const ok=await askConfirm("Trainingssplit wechseln?",msg,"Split übernehmen");
   if(!ok) return;
   templates=JSON.parse(JSON.stringify(preset.templates));
-  /* Nur bei geänderter Tagesstruktur eine neue Plan-Linie – sonst bleiben
-     die Vorwerte der bisherigen Einheiten sichtbar. */
+  /* Eine Vorlage bewusst auszuwählen ist ein Planwechsel – immer eine neue
+     Plan-Linie. Die Tagesstruktur taugt hier nicht als Kriterium: „Ganzkörper
+     A/B/C“ und „Push/Pull/Legs“ haben beide drei Tage, meinen aber völlig
+     Verschiedenes. Anpassungen am eigenen Plan laufen über das Setup und
+     behalten die Linie. */
   const neueId=`${id}-${Date.now()}`;
-  const linie=naechsteLinie(planConfig.lineageId||planConfig.versionId, planConfig.dayOrder, preset.dayOrder, neueId);
-  planConfig={id,name:preset.name,versionId:neueId,lineageId:linie,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
+  planConfig={id,name:preset.name,versionId:neueId,lineageId:neueId,weeklyTarget:preset.weeklyTarget||preset.dayOrder.length,dayOrder:[...preset.dayOrder],dayNames:{...preset.dayNames}};
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder[0]; activeExIdx=0; activeSetKey="warm"; openExIndices=new Set();
   chartFilter="all"; clearFormMeta(); resetSetupPlanDraft();
@@ -3044,19 +3189,28 @@ async function discardSetupPlanChanges(surface="setup"){
 }
 async function saveSetupPlanChanges(surface="setup"){
   if(!setupPlanDirty||!setupPlanDraft) return;
-  const invalidDay=planConfig.dayOrder.find(day=>!setupPlanDraft[day]?.length||setupPlanDraft[day].some(ex=>!(ex.n||"").trim()));
+  const tage=setupPlanTage();
+  const invalidDay=tage.find(day=>!setupPlanDraft[day]?.length||setupPlanDraft[day].some(ex=>!(ex.n||"").trim()));
   if(invalidDay){ setupPlanDay=invalidDay; if(surface==="dashboard"){ dashboardExpandedDay=invalidDay; renderDashboard(); } else renderSetupPlan(); toast("Bitte alle Übungen benennen"); return; }
+  const namenlos=tage.find(day=>!String((setupDayNamesDraft||{})[day]||"").trim());
+  if(namenlos){ setupPlanDay=namenlos; renderSetupPlan(); toast("Bitte alle Workouts benennen"); return; }
   const draftCount=planConfig.dayOrder.filter(meaningfulDraft).length;
   if(draftCount){
     const ok=await askConfirm("Plan speichern?",`${draftCount===1?"Ein laufender Trainingsentwurf wird":"Laufende Trainingsentwürfe werden"} verworfen, damit keine alten Eingaben mit dem neuen Plan vermischt werden. Deine Historie bleibt unverändert.`,"Plan speichern");
     if(!ok) return;
   }
-  templates=JSON.parse(JSON.stringify(setupPlanDraft));
+  /* Nur die Tage übernehmen, die im Entwurf stehen. */
+  templates=Object.fromEntries(tage.map(day=>[day, JSON.parse(JSON.stringify(setupPlanDraft[day]))]));
   Object.values(templates).forEach(day=>day.forEach(ex=>{ delete ex.manual; delete ex.focus; }));
   if(planConfig.id!=="custom") planConfig.name=`${planConfig.name} · angepasst`;
-  /* Übungen ändern = gleiche Plan-Linie. Vorwerte und Wochenzählung bleiben sichtbar. */
+  /* Plan anpassen = gleiche Plan-Linie, auch wenn ein Workout dazukommt.
+     Bestehende Tage behalten ihren Schlüssel, ihre Historie bleibt zugeordnet.
+     Nur ein echter Splitwechsel über Vorlage oder Einrichtung trennt ab. */
   planConfig.id="custom"; planConfig.versionId=`custom-${Date.now()}`;
   if(!planConfig.lineageId) planConfig.lineageId=planConfig.versionId;
+  planConfig.dayOrder=[...tage];
+  planConfig.dayNames={...setupDayNamesDraft};
+  planConfig.weeklyTarget=Math.max(1,Math.min(7,Number(setupWeeklyDraft)||tage.length));
   saveJSON(TPL_KEY,templates); saveJSON(PLAN_KEY,planConfig); saveJSON(DRAFT_KEY,{});
   currentDay=planConfig.dayOrder.includes(currentDay)?currentDay:planConfig.dayOrder[0];
   activeExIdx=0; activeSetKey="warm"; openExIndices=new Set(); completedEditReturnIdx=null;

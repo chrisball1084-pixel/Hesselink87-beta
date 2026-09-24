@@ -156,6 +156,50 @@ assert.equal(L.verwaisteLinie([eintrag("legacy")], "onboarding-x", []), null, "O
 assert.equal(L.verwaisteLinie([eintrag(null)], "onboarding-x", ["1","2"]), "legacy",
   "Uraltdaten ohne Kennung zählen als legacy und werden erkannt");
 
+/* ---- Neues Workout: Schlüssel und Name ---- */
+assert.equal(L.naechsterTagesschluessel(["1","2"]), "3", "Nach zwei Tagen folgt Tag 3");
+assert.equal(L.naechsterTagesschluessel(["1","3"]), "2", "Eine Lücke wird zuerst gefüllt");
+assert.equal(L.naechsterTagesschluessel([]), "1", "Ohne Tage beginnt es bei 1");
+assert.notEqual(L.naechsterTagesschluessel(["1","2"]), "1",
+  "Bestehende Schlüssel dürfen nie neu vergeben werden – daran hängt die Historie");
+
+assert.equal(L.vorgeschlagenerWorkoutName({"1":"Ganzkörper A","2":"Ganzkörper B"}, ["1","2"]), "Ganzkörper C",
+  "A und B setzen sich zu C fort");
+assert.equal(L.vorgeschlagenerWorkoutName({"1":"Push","2":"Pull"}, ["1","2"]), "Workout 3",
+  "Ohne erkennbares Muster wird durchnummeriert");
+assert.equal(L.vorgeschlagenerWorkoutName({"1":"Ganzkörper A"}, ["1"]), "Ganzkörper B",
+  "Auch ab einem einzelnen Buchstaben wird fortgesetzt");
+assert.equal(L.vorgeschlagenerWorkoutName({}, []), "Workout 1", "Ohne Vorlage der erste");
+assert.equal(L.vorgeschlagenerWorkoutName({"1":"Ganzkörper A","2":"Oberkörper B"}, ["1","2"]), "Workout 3",
+  "Unterschiedliche Wortstämme ergeben kein Muster");
+
+/* ---- Orientierung aus einem anderen Trainingstag ---- */
+const eintragMit = (tag, name, kg, datum) => ({day:tag, date:datum,
+  sets:[{name, goal:"8–12", workSets:[{kg:String(kg), reps:"15"}]}]});
+const verlaufTage = [
+  eintragMit("1","Beinpresse",150,"2026-09-20"),
+  eintragMit("1","Beinpresse",140,"2026-09-13"),
+];
+const orient = L.orientierungAusAnderemTag(verlaufTage, "3", "Beinpresse");
+assert.ok(orient, "Dieselbe Übung an einem anderen Tag muss gefunden werden");
+assert.equal(orient.tag, "1", "Der Herkunftstag muss mitgeliefert werden – sonst wäre es ein Vorwert");
+assert.equal(orient.datum, "2026-09-20", "Es zählt die jüngste passende Einheit");
+assert.equal(L.orientierungAusAnderemTag(verlaufTage, "1", "Beinpresse"), null,
+  "Am eigenen Tag ist es kein fremder Hinweis, sondern der normale Vorwert");
+assert.equal(L.orientierungAusAnderemTag(verlaufTage, "3", "Butterfly"), null,
+  "Eine unbekannte Übung ergibt keinen Hinweis");
+const leererEintrag = {day:"1", date:"2026-09-20",
+  sets:[{name:"Beinpresse", goal:"8–12", workSets:[{kg:"", reps:""}]}]};
+assert.equal(L.orientierungAusAnderemTag([leererEintrag], "3", "Beinpresse"), null,
+  "Ein Eintrag ohne jeden Wert taugt nicht als Orientierung");
+/* Körpergewichtsübungen haben kein Gewicht – die zählen trotzdem. */
+const koerpergewicht = {day:"1", date:"2026-09-20",
+  sets:[{name:"Beinheben (Bauch)", goal:"frei", workSets:[{kg:"", reps:"20"}]}]};
+assert.ok(L.orientierungAusAnderemTag([koerpergewicht], "3", "Beinheben (Bauch)"),
+  "Wiederholungen ohne Gewicht sind eine gültige Orientierung");
+assert.equal(L.orientierungAusAnderemTag([], "3", "Beinpresse"), null, "Ohne Historie kein Hinweis");
+assert.equal(L.orientierungAusAnderemTag(verlaufTage, "3", "  "), null, "Ohne Übungsnamen kein Hinweis");
+
 /* ---- Datum: ein leerer Entwurf darf das heutige Training nicht datieren ---- */
 const HEUTE = "2026-08-20";
 const leererEntwurf = datum => ({date:datum, weight:"", energy:"", note:"", exerciseOverrides:{},

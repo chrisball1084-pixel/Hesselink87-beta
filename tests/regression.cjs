@@ -91,6 +91,14 @@ async function importBackup(page,payload,fileName){
   page.on("pageerror",error=>errors.push(error.message));
 
   try{
+    /* Öffnet eine Übungskarte nur, wenn sie zugeklappt ist – nach einem
+       Neuladen kann sie aus dem Entwurf bereits offen wiederhergestellt sein. */
+    const openExercise=async(page,i)=>{
+      const card=page.locator(`.ex[data-i="${i}"]`);
+      if(await card.evaluate(el=>el.classList.contains("compact"))) await card.locator(".ex-top").click();
+      await page.locator(`.ex[data-i="${i}"] input[data-f="kg1"]`).waitFor({state:"visible"});
+    };
+
     await page.goto(`http://127.0.0.1:${address.port}/`,{waitUntil:"load"});
     await page.evaluate(({draft,log,endAt})=>{
       localStorage.setItem("hesselink_beta_draft_v1",JSON.stringify({2:draft}));
@@ -630,6 +638,64 @@ async function importBackup(page,payload,fileName){
     assert.equal(await planEditPage.locator('.ex[data-i="0"] .last-box').count(),1,
       "Nach der Einrichtung müssen die Vorwerte weiterhin sichtbar sein");
 
+    /* Hesselinks Fall: zu zwei Workouts ein drittes dazunehmen, ohne die
+       bisherigen Einheiten zu verlieren. */
+    const drittesWorkout=await planEditPage.evaluate(async()=>{
+      const vorher={linie:planConfig.lineageId, tage:[...planConfig.dayOrder],
+        sichtbar:loadLog().filter(belongsToCurrentPlan).length};
+      setView("setup"); resetSetupPlanDraft();
+      const quelle=setupPlanTage()[0];
+      const neuerTag=fuegeWorkoutHinzu(quelle);                 // als Kopie
+      setupDayNamesDraft[neuerTag]="Ganzkörper C";
+      setupWeeklyDraft=3;
+      const pending=saveSetupPlanChanges("setup");
+      await new Promise(r=>setTimeout(r,80));
+      if(document.querySelector("#modal-bg.show")) document.querySelector("#m-ok").click();
+      await pending;
+      return {vorher, neuerTag,
+        nachher:{linie:planConfig.lineageId, tage:[...planConfig.dayOrder],
+          name:planConfig.dayNames[neuerTag], wochenziel:planConfig.weeklyTarget,
+          sichtbar:loadLog().filter(belongsToCurrentPlan).length,
+          uebungenNeu:(templates[neuerTag]||[]).map(x=>x.n),
+          uebungenQuelle:(templates[quelle]||[]).map(x=>x.n)}};
+    });
+    assert.equal(drittesWorkout.nachher.linie, drittesWorkout.vorher.linie,
+      "Ein zusätzliches Workout darf die Plan-Linie nicht wechseln");
+    assert.equal(drittesWorkout.nachher.sichtbar, drittesWorkout.vorher.sichtbar,
+      "Die bisherigen Einheiten müssen weiterhin zum Plan zählen");
+    assert.equal(drittesWorkout.nachher.tage.length, drittesWorkout.vorher.tage.length+1,
+      "Es muss genau ein Trainingstag dazugekommen sein");
+    assert.deepEqual(drittesWorkout.nachher.tage.slice(0,drittesWorkout.vorher.tage.length),
+      drittesWorkout.vorher.tage, "Die bestehenden Tagesschlüssel dürfen sich nicht verschieben");
+    assert.equal(drittesWorkout.nachher.name, "Ganzkörper C", "Der Name muss frei wählbar sein");
+    assert.equal(drittesWorkout.nachher.wochenziel, 3, "Das Wochenziel muss im Setup änderbar sein");
+    assert.deepEqual(drittesWorkout.nachher.uebungenNeu, drittesWorkout.nachher.uebungenQuelle,
+      "Als Kopie gestartet übernimmt das neue Workout die Übungen der Vorlage");
+
+    /* Die Vorwerte der bestehenden Tage müssen unverändert dastehen. */
+    await planEditPage.locator('.tab[data-view="log"]').click();
+    await planEditPage.evaluate(()=>{ currentDay=planConfig.dayOrder[0]; renderDayPicker(); renderExercises(); });
+    await openExercise(planEditPage,0);
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .last-box').count(),1,
+      "Nach dem Hinzufügen müssen die Vorwerte der bestehenden Tage bleiben");
+
+    /* Der neue Tag hat keine eigene Historie – dort nur ein benannter Hinweis. */
+    await planEditPage.evaluate(tag=>{ currentDay=tag; renderDayPicker(); renderExercises(); },
+      drittesWorkout.neuerTag);
+    await openExercise(planEditPage,0);
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .last-box').count(),0,
+      "Am neuen Tag darf es noch keine Vorwerte geben");
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .orient-box').count(),1,
+      "Stattdessen muss eine Orientierung aus einem anderen Tag erscheinen");
+    const orientText=await planEditPage.locator('.ex[data-i="0"] .orient-box').textContent();
+    assert.match(orientText,/Noch keine Werte an diesem Tag/,"Der Hinweis muss ehrlich benennen, dass es hier nichts gibt");
+    assert.match(orientText,/zuletzt an /,"Der Herkunftstag muss genannt werden");
+    assert.equal(await planEditPage.locator('.ex[data-i="0"] .orient-box .last-copy').count(),0,
+      "Für die Orientierung darf es keinen Übernehmen-Knopf geben");
+    const felderLeer=await planEditPage.evaluate(()=>
+      [...document.querySelectorAll('.ex[data-i="0"] input[type=number]')].every(i=>i.value===""));
+    assert.equal(felderLeer,true,"Die Orientierung darf die Eingabefelder nicht vorbefüllen");
+
     /* Ein echter Splitwechsel soll dagegen weiterhin trennen. */
     const splitLineage=await planEditPage.evaluate(async()=>{
       const before=planConfig.lineageId;
@@ -644,13 +710,6 @@ async function importBackup(page,payload,fileName){
     assert.deepEqual(planEditErrors,[],`Planbearbeitungs-Browserfehler: ${planEditErrors.join(" | ")}`);
     await planEditContext.close();
 
-    /* Öffnet eine Übungskarte nur, wenn sie zugeklappt ist – nach einem
-       Neuladen kann sie aus dem Entwurf bereits offen wiederhergestellt sein. */
-    const openExercise=async(page,i)=>{
-      const card=page.locator(`.ex[data-i="${i}"]`);
-      if(await card.evaluate(el=>el.classList.contains("compact"))) await card.locator(".ex-top").click();
-      await page.locator(`.ex[data-i="${i}"] input[data-f="kg1"]`).waitFor({state:"visible"});
-    };
 
     /* Übungsnotiz wandert mit, Abwärts-Empfehlung bei zweimal zu schwach. */
     const coachContext=await browser.newContext({viewport:{width:390,height:844}});
